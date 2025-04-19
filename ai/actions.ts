@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { geminiFlashModel } from ".";
 import { generateUUID } from "@/lib/utils"; // Import generateUUID if not already present
+import { saveMemory, getMemoriesByUserId, deleteMemoryById } from "@/db/queries"; // Import memory queries
 
 export async function generateSampleFlightStatus({
   flightNumber,
@@ -171,4 +172,46 @@ export async function markTaskCompleteAction({ taskId }: { taskId: string }) {
   // const userId = ... get user ID from session ...
   // await db.update(tasks).set({ status: 'completed' }).where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
   return { taskId: taskId, status: "completed" as const };
+}
+
+// --- Memory Management Actions ---
+
+export async function saveMemoryAction({
+  userId,
+  content,
+}: {
+  userId: string;
+  content: string;
+}) {
+  console.log(`Action: Saving memory for user ${userId}: ${content}`);
+  try {
+    const saved = await saveMemory({ userId, content });
+    // Return only the necessary confirmation details
+    return { memoryId: saved[0]?.id, content: saved[0]?.content, status: "saved" as const };
+  } catch (error) {
+    console.error("Error in saveMemoryAction:", error);
+    return { error: "Failed to save memory." };
+  }
+}
+
+export async function recallMemoriesAction({ userId }: { userId: string }) {
+  console.log(`Action: Recalling memories for user ${userId}`);
+  try {
+    const memories = await getMemoriesByUserId({ userId });
+    return { memories }; // Return the array of memories
+  } catch (error) {
+    console.error("Error in recallMemoriesAction:", error);
+    return { error: "Failed to recall memories." };
+  }
+}
+
+export async function forgetMemoryAction({ memoryId, userId }: { memoryId: string; userId: string }) {
+  console.log(`Action: Forgetting memory ${memoryId} for user ${userId}`);
+  try {
+    await deleteMemoryById({ id: memoryId, userId });
+    return { memoryId, status: "forgotten" as const }; // Confirmation
+  } catch (error) {
+    console.error("Error in forgetMemoryAction:", error);
+    return { error: "Failed to forget memory." };
+  }
 }

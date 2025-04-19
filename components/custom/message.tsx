@@ -17,6 +17,8 @@ import { SelectSeats } from "../flights/select-seats";
 import { VerifyPayment } from "../flights/verify-payment";
 import { ListTasks } from "../tasks/list-tasks";
 import { TaskConfirmation } from "../tasks/task-confirmation";
+import { ListMemories } from "../memories/list-memories";
+import { MemoryConfirmation } from "../memories/memory-confirmation";
 
 export const Message = ({
   chatId,
@@ -56,6 +58,14 @@ export const Message = ({
               if (state === "result") {
                 const { result } = toolInvocation;
 
+                if (result?.error) {
+                  return (
+                    <div key={toolCallId} className="text-red-500 text-sm">
+                      Error: {result.error}
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={toolCallId}>
                     {toolName === "getWeather" ? (
@@ -82,6 +92,12 @@ export const Message = ({
                       <ListTasks tasks={result.tasks} />
                     ) : toolName === "markTaskComplete" ? (
                       <TaskConfirmation {...result} />
+                    ) : toolName === "saveMemory" ? (
+                      <MemoryConfirmation {...result} />
+                    ) : toolName === "recallMemories" ? (
+                      <ListMemories memories={result.memories} />
+                    ) : toolName === "forgetMemory" ? (
+                      <MemoryConfirmation {...result} />
                     ) : (
                       <div>{JSON.stringify(result, null, 2)}</div>
                     )}
@@ -110,6 +126,12 @@ export const Message = ({
                       <ListTasks tasks={[]} />
                     ) : toolName === "markTaskComplete" ? (
                       <TaskConfirmation status="completed" taskId="temp-skeleton" />
+                    ) : toolName === "saveMemory" ? (
+                      <MemoryConfirmation status="saved" memoryId="temp-skeleton" />
+                    ) : toolName === "recallMemories" ? (
+                      <ListMemories memories={[]} />
+                    ) : toolName === "forgetMemory" ? (
+                      <MemoryConfirmation status="forgotten" memoryId="temp-skeleton" />
                     ) : null}
                   </div>
                 );

@@ -1,11 +1,11 @@
 import "server-only";
 
 import { genSaltSync, hashSync } from "bcrypt-ts";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and, like, ilike } from "drizzle-orm"; // Added like, ilike
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import { user, chat, User, reservation } from "./schema";
+import { user, chat, User, reservation, memories, Memory } from "./schema"; // Added memories, Memory
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
@@ -139,4 +139,91 @@ export async function updateReservation({
       hasCompletedPayment,
     })
     .where(eq(reservation.id, id));
+}
+
+// --- Memory Queries ---
+
+export async function saveMemory({
+  userId,
+  content,
+}: {
+  userId: string;
+  content: string;
+}): Promise<Array<Memory>> { // Return the created memory
+  try {
+    // Insert the new memory and return it
+    const newMemory = await db
+      .insert(memories)
+      .values({
+        userId,
+        content,
+      })
+      .returning(); // Return the inserted row
+    return newMemory;
+  } catch (error) {
+    console.error("Failed to save memory in database");
+    throw error;
+  }
+}
+
+export async function getMemoriesByUserId({
+  userId,
+}: {
+  userId: string;
+}): Promise<Array<Memory>> {
+  try {
+    // Retrieve all memories for the user, ordered by creation date
+    return await db
+      .select()
+      .from(memories)
+      .where(eq(memories.userId, userId))
+      .orderBy(desc(memories.createdAt));
+  } catch (error) {
+    console.error("Failed to get memories by user from database");
+    throw error;
+  }
+}
+
+// Function to find memories by content (case-insensitive search)
+export async function findMemoriesByContent({
+  userId,
+  contentQuery,
+}: {
+  userId: string;
+  contentQuery: string;
+}): Promise<Array<Memory>> {
+  try {
+    // Use ilike for case-insensitive partial matching
+    return await db
+      .select()
+      .from(memories)
+      .where(
+        and(
+          eq(memories.userId, userId),
+          ilike(memories.content, `%${contentQuery}%`) // Search for query within content
+        )
+      )
+      .orderBy(desc(memories.createdAt));
+  } catch (error) {
+    console.error("Failed to find memories by content from database");
+    throw error;
+  }
+}
+
+// Optional: Function to delete a specific memory
+export async function deleteMemoryById({
+  id,
+  userId, // Ensure user owns the memory
+}: {
+  id: string;
+  userId: string;
+}) {
+  try {
+    return await db
+      .delete(memories)
+      .where(and(eq(memories.id, id), eq(memories.userId, userId)));
+  } catch (error) {
+    console.error("Failed to delete memory by id from database");
+    throw error;
+  }
 }

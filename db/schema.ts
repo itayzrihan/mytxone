@@ -1,5 +1,5 @@
 import { Message } from "ai";
-import { InferSelectModel } from "drizzle-orm";
+import { InferSelectModel, relations } from "drizzle-orm";
 import {
   pgTable,
   varchar,
@@ -7,6 +7,7 @@ import {
   json,
   uuid,
   boolean,
+  text,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("User", {
@@ -16,6 +17,12 @@ export const user = pgTable("User", {
 });
 
 export type User = InferSelectModel<typeof user>;
+
+export const userRelations = relations(user, ({ many }) => ({
+  chats: many(chat),
+  reservations: many(reservation),
+  memories: many(memories),
+}));
 
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -30,6 +37,13 @@ export type Chat = Omit<InferSelectModel<typeof chat>, "messages"> & {
   messages: Array<Message>;
 };
 
+export const chatRelations = relations(chat, ({ one }) => ({
+  user: one(user, {
+    fields: [chat.userId],
+    references: [user.id],
+  }),
+}));
+
 export const reservation = pgTable("Reservation", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
@@ -41,3 +55,30 @@ export const reservation = pgTable("Reservation", {
 });
 
 export type Reservation = InferSelectModel<typeof reservation>;
+
+export const reservationRelations = relations(reservation, ({ one }) => ({
+  user: one(user, {
+    fields: [reservation.userId],
+    references: [user.id],
+  }),
+}));
+
+export const memories = pgTable("Memory", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type Memory = InferSelectModel<typeof memories>;
+
+export const memoriesRelations = relations(memories, ({ one }) => ({
+  user: one(user, {
+    fields: [memories.userId],
+    references: [user.id],
+  }),
+}));

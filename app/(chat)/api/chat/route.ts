@@ -10,6 +10,9 @@ import {
   addTaskAction,
   listTasksAction,
   markTaskCompleteAction,
+  saveMemoryAction,
+  recallMemoriesAction,
+  forgetMemoryAction,
 } from "@/ai/actions";
 import { auth } from "@/app/(auth)/auth";
 import {
@@ -27,9 +30,11 @@ export async function POST(request: Request) {
 
   const session = await auth();
 
-  if (!session) {
+  if (!session || !session.user || !session.user.id) {
     return new Response("Unauthorized", { status: 401 });
   }
+
+  const userId = session.user.id;
 
   const coreMessages = convertToCoreMessages(messages).filter(
     (message) => message.content.length > 0,
@@ -39,7 +44,7 @@ export async function POST(request: Request) {
     model: geminiProModel,
     system: `
         - you are also generally helpful and friendly and helping with anything else.
-        - you help users book flights AND manage their tasks!
+        - you help users book flights, manage their tasks, AND remember information!
         - keep your responses limited to a sentence.
         - DO NOT output lists.
         - after every tool call, pretend you're showing the result to the user and keep your response limited to a phrase.
@@ -57,8 +62,17 @@ export async function POST(request: Request) {
           - display boarding pass (DO NOT display boarding pass without verifying payment)
         - here's the optimal task management flow
           - add a task
-          - list tasks (consider showing the list after adding or completing a task)
+          - list tasks (automatically show the list after adding or completing a task)
           - mark a task as complete
+        - here's the optimal memory management flow
+          - save a memory (e.g., "Remember my favorite color is blue")
+          - recall memories (e.g., "What do you remember?", "What is my favorite color?")
+          - forget a memory: 
+            - If the user asks to forget something specific (e.g., "forget my name", "forget my favorite color"), FIRST use the recallMemories tool internally (don't show the user the full list yet). 
+            - Check if the recalled memories contain a SINGLE, clear match for the user's request. 
+            - If ONE match is found, ask the user for confirmation: "Are you sure you want me to forget that [memory content]? (ID: [memory ID])". 
+            - If the user confirms, THEN use the forgetMemory tool with that specific ID. 
+            - If there are multiple matches, no matches, or the user's request was vague (e.g., "forget something"), THEN use the recallMemories tool to show the user the list and ask them to provide the ID for the forgetMemory tool.
         '
       `,
     messages: coreMessages,
@@ -141,7 +155,6 @@ export async function POST(request: Request) {
         }),
         execute: async (props) => {
           const { totalPriceInUSD } = await generateReservationPrice(props);
-          const session = await auth();
 
           const id = generateUUID();
 
@@ -244,6 +257,31 @@ export async function POST(request: Request) {
         }),
         execute: async ({ taskId }) => {
           return await markTaskCompleteAction({ taskId });
+        },
+      },
+      saveMemory: {
+        description: "Save a piece of information provided by the user for later recall.",
+        parameters: z.object({
+          content: z.string().describe("The specific piece of information to remember."),
+        }),
+        execute: async ({ content }) => {
+          return await saveMemoryAction({ userId, content });
+        },
+      },
+      recallMemories: {
+        description: "Recall all pieces of information previously saved by the user. Also used internally to find a specific memory before forgetting.",
+        parameters: z.object({}),
+        execute: async () => {
+          return await recallMemoriesAction({ userId });
+        },
+      },
+      forgetMemory: {
+        description: "Forget a specific piece of information previously saved. Requires the memory ID. Usually, you should recall memories first to find the correct ID and ask for user confirmation if a specific memory was requested to be forgotten.",
+        parameters: z.object({
+          memoryId: z.string().describe("The unique ID of the memory to forget."),
+        }),
+        execute: async ({ memoryId }) => {
+          return await forgetMemoryAction({ memoryId, userId });
         },
       },
     },
