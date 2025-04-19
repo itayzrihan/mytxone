@@ -1,5 +1,6 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Save, Trash2 } from "lucide-react";
+
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface MemoryConfirmationProps {
   memoryId: string;
@@ -15,9 +16,9 @@ export function MemoryConfirmation({ memoryId, content, status }: MemoryConfirma
       <CardHeader>
         <CardTitle className="flex items-center">
           {isSaved ? (
-            <><Save className="mr-2 h-5 w-5 text-green-500" /> Memory Saved</>
+            <><Save className="mr-2 size-5 text-green-500" /> Memory Saved</>
           ) : (
-            <><Trash2 className="mr-2 h-5 w-5 text-orange-500" /> Memory Forgotten</>
+            <><Trash2 className="mr-2 size-5 text-orange-500" /> Memory Forgotten</>
           )}
         </CardTitle>
         <CardDescription>

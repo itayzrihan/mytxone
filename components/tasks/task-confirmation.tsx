@@ -1,5 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, PlusCircle } from "lucide-react";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TaskConfirmationProps {
   taskId: string;
@@ -15,9 +16,9 @@ export function TaskConfirmation({ taskId, description, status }: TaskConfirmati
       <CardHeader>
         <CardTitle className="flex items-center">
           {isAdded ? (
-            <><PlusCircle className="mr-2 h-5 w-5 text-green-500" /> Task Added</>
+            <><PlusCircle className="mr-2 size-5 text-green-500" /> Task Added</>
           ) : (
-            <><CheckCircle className="mr-2 h-5 w-5 text-blue-500" /> Task Completed</>
+            <><CheckCircle className="mr-2 size-5 text-blue-500" /> Task Completed</>
           )}
         </CardTitle>
         <CardDescription>

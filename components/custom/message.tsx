@@ -15,10 +15,10 @@ import { FlightStatus } from "../flights/flight-status";
 import { ListFlights } from "../flights/list-flights";
 import { SelectSeats } from "../flights/select-seats";
 import { VerifyPayment } from "../flights/verify-payment";
-import { ListTasks } from "../tasks/list-tasks";
-import { TaskConfirmation } from "../tasks/task-confirmation";
 import { ListMemories } from "../memories/list-memories";
 import { MemoryConfirmation } from "../memories/memory-confirmation";
+import { ListTasks } from "../tasks/list-tasks";
+import { TaskConfirmation } from "../tasks/task-confirmation";
 
 export const Message = ({
   chatId,
@@ -89,7 +89,11 @@ export const Message = ({
                     ) : toolName === "addTask" ? (
                       <TaskConfirmation {...result} />
                     ) : toolName === "listTasks" ? (
-                      <ListTasks tasks={result.tasks} />
+                      <ListTasks
+                        tasks={result.tasks}
+                        onToggleTask={() => {}}
+                        onRemoveTask={() => {}}
+                      />
                     ) : toolName === "markTaskComplete" ? (
                       <TaskConfirmation {...result} />
                     ) : toolName === "saveMemory" ? (
@@ -123,7 +127,7 @@ export const Message = ({
                     ) : toolName === "addTask" ? (
                       <TaskConfirmation status="added" taskId="temp-skeleton" />
                     ) : toolName === "listTasks" ? (
-                      <ListTasks tasks={[]} />
+                      <ListTasks tasks={[]} onToggleTask={() => {}} onRemoveTask={() => {}} />
                     ) : toolName === "markTaskComplete" ? (
                       <TaskConfirmation status="completed" taskId="temp-skeleton" />
                     ) : toolName === "saveMemory" ? (

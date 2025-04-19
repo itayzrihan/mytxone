@@ -1,5 +1,8 @@
+import { Trash2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox"; // Assuming you have a Checkbox component
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 interface Task {
@@ -10,50 +13,44 @@ interface Task {
 
 interface ListTasksProps {
   tasks: Task[];
+  onToggleTask: (taskId: string) => void;
+  onRemoveTask: (taskId: string) => void;
 }
 
-export function ListTasks({ tasks }: ListTasksProps) {
-  const pendingTasks = tasks.filter(task => task.status === 'pending');
-  const completedTasks = tasks.filter(task => task.status === 'completed');
-
+export function ListTasks({ tasks, onToggleTask, onRemoveTask }: ListTasksProps) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Your Tasks</CardTitle>
-        <CardDescription>Here's your current task list.</CardDescription>
+        <CardTitle>Current Tasks</CardTitle>
+        <CardDescription>
+          {tasks.length > 0
+            ? "Here&apos;s your current task list:"
+            : "You don't have any tasks yet."}
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {pendingTasks.length > 0 && (
-          <div>
-            <h3 className="mb-2 text-sm font-medium text-muted-foreground">Pending</h3>
-            <ul className="space-y-2">
-              {pendingTasks.map((task) => (
-                <li key={task.taskId} className="flex items-center space-x-2">
-                  <Checkbox id={`task-${task.taskId}`} disabled />
-                  <Label htmlFor={`task-${task.taskId}`} className="flex-grow">{task.description}</Label>
-                  {/* Add a button/action here later to mark as complete? */}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {completedTasks.length > 0 && (
-          <div>
-            <h3 className="mt-4 mb-2 text-sm font-medium text-muted-foreground">Completed</h3>
-            <ul className="space-y-2">
-              {completedTasks.map((task) => (
-                <li key={task.taskId} className="flex items-center space-x-2">
-                  <Checkbox id={`task-${task.taskId}`} checked disabled />
-                  <Label htmlFor={`task-${task.taskId}`} className="flex-grow line-through text-muted-foreground">{task.description}</Label>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {tasks.length === 0 && (
-          <p className="text-sm text-muted-foreground">You have no tasks yet.</p>
-        )}
-      </CardContent>
+      {tasks.length > 0 && (
+        <CardContent>
+          <ul className="space-y-3">
+            {tasks.map((task) => (
+              <li key={task.taskId} className="flex items-center justify-between border-b pb-2">
+                <div className="flex items-center grow mr-2">
+                  <Checkbox
+                    id={`task-${task.taskId}`}
+                    checked={task.status === 'completed'}
+                    onChange={() => onToggleTask(task.taskId)}
+                  />
+                  <span className={`ml-2 ${task.status === 'completed' ? "line-through text-muted-foreground" : ""}`}>
+                    {task.description}
+                  </span>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => onRemoveTask(task.taskId)}>
+                  <Trash2 className="size-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      )}
     </Card>
   );
 }
