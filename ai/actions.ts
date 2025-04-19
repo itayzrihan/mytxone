@@ -2,6 +2,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 import { geminiFlashModel } from ".";
+import { generateUUID } from "@/lib/utils"; // Import generateUUID if not already present
 
 export async function generateSampleFlightStatus({
   flightNumber,
@@ -131,4 +132,43 @@ export async function generateReservationPrice(props: {
   });
 
   return reservation;
+}
+
+// --- Task Management Actions ---
+
+export async function addTaskAction({
+  taskDescription,
+}: {
+  taskDescription: string;
+}) {
+  console.log(`Action: Adding task: ${taskDescription}`);
+  // TODO: Replace with actual database interaction
+  // const userId = ... get user ID from session ...
+  // await db.insert(tasks).values({ id: generateUUID(), userId, description: taskDescription, status: 'pending' });
+  return { taskId: generateUUID(), description: taskDescription, status: "added" as const };
+}
+
+export async function listTasksAction() {
+  console.log("Action: Listing tasks");
+  // TODO: Replace with actual database interaction
+  // const userId = ... get user ID from session ...
+  // const userTasks = await db.select().from(tasks).where(eq(tasks.userId, userId));
+  // return { tasks: userTasks };
+
+  // Return sample data for now
+  return {
+    tasks: [
+      { taskId: "task-1", description: "Buy groceries", status: "pending" as const },
+      { taskId: "task-2", description: "Finish report", status: "pending" as const },
+      { taskId: "task-3", description: "Call mom", status: "completed" as const },
+    ],
+  };
+}
+
+export async function markTaskCompleteAction({ taskId }: { taskId: string }) {
+  console.log(`Action: Marking task ${taskId} as complete`);
+  // TODO: Replace with actual database interaction
+  // const userId = ... get user ID from session ...
+  // await db.update(tasks).set({ status: 'completed' }).where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+  return { taskId: taskId, status: "completed" as const };
 }

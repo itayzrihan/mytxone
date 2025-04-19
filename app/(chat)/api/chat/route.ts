@@ -7,6 +7,9 @@ import {
   generateSampleFlightSearchResults,
   generateSampleFlightStatus,
   generateSampleSeatSelection,
+  addTaskAction,
+  listTasksAction,
+  markTaskCompleteAction,
 } from "@/ai/actions";
 import { auth } from "@/app/(auth)/auth";
 import {
@@ -34,8 +37,9 @@ export async function POST(request: Request) {
 
   const result = await streamText({
     model: geminiProModel,
-    system: `\n
-        - you help users book flights!
+    system: `
+        - you are also generally helpful and friendly and helping with anything else.
+        - you help users book flights AND manage their tasks!
         - keep your responses limited to a sentence.
         - DO NOT output lists.
         - after every tool call, pretend you're showing the result to the user and keep your response limited to a phrase.
@@ -44,13 +48,17 @@ export async function POST(request: Request) {
         - ask for any details you don't know, like name of passenger, etc.'
         - C and D are aisle seats, A and F are window seats, B and E are middle seats
         - assume the most popular airports for the origin and destination
-        - here's the optimal flow
+        - here's the optimal flight booking flow
           - search for flights
           - choose flight
           - select seats
           - create reservation (ask user whether to proceed with payment or change reservation)
           - authorize payment (requires user consent, wait for user to finish payment and let you know when done)
           - display boarding pass (DO NOT display boarding pass without verifying payment)
+        - here's the optimal task management flow
+          - add a task
+          - list tasks (consider showing the list after adding or completing a task)
+          - mark a task as complete
         '
       `,
     messages: coreMessages,
@@ -211,6 +219,31 @@ export async function POST(request: Request) {
         }),
         execute: async (boardingPass) => {
           return boardingPass;
+        },
+      },
+      addTask: {
+        description: "Add a new task to the user's task list.",
+        parameters: z.object({
+          taskDescription: z.string().describe("The description of the task to add."),
+        }),
+        execute: async ({ taskDescription }) => {
+          return await addTaskAction({ taskDescription });
+        },
+      },
+      listTasks: {
+        description: "List all the user's current tasks.",
+        parameters: z.object({}),
+        execute: async () => {
+          return await listTasksAction();
+        },
+      },
+      markTaskComplete: {
+        description: "Mark a specific task as complete.",
+        parameters: z.object({
+          taskId: z.string().describe("The ID of the task to mark as complete."),
+        }),
+        execute: async ({ taskId }) => {
+          return await markTaskCompleteAction({ taskId });
         },
       },
     },

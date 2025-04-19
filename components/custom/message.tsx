@@ -15,6 +15,8 @@ import { FlightStatus } from "../flights/flight-status";
 import { ListFlights } from "../flights/list-flights";
 import { SelectSeats } from "../flights/select-seats";
 import { VerifyPayment } from "../flights/verify-payment";
+import { ListTasks } from "../tasks/list-tasks";
+import { TaskConfirmation } from "../tasks/task-confirmation";
 
 export const Message = ({
   chatId,
@@ -74,6 +76,12 @@ export const Message = ({
                       <DisplayBoardingPass boardingPass={result} />
                     ) : toolName === "verifyPayment" ? (
                       <VerifyPayment result={result} />
+                    ) : toolName === "addTask" ? (
+                      <TaskConfirmation {...result} />
+                    ) : toolName === "listTasks" ? (
+                      <ListTasks tasks={result.tasks} />
+                    ) : toolName === "markTaskComplete" ? (
+                      <TaskConfirmation {...result} />
                     ) : (
                       <div>{JSON.stringify(result, null, 2)}</div>
                     )}
@@ -96,6 +104,12 @@ export const Message = ({
                       <AuthorizePayment />
                     ) : toolName === "displayBoardingPass" ? (
                       <DisplayBoardingPass />
+                    ) : toolName === "addTask" ? (
+                      <TaskConfirmation status="added" taskId="temp-skeleton" />
+                    ) : toolName === "listTasks" ? (
+                      <ListTasks tasks={[]} />
+                    ) : toolName === "markTaskComplete" ? (
+                      <TaskConfirmation status="completed" taskId="temp-skeleton" />
                     ) : null}
                   </div>
                 );
