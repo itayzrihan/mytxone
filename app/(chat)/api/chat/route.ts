@@ -1,3 +1,5 @@
+import { Ratelimit } from "@upstash/ratelimit"; // Add import
+import { Redis } from "@upstash/redis"; // Add import
 import { convertToCoreMessages, Message, streamText } from "ai";
 import { z } from "zod";
 
@@ -24,6 +26,21 @@ import {
 } from "@/db/queries";
 import { generateUUID } from "@/lib/utils";
 
+// Initialize Upstash Redis client and Ratelimit
+// Use existing Vercel KV environment variables instead of UPSTASH_REDIS_REST_* variables
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL || process.env.KV_URL || '',
+  token: process.env.KV_REST_API_TOKEN || ''
+});
+const ratelimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(200, "1 d"), // 200 requests per 1 day
+  analytics: true,
+  prefix: "@upstash/ratelimit",
+});
+
+const MAX_INPUT_LENGTH = 10000; // Define max input length
+
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Array<Message> } =
     await request.json();
@@ -36,9 +53,41 @@ export async function POST(request: Request) {
 
   const userId = session.user.id;
 
+  // --- Rate Limiting Logic ---
+  const { success, limit, remaining, reset } = await ratelimit.limit(userId);
+
+  // Prepare headers for both success and failure cases
+  const rateLimitHeaders = {
+    "X-RateLimit-Limit": limit.toString(),
+    "X-RateLimit-Remaining": remaining.toString(),
+    "X-RateLimit-Reset": reset.toString(),
+  };
+
+  if (!success) {
+    return new Response("Rate limit exceeded. Please try again later.", {
+      status: 429,
+      headers: rateLimitHeaders, // Include headers in error response
+    });
+  }
+  // --- End Rate Limiting Logic ---
+
   const coreMessages = convertToCoreMessages(messages).filter(
     (message) => message.content.length > 0,
   );
+
+  // --- Input Length Validation ---
+  const userMessagesContent = coreMessages
+    .filter((msg) => msg.role === "user")
+    .map((msg) => (typeof msg.content === "string" ? msg.content : "")) // Handle potential non-string content just in case
+    .join("");
+
+  if (userMessagesContent.length > MAX_INPUT_LENGTH) {
+    return new Response(
+      `Input exceeds the maximum length of ${MAX_INPUT_LENGTH} characters.`,
+      { status: 400 },
+    );
+  }
+  // --- End Input Length Validation ---
 
   const result = await streamText({
     model: geminiProModel,
@@ -237,7 +286,9 @@ export async function POST(request: Request) {
       addTask: {
         description: "Add a new task to the user's task list.",
         parameters: z.object({
-          taskDescription: z.string().describe("The description of the task to add."),
+          taskDescription: z.string().describe(
+            "The description of the task to add.",
+          ),
         }),
         execute: async ({ taskDescription }) => {
           return await addTaskAction({ taskDescription });
@@ -260,25 +311,32 @@ export async function POST(request: Request) {
         },
       },
       saveMemory: {
-        description: "Save a piece of information provided by the user for later recall.",
+        description:
+          "Save a piece of information provided by the user for later recall.",
         parameters: z.object({
-          content: z.string().describe("The specific piece of information to remember."),
+          content: z
+            .string()
+            .describe("The specific piece of information to remember."),
         }),
         execute: async ({ content }) => {
           return await saveMemoryAction({ userId, content });
         },
       },
       recallMemories: {
-        description: "Recall all pieces of information previously saved by the user. Also used internally to find a specific memory before forgetting.",
+        description:
+          "Recall all pieces of information previously saved by the user. Also used internally to find a specific memory before forgetting.",
         parameters: z.object({}),
         execute: async () => {
           return await recallMemoriesAction({ userId });
         },
       },
       forgetMemory: {
-        description: "Forget a specific piece of information previously saved. Requires the memory ID. Usually, you should recall memories first to find the correct ID and ask for user confirmation if a specific memory was requested to be forgotten.",
+        description:
+          "Forget a specific piece of information previously saved. Requires the memory ID. Usually, you should recall memories first to find the correct ID and ask for user confirmation if a specific memory was requested to be forgotten.",
         parameters: z.object({
-          memoryId: z.string().describe("The unique ID of the memory to forget."),
+          memoryId: z.string().describe(
+            "The unique ID of the memory to forget.",
+          ),
         }),
         execute: async ({ memoryId }) => {
           return await forgetMemoryAction({ memoryId, userId });
@@ -304,7 +362,8 @@ export async function POST(request: Request) {
     },
   });
 
-  return result.toDataStreamResponse({});
+  // Return the stream response, adding the rate limit headers
+  return result.toDataStreamResponse({ headers: rateLimitHeaders });
 }
 
 export async function DELETE(request: Request) {

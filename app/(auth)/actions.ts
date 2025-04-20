@@ -1,23 +1,23 @@
 "use server";
 
+import { randomBytes } from "crypto";
+
+import { hashSync } from "bcrypt-ts"; // Import hashSync from bcrypt-ts
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
+
 import {
-  createUser,
-  getUser,
-  // Import the new API key query functions
-  getApiKeysByUserId,
   createApiKeyRecord,
+  createUser,
   deleteApiKeyByIdAndUserId,
   findValidApiKey, // Also needed for validation logic if kept here
+  getApiKeysByUserId,
+  getUser,
   updateApiKeyLastUsed // Also needed for validation logic if kept here
+  // Import the new API key query functions
 } from "@/db/queries";
 
-import { signIn, signOut } from "./auth";
-import { auth } from "./auth";
-
-import { revalidatePath } from "next/cache";
-import { randomBytes } from "crypto";
-import { hashSync } from "bcrypt-ts"; // Import hashSync from bcrypt-ts
+import { auth, signIn, signOut } from "./auth";
 
 const authFormSchema = z.object({
   email: z.string().email(),

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { Toaster } from "sonner";
 
+import BackgroundGlow from "@/components/custom/BackgroundGlow";
 import { Navbar } from "@/components/custom/navbar";
 import { ThemeProvider } from "@/components/custom/theme-provider";
 
@@ -19,15 +20,17 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">
+      <body className="antialiased relative">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
+          <BackgroundGlow />
           <Toaster position="top-center" />
           <Navbar />
+          
           {children}
         </ThemeProvider>
       </body>

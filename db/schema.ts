@@ -84,7 +84,7 @@ export const memoriesRelations = relations(memories, ({ one }) => ({
   }),
 }));
 
-export const apiKey = pgTable("apikey", { // Changed "ApiKey" to "apikey"
+export const apiKey = pgTable("apikey", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   userId: uuid("userId")
     .notNull()

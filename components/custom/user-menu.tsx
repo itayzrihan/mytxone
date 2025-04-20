@@ -1,18 +1,16 @@
 // filepath: components/custom/user-menu.tsx
 "use client";
 
+import { Loader2, Trash2, Copy } from "lucide-react";
 import { Session } from "next-auth";
-import { logout } from "@/app/(auth)/actions"; // Import the server action
 import { useState, useEffect } from "react";
+
 import {
+  logout,
   getApiKeysForUser,
   createApiKey,
   deleteApiKey,
-} from "@/app/(auth)/actions"; // Import API key actions
-
-import { ThemeToggle } from "./theme-toggle";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input"; // Import Input
+} from "@/app/(auth)/actions";
 import {
   Dialog,
   DialogContent,
@@ -21,16 +19,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose, // Import DialogClose
-} from "@/components/ui/dialog"; // Import Dialog components
+  DialogClose,
+} from "@/components/ui/dialog";
+
+import { ThemeToggle } from "./theme-toggle";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator, // Import Separator
+  DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
-import { Loader2, Trash2, Copy } from "lucide-react"; // Import icons
+import { Input } from "../ui/input";
 
 interface UserMenuProps {
   session: Session; // Pass session data from the server component
@@ -185,9 +186,9 @@ export function UserMenu({ session }: UserMenuProps) {
               {newKeyInfo.name && ` (Name: ${newKeyInfo.name})`}
             </p>
             <div className="flex items-center space-x-2 bg-muted p-2 rounded">
-              <code className="flex-grow break-all text-sm">{newKeyInfo.key}</code>
+              <code className="grow break-all text-sm">{newKeyInfo.key}</code>
               <Button variant="ghost" size="icon" onClick={() => copyToClipboard(newKeyInfo.key)}>
-                <Copy className="h-4 w-4" />
+                <Copy className="size-4" />
               </Button>
             </div>
           </div>
@@ -205,7 +206,7 @@ export function UserMenu({ session }: UserMenuProps) {
           <Button type="submit" disabled={isCreatingKey}>
             {isCreatingKey ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                <Loader2 className="mr-2 size-4 animate-spin" /> Generating...
               </>
             ) : (
               "Generate New API Key"
@@ -218,10 +219,10 @@ export function UserMenu({ session }: UserMenuProps) {
           <h3 className="text-lg font-medium">Your Keys</h3>
           {isLoadingKeys ? (
             <div className="flex items-center justify-center p-4">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
             </div>
           ) : apiKeys.length === 0 && !error ? (
-            <p className="text-sm text-muted-foreground">You haven't created any API keys yet.</p>
+            <p className="text-sm text-muted-foreground">You haven&apos;t created any API keys yet.</p>
           ) : (
             apiKeys.map((key) => (
               <div key={key.id} className="flex items-center justify-between p-3 border rounded-md">
@@ -243,9 +244,9 @@ export function UserMenu({ session }: UserMenuProps) {
                   aria-label="Delete API Key"
                 >
                   {isDeletingKey === key.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                   ) : (
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="size-4" />
                   )}
                 </Button>
               </div>

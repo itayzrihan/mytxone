@@ -29,6 +29,27 @@
       "when": 1745107430356,
       "tag": "0003_famous_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1745110519294,
+      "tag": "0004_clumsy_cyclops",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1745115591643,
+      "tag": "0005_eager_sleeper",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1745115869339,
+      "tag": "0006_glamorous_nighthawk",
+      "breakpoints": true
     }
   ]
 }

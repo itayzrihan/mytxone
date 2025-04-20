@@ -2,16 +2,16 @@ import NextAuth from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authConfig } from "@/app/(auth)/auth.config";
 
-const { auth } = NextAuth(authConfig);
+const { auth: nextAuthMiddleware } = NextAuth(authConfig);
 
-export default function middleware(req: NextRequest) {
+export default async function middleware(req: NextRequest) {
   // Exclude the external API route from default auth handling
   if (req.nextUrl.pathname.startsWith("/api/external/v1")) {
     return NextResponse.next(); // Allow the request to proceed to the route handler
   }
 
   // Apply default NextAuth handling to other matched routes
-  return auth(req);
+  return nextAuthMiddleware(req as any);
 }
 
 export const config = {

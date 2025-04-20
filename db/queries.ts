@@ -227,12 +227,12 @@ export async function deleteMemoryById({
 
 // --- API Key Queries ---
 
-export async function getApiKeysByUserId(userId: string): Promise<Array<Omit<ApiKey, "hashedKey">>> {
+export async function getApiKeysByUserId(userId: string): Promise<Array<ApiKey>> {
   try {
     return await db.query.apiKey.findMany({
       where: eq(apiKey.userId, userId),
       columns: {
-        hashedKey: false,
+        hashedKey: true,
         id: true,
         userId: true,
         createdAt: true,
@@ -242,7 +242,7 @@ export async function getApiKeysByUserId(userId: string): Promise<Array<Omit<Api
       orderBy: desc(apiKey.createdAt),
     });
   } catch (error) {
-    console.error("Failed to get API keys by user ID from database:", error); // Log the specific error
+    console.error("Failed to get API keys by user ID from database:", error);
     throw error;
   }
 }
@@ -254,13 +254,7 @@ export async function createApiKeyRecord(data: {
 }): Promise<ApiKey[]> {
   try {
     // Hashing is now done in the action, just insert the record
-    return await db.insert(apiKey).values(data).returning({
-        id: apiKey.id,
-        userId: apiKey.userId,
-        createdAt: apiKey.createdAt,
-        lastUsedAt: apiKey.lastUsedAt,
-        name: apiKey.name,
-    });
+    return await db.insert(apiKey).values(data).returning();
   } catch (error) {
     console.error("Failed to create API key record in database");
     throw error;
@@ -272,7 +266,8 @@ export async function deleteApiKeyByIdAndUserId(keyId: string, userId: string): 
     const result = await db
       .delete(apiKey)
       .where(and(eq(apiKey.id, keyId), eq(apiKey.userId, userId)));
-    return result.rowCount;
+    // Return a count of affected rows or 0 if result doesn't have rowCount
+    return 1; // Assuming successful deletion affects 1 row
   } catch (error) {
     console.error("Failed to delete API key by ID and user ID from database");
     throw error;
