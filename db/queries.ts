@@ -1,17 +1,19 @@
 import "server-only";
 
-import { genSaltSync, hashSync } from "bcrypt-ts";
+import { genSaltSync, hashSync, compareSync } from "bcrypt-ts"; // Use bcrypt-ts
 import { desc, eq, and, like, ilike } from "drizzle-orm"; // Added like, ilike
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import { user, chat, User, reservation, memories, Memory } from "./schema"; // Added memories, Memory
+import * as schema from "./schema"; // Import the entire schema
+const { user, chat, reservation, memories, apiKey } = schema; // Destructure needed tables
+import type { User, Memory, ApiKey } from "./schema"; // Import types separately
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
 let client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
-let db = drizzle(client);
+let db = drizzle(client, { schema }); // Pass the schema to drizzle
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
@@ -149,16 +151,15 @@ export async function saveMemory({
 }: {
   userId: string;
   content: string;
-}): Promise<Array<Memory>> { // Return the created memory
+}): Promise<Array<Memory>> {
   try {
-    // Insert the new memory and return it
     const newMemory = await db
       .insert(memories)
       .values({
         userId,
         content,
       })
-      .returning(); // Return the inserted row
+      .returning();
     return newMemory;
   } catch (error) {
     console.error("Failed to save memory in database");
@@ -172,7 +173,6 @@ export async function getMemoriesByUserId({
   userId: string;
 }): Promise<Array<Memory>> {
   try {
-    // Retrieve all memories for the user, ordered by creation date
     return await db
       .select()
       .from(memories)
@@ -184,7 +184,6 @@ export async function getMemoriesByUserId({
   }
 }
 
-// Function to find memories by content (case-insensitive search)
 export async function findMemoriesByContent({
   userId,
   contentQuery,
@@ -193,14 +192,13 @@ export async function findMemoriesByContent({
   contentQuery: string;
 }): Promise<Array<Memory>> {
   try {
-    // Use ilike for case-insensitive partial matching
     return await db
       .select()
       .from(memories)
       .where(
         and(
           eq(memories.userId, userId),
-          ilike(memories.content, `%${contentQuery}%`) // Search for query within content
+          ilike(memories.content, `%${contentQuery}%`)
         )
       )
       .orderBy(desc(memories.createdAt));
@@ -210,10 +208,9 @@ export async function findMemoriesByContent({
   }
 }
 
-// Optional: Function to delete a specific memory
 export async function deleteMemoryById({
   id,
-  userId, // Ensure user owns the memory
+  userId,
 }: {
   id: string;
   userId: string;
@@ -225,5 +222,96 @@ export async function deleteMemoryById({
   } catch (error) {
     console.error("Failed to delete memory by id from database");
     throw error;
+  }
+}
+
+// --- API Key Queries ---
+
+export async function getApiKeysByUserId(userId: string): Promise<Array<Omit<ApiKey, "hashedKey">>> {
+  try {
+    return await db.query.apiKey.findMany({
+      where: eq(apiKey.userId, userId),
+      columns: {
+        hashedKey: false,
+        id: true,
+        userId: true,
+        createdAt: true,
+        lastUsedAt: true,
+        name: true,
+      },
+      orderBy: desc(apiKey.createdAt),
+    });
+  } catch (error) {
+    console.error("Failed to get API keys by user ID from database:", error); // Log the specific error
+    throw error;
+  }
+}
+
+export async function createApiKeyRecord(data: {
+  userId: string;
+  hashedKey: string; // Hashed key is passed in now
+  name: string | null;
+}): Promise<ApiKey[]> {
+  try {
+    // Hashing is now done in the action, just insert the record
+    return await db.insert(apiKey).values(data).returning({
+        id: apiKey.id,
+        userId: apiKey.userId,
+        createdAt: apiKey.createdAt,
+        lastUsedAt: apiKey.lastUsedAt,
+        name: apiKey.name,
+    });
+  } catch (error) {
+    console.error("Failed to create API key record in database");
+    throw error;
+  }
+}
+
+export async function deleteApiKeyByIdAndUserId(keyId: string, userId: string): Promise<number> {
+  try {
+    const result = await db
+      .delete(apiKey)
+      .where(and(eq(apiKey.id, keyId), eq(apiKey.userId, userId)));
+    return result.rowCount;
+  } catch (error) {
+    console.error("Failed to delete API key by ID and user ID from database");
+    throw error;
+  }
+}
+
+// Function to find a matching API key by comparing the raw key against stored hashes
+// Returns the key details (excluding hash) and user ID if found and valid
+export async function findValidApiKey(rawKey: string): Promise<(Omit<ApiKey, "hashedKey"> & { userId: string }) | null> {
+  try {
+    // In a real high-traffic scenario, optimize this lookup.
+    // Fetching all keys is inefficient.
+    const potentialKeys = await db.query.apiKey.findMany({
+      columns: { id: true, hashedKey: true, userId: true, createdAt: true, lastUsedAt: true, name: true },
+    });
+
+    for (const key of potentialKeys) {
+      // Use compareSync from bcrypt-ts
+      const match = compareSync(rawKey, key.hashedKey);
+      if (match) {
+        // Return key details (without the hash) upon successful match
+        const { hashedKey, ...keyDetails } = key;
+        return keyDetails;
+      }
+    }
+    return null; // No match found
+  } catch (error) {
+    console.error("Error finding/validating API key in database:", error);
+    throw error; // Re-throw to be handled by the caller
+  }
+}
+
+export async function updateApiKeyLastUsed(keyId: string): Promise<void> {
+  try {
+    await db
+      .update(apiKey)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(apiKey.id, keyId));
+  } catch (error) {
+    console.error("Failed to update API key lastUsedAt:", keyId, error);
   }
 }
