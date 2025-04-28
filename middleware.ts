@@ -5,8 +5,11 @@ import { authConfig } from "@/app/(auth)/auth.config";
 const { auth: nextAuthMiddleware } = NextAuth(authConfig);
 
 export default async function middleware(req: NextRequest) {
-  // Exclude the external API route from default auth handling
-  if (req.nextUrl.pathname.startsWith("/api/external/v1")) {
+  // Exclude the external API route and heybos API route from default auth handling
+  if (
+    req.nextUrl.pathname.startsWith("/api/external/v1") ||
+    req.nextUrl.pathname.startsWith("/api/heybos/")
+  ) {
     return NextResponse.next(); // Allow the request to proceed to the route handler
   }
 

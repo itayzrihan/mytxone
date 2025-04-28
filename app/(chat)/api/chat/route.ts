@@ -93,6 +93,7 @@ export async function POST(request: Request) {
     model: geminiProModel,
     system: `
         - you are also generally helpful and friendly and helping with anything else.
+        whenever the user asks if you remember something you should check the memory first. even if the user not explicitly asks you to recall it might be a good idea to try to recall it.
         - you help users book flights, manage their tasks, AND remember information!
         - keep your responses limited to a sentence.
         - DO NOT output lists.

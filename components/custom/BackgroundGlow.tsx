@@ -25,16 +25,16 @@ const BackgroundGlow = () => {
           position: absolute;
           top: 50%;
           left: 50%;
-          width: 100px;
-          height: 100px;
+          width: 300px;
+          height: 300px;
           filter: blur(50px);
-          background-image: linear-gradient(45deg,rgb(0, 98, 246),rgb(15, 93, 105),rgb(33, 35, 148));
+          background-image: linear-gradient(45deg,rgb(0, 98, 246, 0.8),rgb(15, 93, 105, 0.8),rgb(33, 35, 148, 0.9));
           border-radius: 30% 70% 70% 30%/30% 30% 70% 70%;
           /* Center the gradient */
           transform: translate(-50%, -50%);
           animation: 
             rotate 10s cubic-bezier(0.8, 0.2, 0.2, 0.8) alternate infinite,
-            breathe 8s ease-in-out infinite; /* Add breathing animation */
+            breathe 200s ease-in-out infinite; /* Add breathing animation */
           mix-blend-mode: lighten; /* This helps the glow blend with the dark background */
         }
         @keyframes rotate {
@@ -51,7 +51,7 @@ const BackgroundGlow = () => {
             transform: translate(-50%, -50%) scale(1);
           }
           50% {
-            transform: translate(-50%, -50%) scale(1.2);
+            transform: translate(-50%, -50%) scale(1.5);
           }
         }
         @media (max-width: 500px) {
