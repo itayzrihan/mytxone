@@ -20,15 +20,18 @@ interface ListTasksProps {
 }
 
 export function ListTasks({ tasks, onToggleTask, onRemoveTask, chatId }: ListTasksProps) {
-  // Use chat hook when chatId is provided
-  const chat = chatId ? useChat({
-    id: chatId,
-    body: { id: chatId },
+  // Always call the hook, but only configure it when chatId exists
+  const chat = useChat({
+    id: chatId || 'default-id',
+    body: chatId ? { id: chatId } : undefined,
     maxSteps: 5,
-  }) : null;
+  });
+
+  // Only use chat functionality when chatId is provided
+  const hasChatId = Boolean(chatId);
 
   const handleTaskClick = (task: Task) => {
-    if (chat && chatId) {
+    if (hasChatId && chat) {
       // Append a message to rename the task
       chat.append({
         role: "user",
@@ -38,7 +41,7 @@ export function ListTasks({ tasks, onToggleTask, onRemoveTask, chatId }: ListTas
   };
 
   const handleCheckboxClick = (task: Task) => {
-    if (chat && chatId) {
+    if (hasChatId && chat) {
       // Append a message to mark the task as complete
       const action = task.status === 'completed' ? "mark as incomplete" : "mark as complete";
       chat.append({
@@ -51,7 +54,7 @@ export function ListTasks({ tasks, onToggleTask, onRemoveTask, chatId }: ListTas
   };
 
   const handleDeleteClick = (task: Task) => {
-    if (chat && chatId) {
+    if (hasChatId && chat) {
       // Append a message to delete the task
       chat.append({
         role: "user",

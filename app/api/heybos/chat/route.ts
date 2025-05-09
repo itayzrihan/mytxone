@@ -1,8 +1,8 @@
-import admin from 'firebase-admin';
-import { NextRequest, NextResponse } from 'next/server';
 import { convertToCoreMessages, Message, streamText } from "ai";
+import admin from 'firebase-admin';
+import { decode } from 'jsonwebtoken';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { decode } from 'jsonwebtoken'; // Import JWT decoding
 
 import { geminiProModel } from "@/ai"; // Import your configured AI model
 
