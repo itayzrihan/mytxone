@@ -3,13 +3,23 @@ import { NextResponse, NextRequest } from 'next/server';
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
-  const serviceAccount = {
-    projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  };
-  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-  console.log('Firebase Admin initialized.');
+  try {
+    const serviceAccount = {
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    };
+    
+    // Check if all required service account details are present
+    if (!serviceAccount.projectId || !serviceAccount.clientEmail || !serviceAccount.privateKey) {
+      console.error('Missing Firebase Admin SDK configuration details in environment variables.');
+    } else {
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+      console.log('Firebase Admin initialized.');
+    }
+  } catch (error) {
+    console.error('Firebase Admin initialization failed:', error);
+  }
 } else {
   console.log('Firebase Admin already initialized.');
 }
