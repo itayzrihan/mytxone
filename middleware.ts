@@ -9,6 +9,7 @@ const { auth: nextAuthMiddleware } = NextAuth(authConfig);
 // List your allowed origins here
 const ALLOWED_ORIGINS = [
   "https://heybos.me",
+  "https://mytx-ai.vercel.app",
   // add more if needed
 ];
 

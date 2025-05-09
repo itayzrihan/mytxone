@@ -41,7 +41,7 @@ const setCorsHeaders = (response: NextResponse, origin: string | null) => {
     'https://heybos.com',
     'http://10.100.102.8:8081',
     'https://10.100.102.8:8081',
-    
+    'https://mytx-ai.vercel.app'
   ];
   let allowedOrigin = '';
   if (origin && allowedOrigins.includes(origin)) {
