@@ -42,7 +42,9 @@ export default async function middleware(req: NextRequest) {
 
   // 3️⃣ For everything else, let NextAuth handle it, then add CORS
   const authRes = await nextAuthMiddleware(req as any);
-  return applyCors(authRes, origin);
+  // Check if authRes is a NextResponse, if not create one
+  const response = authRes instanceof NextResponse ? authRes : NextResponse.next();
+  return applyCors(response, origin);
 }
 
 export const config = {

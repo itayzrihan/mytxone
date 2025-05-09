@@ -130,7 +130,7 @@ export const Message = ({
                     ) : toolName === "listTasks" ? (
                       <ListTasks tasks={[]} onToggleTask={() => {}} onRemoveTask={() => {}} chatId={chatId} />
                     ) : toolName === "markTaskComplete" ? (
-                      <TaskConfirmation status={toolInvocation.input?.setComplete === false ? "pending" : "completed"} taskId="temp-skeleton" />
+                      <TaskConfirmation status="pending" taskId="temp-skeleton" />
                     ) : toolName === "saveMemory" ? (
                       <MemoryConfirmation status="saved" memoryId="temp-skeleton" />
                     ) : toolName === "recallMemories" ? (
