@@ -12,6 +12,8 @@ import {
   addTaskAction,
   listTasksAction,
   markTaskCompleteAction,
+  deleteTaskAction,
+  updateTaskNameAction,
   saveMemoryAction,
   recallMemoriesAction,
   forgetMemoryAction,
@@ -285,30 +287,52 @@ export async function POST(request: Request) {
         },
       },
       addTask: {
-        description: "Add a new task to the user's task list.",
+        description:
+          "Add a task for the user to complete later.",
         parameters: z.object({
           taskDescription: z.string().describe(
-            "The description of the task to add.",
+            "Description of the task to add.",
           ),
         }),
         execute: async ({ taskDescription }) => {
-          return await addTaskAction({ taskDescription });
+          return await addTaskAction({ taskDescription, userId });
         },
       },
       listTasks: {
-        description: "List all the user's current tasks.",
+        description:
+          "List all tasks for the user, including pending and completed tasks.",
         parameters: z.object({}),
         execute: async () => {
-          return await listTasksAction();
+          return await listTasksAction({ userId });
         },
       },
       markTaskComplete: {
-        description: "Mark a specific task as complete.",
+        description: "Mark a specific task as complete or incomplete. If the task is already completed, it will be marked as incomplete instead.",
         parameters: z.object({
-          taskId: z.string().describe("The ID of the task to mark as complete."),
+          taskId: z.string().describe("The ID of the task to toggle completion status."),
+          setComplete: z.boolean().optional().describe("Optional: true to mark as complete, false to mark as incomplete. If not provided, the status will be toggled."),
+        }),
+        execute: async ({ taskId, setComplete }) => {
+          return await markTaskCompleteAction({ taskId, userId, setComplete });
+        },
+      },
+      deleteTask: {
+        description: "Delete a specific task.",
+        parameters: z.object({
+          taskId: z.string().describe("The ID of the task to delete."),
         }),
         execute: async ({ taskId }) => {
-          return await markTaskCompleteAction({ taskId });
+          return await deleteTaskAction({ taskId, userId });
+        },
+      },
+      updateTaskName: {
+        description: "Update the name/description of an existing task.",
+        parameters: z.object({
+          taskId: z.string().describe("The ID of the task to update."),
+          newDescription: z.string().describe("The new description for the task."),
+        }),
+        execute: async ({ taskId, newDescription }) => {
+          return await updateTaskNameAction({ taskId, userId, newDescription });
         },
       },
       saveMemory: {

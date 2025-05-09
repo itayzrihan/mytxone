@@ -23,6 +23,7 @@ export const userRelations = relations(user, ({ many }) => ({
   reservations: many(reservation),
   memories: many(memories),
   apiKeys: many(apiKey),
+  tasks: many(tasks),
 }));
 
 export const chat = pgTable("Chat", {
@@ -80,6 +81,27 @@ export type Memory = InferSelectModel<typeof memories>;
 export const memoriesRelations = relations(memories, ({ one }) => ({
   user: one(user, {
     fields: [memories.userId],
+    references: [user.id],
+  }),
+}));
+
+export const tasks = pgTable("Task", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type Task = InferSelectModel<typeof tasks>;
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  user: one(user, {
+    fields: [tasks.userId],
     references: [user.id],
   }),
 }));

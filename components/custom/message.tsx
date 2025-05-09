@@ -93,9 +93,10 @@ export const Message = ({
                         tasks={result.tasks}
                         onToggleTask={() => {}}
                         onRemoveTask={() => {}}
+                        chatId={chatId}
                       />
                     ) : toolName === "markTaskComplete" ? (
-                      <TaskConfirmation {...result} />
+                      <TaskConfirmation status={result.status} taskId={result.taskId} />
                     ) : toolName === "saveMemory" ? (
                       <MemoryConfirmation {...result} />
                     ) : toolName === "recallMemories" ? (
@@ -127,9 +128,9 @@ export const Message = ({
                     ) : toolName === "addTask" ? (
                       <TaskConfirmation status="added" taskId="temp-skeleton" />
                     ) : toolName === "listTasks" ? (
-                      <ListTasks tasks={[]} onToggleTask={() => {}} onRemoveTask={() => {}} />
+                      <ListTasks tasks={[]} onToggleTask={() => {}} onRemoveTask={() => {}} chatId={chatId} />
                     ) : toolName === "markTaskComplete" ? (
-                      <TaskConfirmation status="completed" taskId="temp-skeleton" />
+                      <TaskConfirmation status={toolInvocation.input?.setComplete === false ? "pending" : "completed"} taskId="temp-skeleton" />
                     ) : toolName === "saveMemory" ? (
                       <MemoryConfirmation status="saved" memoryId="temp-skeleton" />
                     ) : toolName === "recallMemories" ? (

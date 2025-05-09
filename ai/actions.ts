@@ -2,8 +2,17 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 import { geminiFlashModel } from ".";
-import { generateUUID } from "@/lib/utils"; // Import generateUUID if not already present
-import { saveMemory, getMemoriesByUserId, deleteMemoryById } from "@/db/queries"; // Import memory queries
+import { generateUUID } from "@/lib/utils";
+import { 
+  saveMemory, 
+  getMemoriesByUserId, 
+  deleteMemoryById,
+  addTask,
+  getTasksByUserId,
+  updateTaskStatus,
+  updateTaskDescription,
+  deleteTaskById
+} from "@/db/queries";
 
 export async function generateSampleFlightStatus({
   flightNumber,
@@ -139,39 +148,102 @@ export async function generateReservationPrice(props: {
 
 export async function addTaskAction({
   taskDescription,
+  userId,
 }: {
   taskDescription: string;
+  userId: string;
 }) {
-  console.log(`Action: Adding task: ${taskDescription}`);
-  // TODO: Replace with actual database interaction
-  // const userId = ... get user ID from session ...
-  // await db.insert(tasks).values({ id: generateUUID(), userId, description: taskDescription, status: 'pending' });
-  return { taskId: generateUUID(), description: taskDescription, status: "added" as const };
+  console.log(`Action: Adding task: ${taskDescription} for user ${userId}`);
+  try {
+    const task = await addTask({ userId, description: taskDescription });
+    return { 
+      taskId: task[0]?.id, 
+      description: task[0]?.description, 
+      status: "added" as const 
+    };
+  } catch (error) {
+    console.error("Error in addTaskAction:", error);
+    return { error: "Failed to add task." };
+  }
 }
 
-export async function listTasksAction() {
-  console.log("Action: Listing tasks");
-  // TODO: Replace with actual database interaction
-  // const userId = ... get user ID from session ...
-  // const userTasks = await db.select().from(tasks).where(eq(tasks.userId, userId));
-  // return { tasks: userTasks };
-
-  // Return sample data for now
-  return {
-    tasks: [
-      { taskId: "task-1", description: "Buy groceries", status: "pending" as const },
-      { taskId: "task-2", description: "Finish report", status: "pending" as const },
-      { taskId: "task-3", description: "Call mom", status: "completed" as const },
-    ],
-  };
+export async function listTasksAction({
+  userId,
+}: {
+  userId: string;
+}) {
+  console.log(`Action: Listing tasks for user ${userId}`);
+  try {
+    const userTasks = await getTasksByUserId({ userId });
+    return { 
+      tasks: userTasks.map(task => ({
+        taskId: task.id,
+        description: task.description,
+        status: task.status as "pending" | "completed"
+      }))
+    };
+  } catch (error) {
+    console.error("Error in listTasksAction:", error);
+    return { error: "Failed to list tasks." };
+  }
 }
 
-export async function markTaskCompleteAction({ taskId }: { taskId: string }) {
-  console.log(`Action: Marking task ${taskId} as complete`);
-  // TODO: Replace with actual database interaction
-  // const userId = ... get user ID from session ...
-  // await db.update(tasks).set({ status: 'completed' }).where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
-  return { taskId: taskId, status: "completed" as const };
+export async function markTaskCompleteAction({ 
+  taskId,
+  userId,
+  setComplete = true,
+}: { 
+  taskId: string;
+  userId: string;
+  setComplete?: boolean;
+}) {
+  const action = setComplete ? "complete" : "incomplete";
+  const status = setComplete ? "completed" : "pending";
+  
+  console.log(`Action: Marking task ${taskId} as ${action} for user ${userId}`);
+  try {
+    await updateTaskStatus({ id: taskId, userId, status });
+    return { taskId, status: status as "completed" | "pending" };
+  } catch (error) {
+    console.error(`Error in markTaskCompleteAction:`, error);
+    return { error: `Failed to mark task as ${action}.` };
+  }
+}
+
+export async function deleteTaskAction({
+  taskId,
+  userId,
+}: {
+  taskId: string;
+  userId: string;
+}) {
+  console.log(`Action: Deleting task ${taskId} for user ${userId}`);
+  try {
+    await deleteTaskById({ id: taskId, userId });
+    return { taskId, status: "deleted" as const };
+  } catch (error) {
+    console.error("Error in deleteTaskAction:", error);
+    return { error: "Failed to delete task." };
+  }
+}
+
+export async function updateTaskNameAction({ 
+  taskId,
+  userId,
+  newDescription,
+}: { 
+  taskId: string;
+  userId: string;
+  newDescription: string;
+}) {
+  console.log(`Action: Updating task ${taskId} name to "${newDescription}" for user ${userId}`);
+  try {
+    await updateTaskDescription({ id: taskId, userId, description: newDescription });
+    return { taskId, description: newDescription, status: "updated" as const };
+  } catch (error) {
+    console.error("Error in updateTaskNameAction:", error);
+    return { error: "Failed to update task name." };
+  }
 }
 
 // --- Memory Management Actions ---
@@ -186,7 +258,6 @@ export async function saveMemoryAction({
   console.log(`Action: Saving memory for user ${userId}: ${content}`);
   try {
     const saved = await saveMemory({ userId, content });
-    // Return only the necessary confirmation details
     return { memoryId: saved[0]?.id, content: saved[0]?.content, status: "saved" as const };
   } catch (error) {
     console.error("Error in saveMemoryAction:", error);
@@ -198,7 +269,7 @@ export async function recallMemoriesAction({ userId }: { userId: string }) {
   console.log(`Action: Recalling memories for user ${userId}`);
   try {
     const memories = await getMemoriesByUserId({ userId });
-    return { memories }; // Return the array of memories
+    return { memories };
   } catch (error) {
     console.error("Error in recallMemoriesAction:", error);
     return { error: "Failed to recall memories." };
@@ -209,7 +280,7 @@ export async function forgetMemoryAction({ memoryId, userId }: { memoryId: strin
   console.log(`Action: Forgetting memory ${memoryId} for user ${userId}`);
   try {
     await deleteMemoryById({ id: memoryId, userId });
-    return { memoryId, status: "forgotten" as const }; // Confirmation
+    return { memoryId, status: "forgotten" as const };
   } catch (error) {
     console.error("Error in forgetMemoryAction:", error);
     return { error: "Failed to forget memory." };

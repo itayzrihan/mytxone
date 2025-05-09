@@ -1,4 +1,5 @@
-import { Trash2 } from "lucide-react";
+import { useChat } from "ai/react";
+import { Trash2, Edit } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,9 +16,52 @@ interface ListTasksProps {
   tasks: Task[];
   onToggleTask: (taskId: string) => void;
   onRemoveTask: (taskId: string) => void;
+  chatId?: string; // Add optional chatId parameter
 }
 
-export function ListTasks({ tasks, onToggleTask, onRemoveTask }: ListTasksProps) {
+export function ListTasks({ tasks, onToggleTask, onRemoveTask, chatId }: ListTasksProps) {
+  // Use chat hook when chatId is provided
+  const chat = chatId ? useChat({
+    id: chatId,
+    body: { id: chatId },
+    maxSteps: 5,
+  }) : null;
+
+  const handleTaskClick = (task: Task) => {
+    if (chat && chatId) {
+      // Append a message to rename the task
+      chat.append({
+        role: "user",
+        content: `I want to change the name of task "${task.description}"`,
+      });
+    }
+  };
+
+  const handleCheckboxClick = (task: Task) => {
+    if (chat && chatId) {
+      // Append a message to mark the task as complete
+      const action = task.status === 'completed' ? "mark as incomplete" : "mark as complete";
+      chat.append({
+        role: "user",
+        content: `I want to ${action} the task "${task.description}"`,
+      });
+    }
+    // Still call the original toggle handler
+    onToggleTask(task.taskId);
+  };
+
+  const handleDeleteClick = (task: Task) => {
+    if (chat && chatId) {
+      // Append a message to delete the task
+      chat.append({
+        role: "user",
+        content: `I want to delete the task "${task.description}"`,
+      });
+    }
+    // Still call the original remove handler
+    onRemoveTask(task.taskId);
+  };
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -32,18 +76,57 @@ export function ListTasks({ tasks, onToggleTask, onRemoveTask }: ListTasksProps)
         <CardContent>
           <ul className="space-y-3">
             {tasks.map((task) => (
-              <li key={task.taskId} className="flex items-center justify-between border-b pb-2">
+              <li 
+                key={task.taskId} 
+                className="flex items-center justify-between border-b pb-2 rounded px-1"
+              >
                 <div className="flex items-center grow mr-2">
                   <Checkbox
                     id={`task-${task.taskId}`}
                     checked={task.status === 'completed'}
-                    onChange={() => onToggleTask(task.taskId)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      if (chatId) {
+                        handleCheckboxClick(task);
+                      } else {
+                        onToggleTask(task.taskId);
+                      }
+                    }}
+                    className={chatId ? 'cursor-pointer' : ''}
                   />
-                  <span className={`ml-2 ${task.status === 'completed' ? "line-through text-muted-foreground" : ""}`}>
+                  <span 
+                    className={`ml-2 ${task.status === 'completed' ? "line-through text-muted-foreground" : ""} ${chatId ? 'cursor-pointer hover:underline' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (chatId) {
+                        handleTaskClick(task);
+                      }
+                    }}
+                  >
                     {task.description}
                   </span>
+                  {chatId && (
+                    <Edit 
+                      className="ml-2 size-3 text-muted-foreground hover:text-foreground cursor-pointer" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTaskClick(task);
+                      }}
+                    />
+                  )}
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => onRemoveTask(task.taskId)}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (chatId) {
+                      handleDeleteClick(task);
+                    } else {
+                      onRemoveTask(task.taskId);
+                    }
+                  }}
+                >
                   <Trash2 className="size-4" />
                 </Button>
               </li>

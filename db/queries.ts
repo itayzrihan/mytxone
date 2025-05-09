@@ -6,8 +6,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import * as schema from "./schema"; // Import the entire schema
-const { user, chat, reservation, memories, apiKey } = schema; // Destructure needed tables
-import type { User, Memory, ApiKey } from "./schema"; // Import types separately
+const { user, chat, reservation, memories, apiKey, tasks } = schema; // Destructure needed tables
+import type { User, Memory, ApiKey, Task } from "./schema"; // Import types separately
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
@@ -221,6 +221,105 @@ export async function deleteMemoryById({
       .where(and(eq(memories.id, id), eq(memories.userId, userId)));
   } catch (error) {
     console.error("Failed to delete memory by id from database");
+    throw error;
+  }
+}
+
+// --- Task Queries ---
+
+export async function addTask({
+  userId,
+  description,
+}: {
+  userId: string;
+  description: string;
+}): Promise<Array<Task>> {
+  try {
+    const newTask = await db
+      .insert(tasks)
+      .values({
+        userId,
+        description,
+        status: "pending",
+      })
+      .returning();
+    return newTask;
+  } catch (error) {
+    console.error("Failed to add task to database");
+    throw error;
+  }
+}
+
+export async function getTasksByUserId({
+  userId,
+}: {
+  userId: string;
+}): Promise<Array<Task>> {
+  try {
+    return await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.userId, userId))
+      .orderBy(desc(tasks.createdAt));
+  } catch (error) {
+    console.error("Failed to get tasks by user from database");
+    throw error;
+  }
+}
+
+export async function updateTaskStatus({
+  id,
+  userId,
+  status,
+}: {
+  id: string;
+  userId: string;
+  status: string;
+}): Promise<void> {
+  try {
+    await db
+      .update(tasks)
+      .set({ status })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+  } catch (error) {
+    console.error("Failed to update task status in database");
+    throw error;
+  }
+}
+
+export async function deleteTaskById({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(tasks)
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+  } catch (error) {
+    console.error("Failed to delete task from database");
+    throw error;
+  }
+}
+
+export async function updateTaskDescription({
+  id,
+  userId,
+  description,
+}: {
+  id: string;
+  userId: string;
+  description: string;
+}): Promise<void> {
+  try {
+    await db
+      .update(tasks)
+      .set({ description })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+  } catch (error) {
+    console.error("Failed to update task description in database");
     throw error;
   }
 }
