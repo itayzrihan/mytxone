@@ -6,6 +6,15 @@ import { z } from 'zod';
 
 import { geminiProModel } from "@/ai"; // Import your configured AI model
 
+// --- Environment Configuration ---
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
+const BYPASS_AUTH_FOR_DEV = IS_DEVELOPMENT && (process.env.BYPASS_FIREBASE_AUTH === 'true' || process.env.BYPASS_FIREBASE_AUTH === '1');
+
+if (BYPASS_AUTH_FOR_DEV) {
+  console.log('[Firebase Chat API] Running in development mode with authentication bypass enabled.');
+}
+// --- End Environment Configuration ---
+
 // --- Firebase Admin Initialization ---
 // Ensure Firebase Admin SDK is initialized
 if (!admin.apps.length) {
@@ -37,6 +46,7 @@ const setCorsHeaders = (response: NextResponse, origin: string | null) => {
   // Allow only specific origins
   const allowedOrigins = [
     'http://localhost:8081',
+    'http://localhost:3000',
     'https://heybos.me',
     'https://heybos.com',
     'http://10.100.102.8:8081',
@@ -61,6 +71,13 @@ async function authenticateFirebaseUser(request: NextRequest): Promise<{ uid: st
   const serverTimeStart = Date.now(); // Log server time at start
   const origin = request.headers.get('Origin');
   const authHeader = request.headers.get('Authorization');
+  
+  // Check if we're bypassing auth for development
+  if (BYPASS_AUTH_FOR_DEV) {
+    console.log('[Firebase Chat API Auth] Development mode - bypassing authentication');
+    return { uid: 'dev-user-bypass', errorResponse: null };
+  }
+  
   console.log(`[Firebase Chat API Auth] Received request. Server time: ${serverTimeStart}`); // Log server time
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
