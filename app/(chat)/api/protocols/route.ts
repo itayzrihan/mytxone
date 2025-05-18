@@ -3,7 +3,8 @@ import {
   saveProtocol, 
   getProtocolsByUserId, 
   getProtocolById, 
-  deleteProtocolById 
+  deleteProtocolById,
+  updateProtocol
 } from "@/db/protocol-queries";
 
 export async function GET(request: Request) {
@@ -95,6 +96,57 @@ export async function DELETE(request: Request) {
     return new Response(null, { status: 204 });
   } catch (error) {
     console.error("Error deleting protocol:", error);
+    return new Response("Internal Server Error", { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  const session = await auth();
+
+  if (!session || !session.user || !session.user.id) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+
+  if (!id) {
+    return new Response("Protocol ID is required", { status: 400 });
+  }
+
+  try {
+    const { name, description, parts } = await request.json();
+    
+    if (!name || !parts || !Array.isArray(parts) || parts.length === 0) {
+      return new Response("Invalid protocol data", { status: 400 });
+    }
+    
+    const userId = session.user.id;
+    
+    // First check if the protocol exists and belongs to the user
+    const existingProtocol = await getProtocolById({ id, userId });
+    
+    if (!existingProtocol) {
+      return new Response("Protocol not found or you don't have permission to update it", { status: 404 });
+    }
+    
+    // Update the protocol
+    await updateProtocol({
+      id,
+      userId,
+      name,
+      description,
+      parts,
+    });
+    
+    // Fetch the updated protocol to return
+    const updatedProtocol = await getProtocolById({ id, userId });
+    
+    return new Response(JSON.stringify(updatedProtocol), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Error updating protocol:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
 }
