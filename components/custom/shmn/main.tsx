@@ -1,21 +1,89 @@
-import React from 'react';
+'use client';
+import React, { useEffect } from 'react';
 import { ProtocolManager } from './protocol-manager';
 import { TeleprompterPlayer } from './teleprompter-player';
 
 const Main = () => {
+  useEffect(() => {
+    // Improve dropdown menu behavior
+    const selfDropdownButton = document.getElementById('self-dropdown-button');
+    const selfDropdownMenu = document.getElementById('self-dropdown-menu');
+    
+    if (selfDropdownButton && selfDropdownMenu) {
+      // Toggle dropdown on click
+      selfDropdownButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        selfDropdownMenu.classList.toggle('hidden');
+        const isExpanded = !selfDropdownMenu.classList.contains('hidden');
+        selfDropdownButton.setAttribute('aria-expanded', isExpanded.toString());
+      });
+      
+      // Close dropdown when clicking elsewhere
+      document.addEventListener('click', (e) => {
+        if (!selfDropdownButton.contains(e.target as Node) && 
+            !selfDropdownMenu.contains(e.target as Node)) {
+          selfDropdownMenu.classList.add('hidden');
+          selfDropdownButton.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-10">
       <header className="flex justify-between items-center py-5 border-b border-white/10">
         <div className="logo-container flex flex-col">
           <div className="logo text-3xl font-bold text-primary tracking-wider">SHMN</div>
           <div className="subtitle text-xs text-text-secondary">Spiritual Human Mental Network</div>
-        </div>
-        <nav>
-          <ul className="flex list-none">
-            <li className="ml-5"><a href="#" className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10 active:text-text-primary active:bg-slate-700/10" data-section="home">Home</a></li>
-            <li className="ml-5"><a href="#" className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10" data-section="protocols">Protocols</a></li>
-            <li className="ml-5"><a href="#" className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10" data-section="concepts">Concepts</a></li>
-            <li className="ml-5"><a href="#" className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10" data-section="journal">Journal</a></li>
+        </div>        <nav>
+          <ul className="flex list-none items-center">
+            <li className="ml-5"><a href="#" className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10 active:text-text-primary active:bg-slate-700/10" data-section="home">Home</a></li>            <li className="ml-5"><a href="#" className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10" data-section="protocols">Protocols</a></li>
+            <li className="ml-5"><a href="#" className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10" data-section="concepts">Concepts</a></li>            <li className="ml-5"><a href="#" className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10" data-section="journal">Journal</a></li>
+        
+            <li className="ml-5 relative">
+              <button
+              id="self-dropdown-button"
+              type="button"
+              className="text-text-secondary no-underline px-2.5 py-1.5 rounded transition-all duration-300 ease-in-out hover:text-text-primary hover:bg-slate-700/10 flex items-center focus:outline-none" 
+              data-section="self"
+              aria-haspopup="true"
+              aria-expanded="false"
+              >
+              {/* Set to true via JS if dropdown is open, useful for click-toggled dropdowns */}
+              Self
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1.5 transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>              </button><div
+              id="self-dropdown-menu"
+              className="absolute left-0 top-full w-48 rounded-md shadow-lg overflow-hidden bg-card-background ring-1 ring-primary/10 hidden z-20"
+              role="menu"
+              aria-orientation="vertical"
+              aria-labelledby="self-dropdown-button"
+              >
+              {/* Empty div for buffer space to make hover transition smoother */}
+              <div className="h-2"></div>
+              <div className="py-1">
+                <a
+                href="/shmn/definitions"
+                className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-slate-700/20 w-full text-left"
+                role="menuitem"
+                data-section="definitions"
+                >
+                {/* This was on the original definitions link */}
+                Definitions
+                </a>
+                {/* You can add more dropdown items here if needed */}
+                {/* Example:
+                <a
+                href="#"
+                className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-slate-700/20 w-full text-left"
+                role="menuitem"
+                >
+                Another Item                </a>
+                */}
+              </div>
+              </div>
+            </li>
           </ul>
         </nav>
       </header>
