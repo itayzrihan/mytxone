@@ -29,11 +29,10 @@ const getParsedParts = (protocol: Protocol): ProtocolPart[] => {
 };
 
 const ProtocolManager = () => {
-  useEffect(() => {
-    // DOM elements
+  useEffect(() => {    // DOM elements
     const addProtocolBtn = document.getElementById('add-protocol-btn');
     const protocolModal = document.getElementById('protocol-modal');
-    const closeModalBtn = document.getElementById('close-modal');
+    const closeModalBtn = document.getElementById('close-protocol-modal');
     const cancelProtocolBtn = document.getElementById('cancel-protocol');
     const addPartBtn = document.getElementById('add-part-btn');
     const protocolPartsContainer = document.getElementById('protocol-parts');

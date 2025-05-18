@@ -2,9 +2,11 @@
 import React, { useEffect } from 'react';
 import { ProtocolManager } from './protocol-manager';
 import { TeleprompterPlayer } from './teleprompter-player';
+import { SharedModal } from './shared-modal';
+import { ProtocolModalContent } from './protocol-modal-content';
+import { DefinitionModalContent } from './definition-modal-content';
 
-const Main = () => {
-  useEffect(() => {
+const Main = () => {  useEffect(() => {
     // Improve dropdown menu behavior
     const selfDropdownButton = document.getElementById('self-dropdown-button');
     const selfDropdownMenu = document.getElementById('self-dropdown-menu');
@@ -27,6 +29,18 @@ const Main = () => {
         }
       });
     }
+
+    // Set up shared modal close behavior
+    const closeModalButtons = document.querySelectorAll('.close-modal-btn');
+    closeModalButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const modalId = (button as HTMLElement).getAttribute('data-modal-id');
+        if (modalId) {
+          const modal = document.getElementById(modalId);
+          if (modal) modal.classList.add('hidden');
+        }
+      });
+    });
   }, []);
 
   return (
@@ -145,96 +159,17 @@ const Main = () => {
       </main>
 
       <footer className="py-5 text-center text-text-secondary text-xs border-t border-white/10">
-        <p>&copy; 2025 SHMN - Spiritual Human Mental Network. A framework for personal development and mindfulness.</p>
-      </footer>
+        <p>&copy; 2025 SHMN - Spiritual Human Mental Network. A framework for personal development and mindfulness.</p>      </footer>
 
       {/* Protocol Creation Modal */}
-      <div id="protocol-modal" className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center hidden">
-        <div className="bg-card-background rounded-lg shadow-xl border border-primary/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-          <div className="p-5 border-b border-white/10 flex justify-between items-center">
-            <h3 className="text-xl font-medium text-primary">Create New Protocol</h3>
-            <button id="close-modal" className="text-text-secondary hover:text-text-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-          
-          <div className="p-5">
-            <div className="mb-5">
-              <label htmlFor="protocol-name" className="block text-text-primary mb-2">Protocol Name</label>
-              <input 
-                type="text" 
-                id="protocol-name" 
-                className="w-full p-3 bg-black/20 border border-white/10 rounded-md text-text-primary focus:border-primary focus:outline-none"
-                placeholder="Enter protocol name"
-              />
-            </div>
-            
-            <div className="mb-5">
-              <label htmlFor="protocol-description" className="block text-text-primary mb-2">Description</label>
-              <textarea 
-                id="protocol-description" 
-                className="w-full p-3 bg-black/20 border border-white/10 rounded-md text-text-primary focus:border-primary focus:outline-none min-h-[100px]"
-                placeholder="Enter protocol description"
-              ></textarea>
-            </div>
-            
-            <div className="mb-5">
-              <label className="block text-text-primary mb-2">Protocol Parts</label>
-              <div id="protocol-parts" className="space-y-4">
-                {/* Initial empty part */}
-                <div className="protocol-part p-4 bg-black/30 rounded-md border border-white/10">
-                  <div className="mb-3">
-                    <label className="block text-text-secondary mb-1 text-sm">Part 1</label>
-                    <textarea 
-                      className="part-content w-full p-3 bg-black/20 border border-white/10 rounded-md text-text-primary focus:border-primary focus:outline-none min-h-[80px]"
-                      placeholder="Enter the text for this part (e.g., a sentence or short paragraph)"
-                    ></textarea>
-                  </div>
-                  <div className="flex justify-end">
-                    <button className="remove-part bg-transparent hover:bg-red-900/20 text-red-500 border border-red-500 px-3 py-1 rounded text-xs">
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <button 
-                id="add-part-btn" 
-                className="mt-3 bg-transparent hover:bg-primary/10 text-primary border border-primary px-4 py-2 rounded flex items-center text-sm"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Add Another Part
-              </button>
-            </div>
-            
-            <div className="flex justify-end space-x-3 mt-6">
-              <button 
-                id="cancel-protocol" 
-                className="bg-transparent hover:bg-white/10 text-text-secondary border border-white/20 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button 
-                id="save-protocol" 
-                className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded flex items-center"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                Save Protocol
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <SharedModal id="protocol-modal" title="Create New Protocol">
+        <ProtocolModalContent />
+      </SharedModal>
+
+      {/* Definition Creation Modal */}
+      <SharedModal id="definition-modal" title="Create New Definition">
+        <DefinitionModalContent />
+      </SharedModal>
 
       {/* Include the Protocol Manager Component */}
       <ProtocolManager />
