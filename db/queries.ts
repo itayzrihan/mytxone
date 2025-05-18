@@ -13,7 +13,7 @@ import type { User, Memory, ApiKey, Task } from "./schema"; // Import types sepa
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
 let client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
-let db = drizzle(client, { schema }); // Pass the schema to drizzle
+export let db = drizzle(client, { schema }); // Pass the schema to drizzle
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {

@@ -7,11 +7,26 @@ interface ProtocolPart {
 }
 
 interface Protocol {
+  id: string;
+  userId: string;
   name: string;
-  description: string;
-  parts: ProtocolPart[];
+  description: string | null;
+  parts: ProtocolPart[] | string; // Can be string (serialized JSON from DB)
   createdAt: string;
 }
+
+// Helper function to parse parts if needed
+const getParsedParts = (protocol: Protocol): ProtocolPart[] => {
+  if (typeof protocol.parts === 'string') {
+    try {
+      return JSON.parse(protocol.parts);
+    } catch (error) {
+      console.error('Error parsing protocol parts:', error);
+      return [];
+    }
+  }
+  return protocol.parts as ProtocolPart[];
+};
 
 const ProtocolManager = () => {
   useEffect(() => {
@@ -102,6 +117,40 @@ const ProtocolManager = () => {
         });
       }
     };
+    
+    // Delete protocol
+    const deleteProtocol = async (protocolId: string) => {
+      if (!confirm("Are you sure you want to delete this protocol? This action cannot be undone.")) {
+        return;
+      }
+      
+      try {
+        // Delete protocol via API
+        const response = await fetch(`/api/protocols?id=${protocolId}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to delete protocol: ${response.statusText}`);
+        }
+        
+        // Show confirmation
+        const consoleContent = document.querySelector('.console-content');
+        if (consoleContent) {
+          const message = document.createElement('div');
+          message.className = 'mb-2';
+          message.innerHTML = `<span class="text-red-500">[${new Date().toLocaleTimeString()}]</span> Protocol <strong>deleted</strong> successfully.`;
+          consoleContent.appendChild(message);
+          consoleContent.scrollTop = consoleContent.scrollHeight;
+        }
+        
+        // Refresh the protocol cards
+        generateProtocolCards();
+      } catch (error) {
+        console.error('Error deleting protocol:', error);
+        alert('Failed to delete protocol. Please try again.');
+      }
+    };
 
     // Save protocol
     const saveProtocol = async () => {
@@ -136,21 +185,26 @@ const ProtocolManager = () => {
         return;
       }
       
-      const protocol: Protocol = {
-        name,
-        description,
-        parts,
-        createdAt: new Date().toISOString(),
-      };
-      
       try {
-        // TODO: Replace with actual API call
-        console.log('Saving protocol:', protocol);
+        // Save protocol to database via API
+        const response = await fetch('/api/protocols', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            parts,
+          }),
+        });
         
-        // For now, save to localStorage
-        const protocols: Protocol[] = JSON.parse(localStorage.getItem('protocols') || '[]');
-        protocols.push(protocol);
-        localStorage.setItem('protocols', JSON.stringify(protocols));
+        if (!response.ok) {
+          throw new Error(`Failed to save protocol: ${response.statusText}`);
+        }
+        
+        const savedProtocol = await response.json();
+        console.log('Protocol saved successfully:', savedProtocol);
         
         // Show confirmation
         const consoleContent = document.querySelector('.console-content');
@@ -172,80 +226,112 @@ const ProtocolManager = () => {
         alert('Failed to save protocol. Please try again.');
       }
     };
-
+    
     // Generate protocol cards
-    const generateProtocolCards = () => {
+    const generateProtocolCards = async () => {
       const dashboard = document.querySelector('.dashboard');
       if (!dashboard) return;
       
       // Clear existing cards
       dashboard.innerHTML = '';
       
-      // Get protocols from localStorage
-      const protocols: Protocol[] = JSON.parse(localStorage.getItem('protocols') || '[]');
-      
-      if (protocols.length === 0) {
-        dashboard.innerHTML = `
-          <div class="col-span-full text-center py-10">
-            <p class="text-text-secondary">No protocols yet. Click the + button to create your first protocol.</p>
-          </div>
-        `;
-        return;
-      }
-      
-      // Create a card for each protocol
-      protocols.forEach((protocol: Protocol) => {
-        const card = document.createElement('div');
-        card.className = 'protocol-card bg-card-background rounded-lg p-5 border border-primary/10 hover:border-primary/30 transition-all duration-300 shadow-lg';
-        card.innerHTML = `
-          <h3 class="text-xl text-primary mb-2">${protocol.name}</h3>
-          <p class="text-text-secondary text-sm mb-4">${protocol.description || 'No description'}</p>
-          <div class="flex justify-between items-center">
-            <span class="text-text-secondary text-xs">${protocol.parts.length} parts</span>
-            <button 
-              class="start-protocol bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1 rounded text-sm"
-              data-protocol-id="${protocols.indexOf(protocol)}"
-            >
-              Start
-            </button>
-          </div>
-        `;
+      try {
+        // Fetch protocols from API
+        const response = await fetch('/api/protocols');
         
-        dashboard.appendChild(card);
-        
-        // Add event listener to start button
-        const startBtn = card.querySelector('.start-protocol');
-        if (startBtn) {
-          startBtn.addEventListener('click', (e) => {
-            const target = e.target as HTMLElement;
-            const protocolId = target.getAttribute('data-protocol-id');
-            if (protocolId) {
-              startProtocol(parseInt(protocolId));
-            }
-          });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch protocols: ${response.statusText}`);
         }
-      });
+        
+        const protocols = await response.json();
+        
+        if (protocols.length === 0) {
+          dashboard.innerHTML = `
+            <div class="col-span-full text-center py-10">
+              <p class="text-text-secondary">No protocols yet. Click the + button to create your first protocol.</p>
+            </div>
+          `;
+          return;
+        }
+      
+        // Create a card for each protocol
+        protocols.forEach((protocol: Protocol) => {
+          // Parse parts if they're stored as a JSON string
+          const parsedParts = getParsedParts(protocol);
+          
+          const card = document.createElement('div');
+          card.className = 'protocol-card bg-card-background rounded-lg p-5 border border-primary/10 hover:border-primary/30 transition-all duration-300 shadow-lg';
+          card.innerHTML = `
+            <h3 class="text-xl text-primary mb-2">${protocol.name}</h3>
+            <p class="text-text-secondary text-sm mb-4">${protocol.description || 'No description'}</p>
+            <div class="flex justify-between items-center">
+              <span class="text-text-secondary text-xs">${parsedParts.length} parts</span>
+              <div class="flex gap-2">
+                <button 
+                  class="delete-protocol bg-transparent hover:bg-red-500/10 text-red-500 border border-red-500 px-3 py-1 rounded text-sm"
+                  data-protocol-id="${protocol.id}"
+                >
+                  Delete
+                </button>
+                <button 
+                  class="start-protocol bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1 rounded text-sm"
+                  data-protocol-id="${protocol.id}"
+                >
+                  Start
+                </button>
+              </div>
+            </div>
+          `;
+          
+          dashboard.appendChild(card);
+          
+          // Add event listeners to buttons
+          const startBtn = card.querySelector('.start-protocol');
+          if (startBtn) {
+            startBtn.addEventListener('click', (e) => {
+              const target = e.target as HTMLElement;
+              const protocolId = target.getAttribute('data-protocol-id');
+              if (protocolId) {
+                startProtocol(protocolId);
+              }
+            });
+          }
+          
+          const deleteBtn = card.querySelector('.delete-protocol');
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', (e) => {
+              e.stopPropagation(); // Prevent event bubbling
+              const target = e.target as HTMLElement;
+              const protocolId = target.getAttribute('data-protocol-id');
+              if (protocolId) {
+                deleteProtocol(protocolId);
+              }
+            });
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching protocols:', error);
+        dashboard.innerHTML = `
+          <div class="col-span-full text-center py-10 text-red-500">
+            <p>Error loading protocols. Please try again later.</p>
+          </div>
+        `;
+      }
     };
 
     // Start a protocol teleprompter
-    const startProtocol = (protocolId: number) => {
-      const protocols: Protocol[] = JSON.parse(localStorage.getItem('protocols') || '[]');
-      const protocol = protocols[protocolId];
-      
-      if (!protocol) return;
-      
+    const startProtocol = (protocolId: string) => {
       // Update console
       const consoleContent = document.querySelector('.console-content');
       if (consoleContent) {
         const message = document.createElement('div');
         message.className = 'mb-2';
-        message.innerHTML = `<span class="text-blue-500">[${new Date().toLocaleTimeString()}]</span> Starting protocol: <strong>${protocol.name}</strong>`;
+        message.innerHTML = `<span class="text-blue-500">[${new Date().toLocaleTimeString()}]</span> Starting protocol with ID: <strong>${protocolId}</strong>`;
         consoleContent.appendChild(message);
         consoleContent.scrollTop = consoleContent.scrollHeight;
       }
       
-      // TODO: Implement the teleprompter functionality
-      // This will be implemented in the next step
+      // The actual teleprompter functionality is implemented in the teleprompter-player component
     };
 
     // Event listeners

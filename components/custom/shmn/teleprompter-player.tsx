@@ -7,11 +7,26 @@ interface ProtocolPart {
 }
 
 interface Protocol {
+  id: string;
+  userId: string;
   name: string;
-  description: string;
-  parts: ProtocolPart[];
+  description: string | null;
+  parts: ProtocolPart[] | string; // Can be string (serialized JSON from DB)
   createdAt: string;
 }
+
+// Helper function to parse parts if needed
+const getParsedParts = (protocol: Protocol): ProtocolPart[] => {
+  if (typeof protocol.parts === 'string') {
+    try {
+      return JSON.parse(protocol.parts);
+    } catch (error) {
+      console.error('Error parsing protocol parts:', error);
+      return [];
+    }
+  }
+  return protocol.parts as ProtocolPart[];
+};
 
 const TeleprompterPlayer = () => {
   useEffect(() => {
@@ -26,7 +41,8 @@ const TeleprompterPlayer = () => {
     const teleprompterText = document.querySelector('.teleprompter-text');
     const progressCircle = document.querySelector('.circle');
     const progressPercentage = document.querySelector('.progress-circle div');
-      // Get the linear progress bar for the overall protocol
+    
+    // Get the linear progress bar for the overall protocol
     const getLinearProgressBar = () => {
       // Get the progress bar that's already in the DOM
       const linearProgressBar = document.querySelector('#protocol-progress-bar div');
@@ -39,30 +55,43 @@ const TeleprompterPlayer = () => {
       
       return linearProgressBar;
     };
-      // Start a protocol
-    const startProtocol = (protocolId: number) => {
-      // Get protocol data
-      const protocols: Protocol[] = JSON.parse(localStorage.getItem('protocols') || '[]');
-      currentProtocol = protocols[protocolId];
-      
-      if (!currentProtocol || !currentProtocol.parts || currentProtocol.parts.length === 0) {
-        console.error('Invalid protocol or no parts available');
-        return;
+    
+    // Start a protocol
+    const startProtocol = async (protocolId: string) => {
+      try {
+        // Fetch protocol from API
+        const response = await fetch(`/api/protocols?id=${protocolId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch protocol: ${response.statusText}`);
+        }
+        
+        currentProtocol = await response.json();
+        
+        if (!currentProtocol) {
+          console.error('Protocol not found');
+          return;
+        }
+        
+        // Reset indices
+        currentPartIndex = 0;
+        currentWordIndex = 0;
+        
+        // Get the linear progress bar
+        getLinearProgressBar();
+        
+        // Start playing first part
+        startPart();
+        
+        // Update console
+        logToConsole(`Starting protocol: ${currentProtocol.name}`);
+      } catch (error) {
+        console.error('Error starting protocol:', error);
+        logToConsole(`Error starting protocol: ${error}`, 'red');
       }
-      
-      // Reset indices
-      currentPartIndex = 0;
-      currentWordIndex = 0;
-      
-      // Get the linear progress bar
-      getLinearProgressBar();
-      
-      // Start playing first part
-      startPart();
-      
-      // Update console
-      logToConsole(`Starting protocol: ${currentProtocol.name}`);
-    };    // Detect if text is in Hebrew
+    };
+    
+    // Detect if text is in Hebrew
     const isHebrew = (text: string): boolean => {
       // Hebrew Unicode range: \u0590-\u05FF
       const hebrewRegex = /[\u0590-\u05FF]/;
@@ -71,13 +100,21 @@ const TeleprompterPlayer = () => {
     
     // Start a part
     const startPart = () => {
-      if (!currentProtocol || currentPartIndex >= currentProtocol.parts.length) {
+      if (!currentProtocol) {
+        finishProtocol();
+        return;
+      }
+      
+      // Parse parts if they're stored as a JSON string
+      const parsedParts = getParsedParts(currentProtocol);
+      
+      if (currentPartIndex >= parsedParts.length) {
         finishProtocol();
         return;
       }
       
       // Get current part
-      const part = currentProtocol.parts[currentPartIndex];
+      const part = parsedParts[currentPartIndex];
       
       // Split content into words
       words = part.content.split(/\s+/);
@@ -85,7 +122,8 @@ const TeleprompterPlayer = () => {
       
       // Check if content is Hebrew
       const isHebrewText = isHebrew(part.content);
-        // Update teleprompter
+      
+      // Update teleprompter
       if (teleprompterText) {
         // Apply RTL direction if it's Hebrew
         const textElement = teleprompterText as HTMLElement;
@@ -96,7 +134,7 @@ const TeleprompterPlayer = () => {
       // Update part indicator
       const partIndicator = document.querySelector('.protocol-part-indicator');
       if (partIndicator) {
-        partIndicator.textContent = `Part ${currentPartIndex + 1}/${currentProtocol.parts.length}`;
+        partIndicator.textContent = `Part ${currentPartIndex + 1}/${parsedParts.length}`;
       }
       
       // Start animation
@@ -104,7 +142,7 @@ const TeleprompterPlayer = () => {
       startWordAnimation();
       
       // Update console
-      logToConsole(`Playing part ${currentPartIndex + 1} of ${currentProtocol.parts.length}`);
+      logToConsole(`Playing part ${currentPartIndex + 1} of ${parsedParts.length}`);
     };
     
     // Start word animation
@@ -149,7 +187,8 @@ const TeleprompterPlayer = () => {
         }
       }, 1000); // 1 second per word
     };
-      // Highlight a word
+    
+    // Highlight a word
     const highlightWord = (wordElement: Element) => {
       // Remove highlight from all words
       document.querySelectorAll('.word').forEach(el => {
@@ -189,16 +228,20 @@ const TeleprompterPlayer = () => {
       if (progressPercentage) {
         progressPercentage.textContent = `${progress}%`;
       }
-        // Update linear progress
+      
+      // Update linear progress
       if (currentProtocol) {
-        const overallProgress = (currentPartIndex + (currentWordIndex / words.length)) / currentProtocol.parts.length * 100;
+        const parsedParts = getParsedParts(currentProtocol);
+        const overallProgress = (currentPartIndex + (currentWordIndex / words.length)) / parsedParts.length * 100;
         const linearProgressBar = document.querySelector('#protocol-progress-bar div');
         if (linearProgressBar) {
           const htmlElement = linearProgressBar as HTMLElement;
           htmlElement.style.width = `${overallProgress}%`;
         }
       }
-    };    // Finish protocol
+    };
+    
+    // Finish protocol
     const finishProtocol = () => {
       isPlaying = false;
       if (animationInterval) clearInterval(animationInterval);
@@ -270,7 +313,7 @@ const TeleprompterPlayer = () => {
         if (target && target.classList.contains('start-protocol')) {
           const protocolId = target.getAttribute('data-protocol-id');
           if (protocolId) {
-            startProtocol(parseInt(protocolId));
+            startProtocol(protocolId);
           }
         }
       });
@@ -281,7 +324,8 @@ const TeleprompterPlayer = () => {
         clearConsoleBtn.addEventListener('click', clearConsole);
       }
     };
-      // Add styles for word glow effect
+    
+    // Add styles for word glow effect
     const addGlowStyles = () => {
       const styleEl = document.createElement('style');
       styleEl.textContent = `

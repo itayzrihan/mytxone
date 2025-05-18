@@ -9,6 +9,7 @@ import {
   boolean,
   text,
 } from "drizzle-orm/pg-core";
+import { protocols } from "./protocols-schema";
 
 export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -24,6 +25,7 @@ export const userRelations = relations(user, ({ many }) => ({
   memories: many(memories),
   apiKeys: many(apiKey),
   tasks: many(tasks),
+  protocols: many(protocols),
 }));
 
 export const chat = pgTable("Chat", {
