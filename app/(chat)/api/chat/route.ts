@@ -441,14 +441,54 @@ export async function POST(request: Request) {
         execute: async ({ meditationId }) => {
           return await getMeditationAction({ meditationId, userId });
         },
-      },
-      deleteMeditation: {
+      },      deleteMeditation: {
         description: "Delete a specific saved meditation.",
         parameters: z.object({
           meditationId: z.string().describe("The ID of the meditation to delete"),
         }),
         execute: async ({ meditationId }) => {
           return await deleteMeditationAction({ meditationId, userId });
+        },
+      },      generateMeditationAudio: {
+        description: "Generate TTS audio for a meditation using Gemini's text-to-speech. Returns audio URL for playback.",
+        parameters: z.object({
+          content: z.string().describe("The meditation content with timestamps"),
+          meditationId: z.string().optional().describe("Optional meditation ID for audio file naming"),
+          voiceName: z.string().optional().describe("Voice to use for meditation (Enceladus, Callirrhoe, Vindemiatrix, Sulafat, Aoede)"),
+        }),
+        execute: async ({ content, meditationId, voiceName }) => {
+          try {
+            const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/tts`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content,
+                meditationId: meditationId || `meditation_${Date.now()}`,
+                voiceName: voiceName || 'Enceladus'
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to generate audio');
+            }
+
+            const data = await response.json();
+            return {
+              audioUrl: data.audioUrl,
+              segments: data.segments,
+              success: true,
+              message: "Audio generated successfully! You can now play your meditation."
+            };
+          } catch (error) {
+            console.error('Error generating meditation audio:', error);
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : 'Failed to generate audio'
+            };
+          }
         },
       },
     },
