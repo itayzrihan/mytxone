@@ -15,6 +15,11 @@ import { FlightStatus } from "../flights/flight-status";
 import { ListFlights } from "../flights/list-flights";
 import { SelectSeats } from "../flights/select-seats";
 import { VerifyPayment } from "../flights/verify-payment";
+import { ListMeditations } from "../meditations/list-meditations";
+import { MeditationConfirmation } from "../meditations/meditation-confirmation";
+import { MeditationDisplay } from "../meditations/meditation-display";
+import { MeditationPromptSelector } from "../meditations/meditation-prompt-selector";
+import { MeditationTypesSelector } from "../meditations/meditation-types-selector";
 import { ListMemories } from "../memories/list-memories";
 import { MemoryConfirmation } from "../memories/memory-confirmation";
 import { ListTasks } from "../tasks/list-tasks";
@@ -100,9 +105,18 @@ export const Message = ({
                     ) : toolName === "saveMemory" ? (
                       <MemoryConfirmation {...result} />
                     ) : toolName === "recallMemories" ? (
-                      <ListMemories memories={result.memories} />
-                    ) : toolName === "forgetMemory" ? (
+                      <ListMemories memories={result.memories} />                    ) : toolName === "forgetMemory" ? (
                       <MemoryConfirmation {...result} />
+                    ) : toolName === "generateMeditationContent" ? (
+                      <MeditationDisplay {...result} chatId={chatId} />
+                    ) : toolName === "createMeditation" ? (
+                      <MeditationConfirmation {...result} />
+                    ) : toolName === "listMeditations" ? (
+                      <ListMeditations meditations={result.meditations} chatId={chatId} />
+                    ) : toolName === "getMeditation" ? (
+                      <MeditationDisplay {...result} chatId={chatId} />
+                    ) : toolName === "deleteMeditation" ? (
+                      <MeditationConfirmation status="deleted" meditationId={result.meditationId} />
                     ) : (
                       <div>{JSON.stringify(result, null, 2)}</div>
                     )}
@@ -134,9 +148,18 @@ export const Message = ({
                     ) : toolName === "saveMemory" ? (
                       <MemoryConfirmation status="saved" memoryId="temp-skeleton" />
                     ) : toolName === "recallMemories" ? (
-                      <ListMemories memories={[]} />
-                    ) : toolName === "forgetMemory" ? (
+                      <ListMemories memories={[]} />                    ) : toolName === "forgetMemory" ? (
                       <MemoryConfirmation status="forgotten" memoryId="temp-skeleton" />
+                    ) : toolName === "generateMeditationContent" ? (
+                      <MeditationDisplay type="mindfulness" title="Loading..." content="Generating your meditation..." chatId={chatId} />
+                    ) : toolName === "createMeditation" ? (
+                      <MeditationConfirmation status="created" meditationId="temp-skeleton" />
+                    ) : toolName === "listMeditations" ? (
+                      <ListMeditations meditations={[]} chatId={chatId} />
+                    ) : toolName === "getMeditation" ? (
+                      <MeditationDisplay type="mindfulness" title="Loading..." content="Loading meditation..." chatId={chatId} />
+                    ) : toolName === "deleteMeditation" ? (
+                      <MeditationConfirmation status="deleted" meditationId="temp-skeleton" />
                     ) : null}
                   </div>
                 );

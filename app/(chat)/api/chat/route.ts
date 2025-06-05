@@ -17,6 +17,11 @@ import {
   saveMemoryAction,
   recallMemoriesAction,
   forgetMemoryAction,
+  createMeditationAction,
+  listMeditationsAction,
+  getMeditationAction,
+  deleteMeditationAction,
+  generateMeditationContentAction,
 } from "@/ai/actions";
 import { auth } from "@/app/(auth)/auth";
 import {
@@ -354,8 +359,7 @@ export async function POST(request: Request) {
         execute: async () => {
           return await recallMemoriesAction({ userId });
         },
-      },
-      forgetMemory: {
+      },      forgetMemory: {
         description:
           "Forget a specific piece of information previously saved. Requires the memory ID. Usually, you should recall memories first to find the correct ID and ask for user confirmation if a specific memory was requested to be forgotten.",
         parameters: z.object({
@@ -365,6 +369,55 @@ export async function POST(request: Request) {
         }),
         execute: async ({ memoryId }) => {
           return await forgetMemoryAction({ memoryId, userId });
+        },
+      },
+      generateMeditationContent: {
+        description: "Generate custom meditation content based on user intentions or chat history. Returns meditation content that can optionally be saved.",
+        parameters: z.object({
+          type: z.string().describe("Type of meditation: visualization, mindfulness, sleep story, loving kindness, chakra balancing, breath awareness, affirmations, concentration, body scan, or memory palace enhancement"),
+          intention: z.string().optional().describe("User's specific intention or goal for the meditation"),
+          chatHistory: z.string().optional().describe("Recent chat history to base meditation on"),
+          duration: z.string().optional().describe("Desired meditation duration (e.g., '5 minutes', '10 minutes')"),
+        }),
+        execute: async ({ type, intention, chatHistory, duration }) => {
+          return await generateMeditationContentAction({ type, intention, chatHistory, duration });
+        },
+      },
+      createMeditation: {
+        description: "Save a meditation session for the user. Use this after generating meditation content to save it.",
+        parameters: z.object({
+          type: z.string().describe("Type of meditation"),
+          title: z.string().describe("Title for the meditation"),
+          content: z.string().describe("The full meditation content/script"),
+          duration: z.string().optional().describe("Duration of the meditation"),
+        }),
+        execute: async ({ type, title, content, duration }) => {
+          return await createMeditationAction({ userId, type, title, content, duration });
+        },
+      },
+      listMeditations: {
+        description: "List all saved meditations for the user.",
+        parameters: z.object({}),
+        execute: async () => {
+          return await listMeditationsAction({ userId });
+        },
+      },
+      getMeditation: {
+        description: "Get the full content of a specific saved meditation.",
+        parameters: z.object({
+          meditationId: z.string().describe("The ID of the meditation to retrieve"),
+        }),
+        execute: async ({ meditationId }) => {
+          return await getMeditationAction({ meditationId, userId });
+        },
+      },
+      deleteMeditation: {
+        description: "Delete a specific saved meditation.",
+        parameters: z.object({
+          meditationId: z.string().describe("The ID of the meditation to delete"),
+        }),
+        execute: async ({ meditationId }) => {
+          return await deleteMeditationAction({ meditationId, userId });
         },
       },
     },

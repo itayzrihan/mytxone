@@ -11,7 +11,11 @@ import {
   getTasksByUserId,
   updateTaskStatus,
   updateTaskDescription,
-  deleteTaskById
+  deleteTaskById,
+  createMeditation,
+  getMeditationsByUserId,
+  getMeditationById,
+  deleteMeditationById
 } from "@/db/queries";
 
 export async function generateSampleFlightStatus({
@@ -284,5 +288,149 @@ export async function forgetMemoryAction({ memoryId, userId }: { memoryId: strin
   } catch (error) {
     console.error("Error in forgetMemoryAction:", error);
     return { error: "Failed to forget memory." };
+  }
+}
+
+// --- Meditation Management Actions ---
+
+export async function createMeditationAction({
+  userId,
+  type,
+  title,
+  content,
+  duration,
+}: {
+  userId: string;
+  type: string;
+  title: string;
+  content: string;
+  duration?: string;
+}) {
+  console.log(`Action: Creating meditation "${title}" of type ${type} for user ${userId}`);
+  try {
+    const meditation = await createMeditation({ userId, type, title, content, duration });
+    return { 
+      meditationId: meditation[0]?.id, 
+      type: meditation[0]?.type,
+      title: meditation[0]?.title,
+      content: meditation[0]?.content,
+      duration: meditation[0]?.duration,
+      status: "created" as const 
+    };
+  } catch (error) {
+    console.error("Error in createMeditationAction:", error);
+    return { error: "Failed to create meditation." };
+  }
+}
+
+export async function listMeditationsAction({
+  userId,
+}: {
+  userId: string;
+}) {
+  console.log(`Action: Listing meditations for user ${userId}`);
+  try {
+    const userMeditations = await getMeditationsByUserId({ userId });
+    return { 
+      meditations: userMeditations.map(meditation => ({
+        meditationId: meditation.id,
+        type: meditation.type,
+        title: meditation.title,
+        duration: meditation.duration,
+        createdAt: meditation.createdAt
+      }))
+    };
+  } catch (error) {
+    console.error("Error in listMeditationsAction:", error);
+    return { error: "Failed to list meditations." };
+  }
+}
+
+export async function getMeditationAction({
+  meditationId,
+  userId,
+}: {
+  meditationId: string;
+  userId: string;
+}) {
+  console.log(`Action: Getting meditation ${meditationId} for user ${userId}`);
+  try {
+    const meditation = await getMeditationById({ id: meditationId, userId });
+    if (!meditation) {
+      return { error: "Meditation not found." };
+    }
+    return { 
+      meditationId: meditation.id,
+      type: meditation.type,
+      title: meditation.title,
+      content: meditation.content,
+      duration: meditation.duration,
+      createdAt: meditation.createdAt
+    };
+  } catch (error) {
+    console.error("Error in getMeditationAction:", error);
+    return { error: "Failed to get meditation." };
+  }
+}
+
+export async function deleteMeditationAction({
+  meditationId,
+  userId,
+}: {
+  meditationId: string;
+  userId: string;
+}) {
+  console.log(`Action: Deleting meditation ${meditationId} for user ${userId}`);
+  try {
+    await deleteMeditationById({ id: meditationId, userId });
+    return { meditationId, status: "deleted" as const };
+  } catch (error) {
+    console.error("Error in deleteMeditationAction:", error);
+    return { error: "Failed to delete meditation." };
+  }
+}
+
+export async function generateMeditationContentAction({
+  type,
+  intention,
+  chatHistory,
+  duration = "10 minutes",
+}: {
+  type: string;
+  intention?: string;
+  chatHistory?: string;
+  duration?: string;
+}) {
+  console.log(`Action: Generating ${type} meditation content`);
+  try {
+    const contextPrompt = chatHistory 
+      ? `Based on this chat history: ${chatHistory.slice(-1000)}` // Use last 1000 chars
+      : intention 
+      ? `Based on this intention: ${intention}`
+      : `Create a general ${type} meditation`;
+
+    const { object: meditationContent } = await generateObject({
+      model: geminiFlashModel,
+      prompt: `Generate a ${type} meditation content for ${duration}. ${contextPrompt}. 
+      Create a guided meditation that is calming, helpful, and professionally structured.`,
+      schema: z.object({
+        title: z.string().describe("A meaningful title for the meditation"),
+        content: z.string().describe("The complete guided meditation script with clear instructions"),
+        estimatedDuration: z.string().describe("Estimated time needed for this meditation"),
+        keyBenefits: z.array(z.string()).describe("Key benefits this meditation provides"),
+      }),
+    });
+
+    return {
+      type,
+      title: meditationContent.title,
+      content: meditationContent.content,
+      duration: meditationContent.estimatedDuration,
+      keyBenefits: meditationContent.keyBenefits,
+      status: "generated" as const
+    };
+  } catch (error) {
+    console.error("Error in generateMeditationContentAction:", error);
+    return { error: "Failed to generate meditation content." };
   }
 }

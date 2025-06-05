@@ -25,6 +25,7 @@ export const userRelations = relations(user, ({ many }) => ({
   memories: many(memories),
   apiKeys: many(apiKey),
   tasks: many(tasks),
+  meditations: many(meditations),
   protocols: many(protocols),
 }));
 
@@ -104,6 +105,29 @@ export type Task = InferSelectModel<typeof tasks>;
 export const tasksRelations = relations(tasks, ({ one }) => ({
   user: one(user, {
     fields: [tasks.userId],
+    references: [user.id],
+  }),
+}));
+
+export const meditations = pgTable("Meditation", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  type: text("type").notNull(), // e.g., "visualization", "mindfulness", etc.
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  duration: text("duration"), // e.g., "5 minutes", "10 minutes"
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type Meditation = InferSelectModel<typeof meditations>;
+
+export const meditationsRelations = relations(meditations, ({ one }) => ({
+  user: one(user, {
+    fields: [meditations.userId],
     references: [user.id],
   }),
 }));

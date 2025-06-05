@@ -6,8 +6,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import * as schema from "./schema"; // Import the entire schema
-const { user, chat, reservation, memories, apiKey, tasks } = schema; // Destructure needed tables
-import type { User, Memory, ApiKey, Task } from "./schema"; // Import types separately
+const { user, chat, reservation, memories, apiKey, tasks, meditations } = schema; // Destructure needed tables
+import type { User, Memory, ApiKey, Task, Meditation } from "./schema"; // Import types separately
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
@@ -320,6 +320,95 @@ export async function updateTaskDescription({
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
   } catch (error) {
     console.error("Failed to update task description in database");
+    throw error;
+  }
+}
+
+// --- API Key Queries ---
+
+// --- Meditation Queries ---
+
+export async function createMeditation({
+  userId,
+  type,
+  title,
+  content,
+  duration,
+}: {
+  userId: string;
+  type: string;
+  title: string;
+  content: string;
+  duration?: string;
+}): Promise<Array<Meditation>> {
+  try {
+    const newMeditation = await db
+      .insert(meditations)
+      .values({
+        userId,
+        type,
+        title,
+        content,
+        duration,
+      })
+      .returning();
+    return newMeditation;
+  } catch (error) {
+    console.error("Failed to create meditation in database");
+    throw error;
+  }
+}
+
+export async function getMeditationsByUserId({
+  userId,
+}: {
+  userId: string;
+}): Promise<Array<Meditation>> {
+  try {
+    return await db
+      .select()
+      .from(meditations)
+      .where(eq(meditations.userId, userId))
+      .orderBy(desc(meditations.createdAt));
+  } catch (error) {
+    console.error("Failed to get meditations from database");
+    throw error;
+  }
+}
+
+export async function getMeditationById({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<Meditation | undefined> {
+  try {
+    const result = await db
+      .select()
+      .from(meditations)
+      .where(and(eq(meditations.id, id), eq(meditations.userId, userId)));
+    return result[0];
+  } catch (error) {
+    console.error("Failed to get meditation by ID from database");
+    throw error;
+  }
+}
+
+export async function deleteMeditationById({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<number> {
+  try {
+    const result = await db
+      .delete(meditations)
+      .where(and(eq(meditations.id, id), eq(meditations.userId, userId)));
+    return 1; // Assuming successful deletion affects 1 row
+  } catch (error) {
+    console.error("Failed to delete meditation by ID from database");
     throw error;
   }
 }
