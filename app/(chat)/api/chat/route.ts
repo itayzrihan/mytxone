@@ -17,6 +17,8 @@ import {
   saveMemoryAction,
   recallMemoriesAction,
   forgetMemoryAction,
+  showMeditationTypeSelectorAction,
+  showMeditationPromptSelectorAction,
   createMeditationAction,
   listMeditationsAction,
   getMeditationAction,
@@ -120,8 +122,7 @@ export async function POST(request: Request) {
         - here's the optimal task management flow
           - add a task
           - list tasks (automatically show the list after adding or completing a task)
-          - mark a task as complete
-        - here's the optimal memory management flow
+          - mark a task as complete        - here's the optimal memory management flow
           - save a memory (e.g., "Remember my favorite color is blue")
           - recall memories (e.g., "What do you remember?", "What is my favorite color?")
           - forget a memory: 
@@ -130,6 +131,11 @@ export async function POST(request: Request) {
             - If ONE match is found, ask the user for confirmation: "Are you sure you want me to forget that [memory content]? (ID: [memory ID])". 
             - If the user confirms, THEN use the forgetMemory tool with that specific ID. 
             - If there are multiple matches, no matches, or the user's request was vague (e.g., "forget something"), THEN use the recallMemories tool to show the user the list and ask them to provide the ID for the forgetMemory tool.
+        - here's the optimal meditation flow
+          - when user asks for meditation or you recognize they might need one, ALWAYS use showMeditationTypeSelector tool to show the UI cards
+          - DO NOT ask what type of meditation they want - always show the UI selector instead
+          - after they select a type (they will tell you which one), use showMeditationPromptSelector tool to show the intention options
+          - then proceed with generateMeditationContent based on their choice
         '
       `,
     messages: coreMessages,
@@ -369,6 +375,21 @@ export async function POST(request: Request) {
         }),
         execute: async ({ memoryId }) => {
           return await forgetMemoryAction({ memoryId, userId });
+        },      },
+      showMeditationTypeSelector: {
+        description: "Show UI cards with different meditation types for the user to select from. Use this when user asks for meditation or you recognize they might need one.",
+        parameters: z.object({}),
+        execute: async () => {
+          return await showMeditationTypeSelectorAction();
+        },
+      },
+      showMeditationPromptSelector: {
+        description: "Show UI options to choose between chat history or custom intention for meditation creation. Use this after user selects a meditation type.",
+        parameters: z.object({
+          type: z.string().describe("The type of meditation selected by the user"),
+        }),
+        execute: async ({ type }) => {
+          return await showMeditationPromptSelectorAction({ type });
         },
       },
       generateMeditationContent: {

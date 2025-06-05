@@ -293,6 +293,27 @@ export async function forgetMemoryAction({ memoryId, userId }: { memoryId: strin
 
 // --- Meditation Management Actions ---
 
+export async function showMeditationTypeSelectorAction() {
+  console.log(`Action: Showing meditation type selector UI`);
+  return { 
+    status: "showing_types" as const,
+    message: "Please select a meditation type from the options below."
+  };
+}
+
+export async function showMeditationPromptSelectorAction({
+  type,
+}: {
+  type: string;
+}) {
+  console.log(`Action: Showing meditation prompt selector for ${type}`);
+  return { 
+    type,
+    status: "showing_prompt_selector" as const,
+    message: `Now choose how you'd like to create your ${type} meditation.`
+  };
+}
+
 export async function createMeditationAction({
   userId,
   type,

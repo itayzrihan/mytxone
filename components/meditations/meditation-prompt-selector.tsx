@@ -46,30 +46,28 @@ export function MeditationPromptSelector({ type, chatId }: MeditationPromptSelec
           Choose how you&apos;d like to create your meditation content.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Button
+      <CardContent className="space-y-4">        <Button
           variant="outline"
-          className="w-full h-auto p-4 flex flex-col items-start space-y-2 hover:bg-accent/50 transition-colors"
+          className="w-full h-auto min-h-fit p-4 flex flex-col items-start space-y-2 hover:bg-accent/50 transition-colors text-wrap"
           onClick={handleChatHistoryOption}
         >
           <div className="flex items-center space-x-2 w-full">
-            <MessageCircle className="size-5 text-blue-500" />
-            <span className="font-medium">Based on Our Conversation</span>
-          </div>          <p className="text-sm text-muted-foreground text-left">
+            <MessageCircle className="size-5 text-blue-500 flex-shrink-0" />
+            <span className="font-medium text-left">Based on Our Conversation</span>
+          </div>
+          <p className="text-sm text-muted-foreground text-left w-full whitespace-normal">
             Create a meditation tailored to our recent chat history and the topics we&apos;ve discussed.
           </p>
-        </Button>
-
-        <Button
+        </Button>        <Button
           variant="outline"
-          className="w-full h-auto p-4 flex flex-col items-start space-y-2 hover:bg-accent/50 transition-colors"
+          className="w-full h-auto min-h-fit p-4 flex flex-col items-start space-y-2 hover:bg-accent/50 transition-colors text-wrap"
           onClick={handleCustomIntentionOption}
         >
           <div className="flex items-center space-x-2 w-full">
-            <Edit3 className="size-5 text-green-500" />
-            <span className="font-medium">Custom Intention</span>
+            <Edit3 className="size-5 text-green-500 flex-shrink-0" />
+            <span className="font-medium text-left">Custom Intention</span>
           </div>
-          <p className="text-sm text-muted-foreground text-left">
+          <p className="text-sm text-muted-foreground text-left w-full whitespace-normal">
             Provide your own specific intention, goal, or focus area for a personalized meditation.
           </p>
         </Button>

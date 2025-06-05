@@ -107,6 +107,10 @@ export const Message = ({
                     ) : toolName === "recallMemories" ? (
                       <ListMemories memories={result.memories} />                    ) : toolName === "forgetMemory" ? (
                       <MemoryConfirmation {...result} />
+                    ) : toolName === "showMeditationTypeSelector" ? (
+                      <MeditationTypesSelector chatId={chatId} />
+                    ) : toolName === "showMeditationPromptSelector" ? (
+                      <MeditationPromptSelector type={result.type} chatId={chatId} />
                     ) : toolName === "generateMeditationContent" ? (
                       <MeditationDisplay {...result} chatId={chatId} />
                     ) : toolName === "createMeditation" ? (
@@ -150,6 +154,10 @@ export const Message = ({
                     ) : toolName === "recallMemories" ? (
                       <ListMemories memories={[]} />                    ) : toolName === "forgetMemory" ? (
                       <MemoryConfirmation status="forgotten" memoryId="temp-skeleton" />
+                    ) : toolName === "showMeditationTypeSelector" ? (
+                      <MeditationTypesSelector chatId={chatId} />
+                    ) : toolName === "showMeditationPromptSelector" ? (
+                      <MeditationPromptSelector type="mindfulness" chatId={chatId} />
                     ) : toolName === "generateMeditationContent" ? (
                       <MeditationDisplay type="mindfulness" title="Loading..." content="Generating your meditation..." chatId={chatId} />
                     ) : toolName === "createMeditation" ? (
