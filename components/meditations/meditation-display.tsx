@@ -1,9 +1,10 @@
 import { useChat } from "ai/react";
-import { Clock, Heart, Save, Play, Pause } from "lucide-react";
-import { useState } from "react";
+import { Clock, Heart, Save, Play, Pause, Loader2, Volume2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 interface MeditationDisplayProps {
   type: string;
@@ -23,6 +24,8 @@ export function MeditationDisplay({
   chatId 
 }: MeditationDisplayProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
   
   const chat = useChat({
     id: chatId || 'default-id',
@@ -31,6 +34,24 @@ export function MeditationDisplay({
   });
 
   const hasChatId = Boolean(chatId);
+
+  useEffect(() => {
+    if (isGeneratingAudio) {
+      const interval = setInterval(() => {
+        setAudioProgress((prev) => {
+          const newProgress = prev + 10;
+          if (newProgress >= 100) {
+            setIsGeneratingAudio(false);
+            clearInterval(interval);
+            return 100;
+          }
+          return newProgress;
+        });
+      }, 1000); // Update every second (10 seconds total)
+      
+      return () => clearInterval(interval);
+    }
+  }, [isGeneratingAudio]);
 
   const handleSaveMeditation = () => {
     if (hasChatId && chat) {
@@ -42,8 +63,18 @@ export function MeditationDisplay({
   };
 
   const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    // In a real implementation, this would control text-to-speech or audio playback
+    if (isPlaying) {
+      setIsPlaying(false);
+    } else {
+      if (!isGeneratingAudio && audioProgress < 100) {
+        // Start audio generation simulation
+        setIsGeneratingAudio(true);
+        setAudioProgress(0);
+      } else {
+        // If audio is already generated, just play it
+        setIsPlaying(true);
+      }
+    }
   };
 
   return (
@@ -85,7 +116,28 @@ export function MeditationDisplay({
           <div className="whitespace-pre-wrap text-sm leading-relaxed">
             {content}
           </div>
-        </div>
+        </div>        {/* Audio Generation Progress */}
+        {(isGeneratingAudio || audioProgress > 0) && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-2">
+                {isGeneratingAudio ? (
+                  <>
+                    <Loader2 className="size-4 text-primary animate-spin" />
+                    <span className="text-muted-foreground">Generating audio...</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="size-4 text-primary" />
+                    <span className="text-muted-foreground">Audio ready</span>
+                  </>
+                )}
+              </div>
+              <span className="text-muted-foreground">{audioProgress}%</span>
+            </div>
+            <Progress value={audioProgress} max={100} className="h-1" />
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3 pt-4 border-t">
@@ -93,6 +145,7 @@ export function MeditationDisplay({
             variant="outline"
             size="sm"
             onClick={handlePlayPause}
+            disabled={isGeneratingAudio}
             className="flex items-center space-x-2"
           >
             {isPlaying ? (
@@ -103,7 +156,7 @@ export function MeditationDisplay({
             ) : (
               <>
                 <Play className="size-4" />
-                <span>Listen</span>
+                <span>{audioProgress === 100 ? "Listen" : "Generate Audio"}</span>
               </>
             )}
           </Button>

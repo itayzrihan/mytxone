@@ -130,12 +130,22 @@ export async function POST(request: Request) {
             - Check if the recalled memories contain a SINGLE, clear match for the user's request. 
             - If ONE match is found, ask the user for confirmation: "Are you sure you want me to forget that [memory content]? (ID: [memory ID])". 
             - If the user confirms, THEN use the forgetMemory tool with that specific ID. 
-            - If there are multiple matches, no matches, or the user's request was vague (e.g., "forget something"), THEN use the recallMemories tool to show the user the list and ask them to provide the ID for the forgetMemory tool.
-        - here's the optimal meditation flow
+            - If there are multiple matches, no matches, or the user's request was vague (e.g., "forget something"), THEN use the recallMemories tool to show the user the list and ask them to provide the ID for the forgetMemory tool.        - here's the optimal meditation flow
           - when user asks for meditation or you recognize they might need one, ALWAYS use showMeditationTypeSelector tool to show the UI cards
           - DO NOT ask what type of meditation they want - always show the UI selector instead
           - after they select a type (they will tell you which one), use showMeditationPromptSelector tool to show the intention options
           - then proceed with generateMeditationContent based on their choice
+          - IMPORTANT: When generating meditation content, format it with precise timing for TTS playback:
+            * Use timestamp format [MM:SS] at the beginning of each line
+            * Start with [00:00] for the opening
+            * Use larger gaps (30-60 seconds) at the beginning for smooth entry
+            * Use smaller gaps (10-20 seconds) for continuing parts to maintain flow
+            * Target 12 minutes total duration with the last line at [10:00] (leaving 2 minutes for closing silence)
+            * Example format:
+              [00:00] Welcome to this peaceful meditation...
+              [00:45] Take a deep breath and settle into your space...
+              [01:30] Feel your body beginning to relax...
+            * This creates perfect pacing for TTS audio meditation experience
         '
       `,
     messages: coreMessages,

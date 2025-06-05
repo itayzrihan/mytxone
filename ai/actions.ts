@@ -428,12 +428,28 @@ export async function generateMeditationContentAction({
       ? `Based on this chat history: ${chatHistory.slice(-1000)}` // Use last 1000 chars
       : intention 
       ? `Based on this intention: ${intention}`
-      : `Create a general ${type} meditation`;
-
-    const { object: meditationContent } = await generateObject({
+      : `Create a general ${type} meditation`;    const { object: meditationContent } = await generateObject({
       model: geminiFlashModel,
       prompt: `Generate a ${type} meditation content for ${duration}. ${contextPrompt}. 
-      Create a guided meditation that is calming, helpful, and professionally structured.`,
+      Create a guided meditation that is calming, helpful, and professionally structured.
+      
+      CRITICAL: Format the meditation content with precise timing for TTS audio playback:
+      - Use timestamp format [MM:SS] at the beginning of each line
+      - Start with [00:00] for the opening line
+      - Use larger gaps (30-60 seconds) at the beginning for smooth, gentle entry
+      - Use smaller gaps (10-20 seconds) for continuing parts to maintain flow and connection
+      - Target 12 minutes total duration with the LAST line at [10:00] (leaving 2 minutes for natural closing silence)
+      - Create a gradual progression from slow, spacious pacing to more connected flow
+      - Each timestamp should feel natural and allow proper breathing/pause time
+      
+      Example timing structure:
+      [00:00] Welcome to this peaceful meditation session...
+      [00:45] Take a deep, slow breath and allow yourself to settle...
+      [01:30] Feel your body beginning to relax and release...
+      [02:00] Notice the rhythm of your breathing...
+      [02:20] Let each breath bring you deeper into stillness...
+      
+      Continue this pattern, building a complete 10-minute guided experience that flows naturally for TTS audio.`,
       schema: z.object({
         title: z.string().describe("A meaningful title for the meditation"),
         content: z.string().describe("The complete guided meditation script with clear instructions"),
