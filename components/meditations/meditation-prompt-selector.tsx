@@ -17,12 +17,11 @@ export function MeditationPromptSelector({ type, chatId }: MeditationPromptSelec
   });
 
   const hasChatId = Boolean(chatId);
-
   const handleChatHistoryOption = () => {
     if (hasChatId && chat) {
       chat.append({
         role: "user",
-        content: `Please create a ${type} meditation based on our recent conversation and interactions.`,
+        content: `I want to create a ${type} meditation based on our recent conversation. Please show me language options.`,
       });
     }
   };
@@ -31,7 +30,7 @@ export function MeditationPromptSelector({ type, chatId }: MeditationPromptSelec
     if (hasChatId && chat) {
       chat.append({
         role: "user",
-        content: `I want to create a ${type} meditation with a custom intention. Please ask me what specific intention, goal, or focus I'd like for this meditation.`,
+        content: `I want to create a ${type} meditation with a custom intention. Please ask me what specific intention I'd like, then show me language options.`,
       });
     }
   };

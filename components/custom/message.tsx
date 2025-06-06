@@ -18,6 +18,7 @@ import { VerifyPayment } from "../flights/verify-payment";
 import { ListMeditations } from "../meditations/list-meditations";
 import { MeditationConfirmation } from "../meditations/meditation-confirmation";
 import { MeditationDisplay } from "../meditations/meditation-display";
+import { MeditationLanguageSelector } from "../meditations/meditation-language-selector";
 import { MeditationPromptSelector } from "../meditations/meditation-prompt-selector";
 import { MeditationTypesSelector } from "../meditations/meditation-types-selector";
 import { ListMemories } from "../memories/list-memories";
@@ -108,9 +109,15 @@ export const Message = ({
                       <ListMemories memories={result.memories} />                    ) : toolName === "forgetMemory" ? (
                       <MemoryConfirmation {...result} />
                     ) : toolName === "showMeditationTypeSelector" ? (
-                      <MeditationTypesSelector chatId={chatId} />
-                    ) : toolName === "showMeditationPromptSelector" ? (
+                      <MeditationTypesSelector chatId={chatId} />                    ) : toolName === "showMeditationPromptSelector" ? (
                       <MeditationPromptSelector type={result.type} chatId={chatId} />
+                    ) : toolName === "showMeditationLanguageSelector" ? (
+                      <MeditationLanguageSelector 
+                        type={result.type} 
+                        intention={result.intention}
+                        chatHistory={result.chatHistory}
+                        chatId={chatId} 
+                      />
                     ) : toolName === "generateMeditationContent" ? (
                       <MeditationDisplay {...result} chatId={chatId} />
                     ) : toolName === "createMeditation" ? (
@@ -155,9 +162,13 @@ export const Message = ({
                       <ListMemories memories={[]} />                    ) : toolName === "forgetMemory" ? (
                       <MemoryConfirmation status="forgotten" memoryId="temp-skeleton" />
                     ) : toolName === "showMeditationTypeSelector" ? (
-                      <MeditationTypesSelector chatId={chatId} />
-                    ) : toolName === "showMeditationPromptSelector" ? (
+                      <MeditationTypesSelector chatId={chatId} />                    ) : toolName === "showMeditationPromptSelector" ? (
                       <MeditationPromptSelector type="mindfulness" chatId={chatId} />
+                    ) : toolName === "showMeditationLanguageSelector" ? (
+                      <MeditationLanguageSelector 
+                        type="mindfulness" 
+                        chatId={chatId} 
+                      />
                     ) : toolName === "generateMeditationContent" ? (
                       <MeditationDisplay type="mindfulness" title="Loading..." content="Generating your meditation..." chatId={chatId} />
                     ) : toolName === "createMeditation" ? (

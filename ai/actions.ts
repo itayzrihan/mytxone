@@ -314,6 +314,25 @@ export async function showMeditationPromptSelectorAction({
   };
 }
 
+export async function showMeditationLanguageSelectorAction({
+  type,
+  intention,
+  chatHistory,
+}: {
+  type: string;
+  intention?: string;
+  chatHistory?: string;
+}) {
+  console.log(`Action: Showing meditation language selector for ${type}`);
+  return { 
+    type,
+    intention,
+    chatHistory,
+    status: "showing_language_selector" as const,
+    message: `Please choose the language for your ${type} meditation.`
+  };
+}
+
 export async function createMeditationAction({
   userId,
   type,
@@ -416,11 +435,13 @@ export async function generateMeditationContentAction({
   intention,
   chatHistory,
   duration = "10 minutes",
+  language = "english",
 }: {
   type: string;
   intention?: string;
   chatHistory?: string;
   duration?: string;
+  language?: string;
 }) {
   console.log(`Action: Generating ${type} meditation content`);
   try {
@@ -428,10 +449,63 @@ export async function generateMeditationContentAction({
       ? `Based on this chat history: ${chatHistory.slice(-1000)}` // Use last 1000 chars
       : intention 
       ? `Based on this intention: ${intention}`
-      : `Create a general ${type} meditation`;    const { object: meditationContent } = await generateObject({
+      : `Create a general ${type} meditation`;    // Prepare language-specific prompt
+    const languageInstruction = language === "hebrew" 
+      ? `      ===== CRITICAL HEBREW LANGUAGE REQUIREMENT =====
+      
+      MANDATORY: Generate 100% of the meditation content in Hebrew with COMPLETE ניקוד (vowel marks) on EVERY SINGLE WORD IN EVERY LINE.
+      
+      CRITICAL INSTRUCTION: Every line with timestamp must have Hebrew text with full ניקוד after the timestamp.
+      
+      REQUIRED FORMAT FOR HEBREW MEDITATION:
+      [00:00] בְּרוּכִים הַבָּאִים לִמְדִיטַצְיַת הַשַּׁלְוָה הַזֹּאת
+      [00:30] קְחוּ נְשִׁימָה עֲמֻקָּה וְהַרְגִּישׁוּ אֶת הַגּוּף מִתְרַגֵּעַ
+      [01:00] הַאֲזִינוּ לְקוֹל הַנְּשִׁימָה שֶׁלָּכֶם וְהִתְמַקְּדוּ בָּרֶגַע הַזֶּה
+      [01:30] כָּל נְשִׁימָה מְבִיאָה אֶתְכֶם יוֹתֵר עָמֹק לְתוֹךְ הַשַּׁלְוָה
+      
+      VOWEL MARK REQUIREMENTS (MUST BE USED ON EVERY WORD):
+      - קָמַץ (kamatz), פַּתַח (patach), צֵירֵי (tzere), סֶגּוֹל (segol)
+      - חִירִיק (chirik), חוֹלָם (cholam), שׁוּרוּק (shuruk), קֻבּוּץ (kubutz)
+      - שְׁוָא (sheva), דָּגֵשׁ (dagesh) where appropriate
+      
+      MEDITATION TERMINOLOGY WITH ניקוד:
+      - מְדִיטַצְיָה (meditation)
+      - הַרְגָּעָה (relaxation)
+      - נְשִׁימָה (breathing)
+      - רִגְעָה (calmness)
+      - שַׁלְוָה (peace)
+      - מַחְשָׁבוֹת (thoughts)
+      - תְּחוּשׁוֹת (sensations)
+      - מַעֲרֶכֶת עַצְמִית (self-system)
+      
+      ABSOLUTE REQUIREMENT: EVERY Hebrew word in the meditation content must have complete vowel marks. No Hebrew text without ניקוד is acceptable.
+      
+      VALIDATION: Before generating, ensure each Hebrew word has proper vowel marks like: שִׁמְחָה, רָגוּעַ, מְרֻכָּז
+      `
+      : `Generate the meditation content in English.`;    const { object: meditationContent } = await generateObject({
       model: geminiFlashModel,
       prompt: `Generate a ${type} meditation content for ${duration}. ${contextPrompt}. 
       Create a guided meditation that is calming, helpful, and professionally structured.
+      
+      ${languageInstruction}
+        ${language === "hebrew" ? `
+      ===== HEBREW VALIDATION FOR TIMELINE =====
+      MANDATORY: Each timeline entry MUST follow this exact format:
+      [MM:SS] [Hebrew text with complete ניקוד]
+      
+      EXAMPLES OF CORRECT TIMELINE ENTRIES:
+      [00:00] בְּרוּכִים הַבָּאִים לִמְדִיטַצְיַת הַשַּׁלְוָה הַזֹּאת
+      [00:45] קְחוּ נְשִׁימָה עֲמֻקָּה וְהַרְגִּישׁוּ אֶת הַגּוּף מִתְרַגֵּעַ
+      [01:30] הַאֲזִינוּ לְקוֹל הַנְּשִׁימָה שֶׁלָּכֶם וְהִתְמַקְּדוּ בָּרֶגַע הַזֶּה
+      [02:00] כָּל נְשִׁימָה מְבִיאָה אֶתְכֶם יוֹתֵר עָמֹק לְתוֹךְ הַשַּׁלְוָה
+      [02:20] הַרְגִּישׁוּ אֶת הַמַּתְח נֶעְלָם מִן הַכְּתֵפַיִם וְהַצַּוָּאר
+      
+      WRONG EXAMPLES (DO NOT DO THIS):
+      [00:00] ברוכים הבאים למדיטציית השלווה הזאת (missing ניקוד)
+      [00:45] קחו נשימה עמוקה (missing vowel marks)
+      
+      CRITICAL: EVERY Hebrew word after each timestamp MUST have complete vowel marks.
+      ` : ''}
       
       CRITICAL: Format the meditation content with precise timing for TTS audio playback:
       - Use timestamp format [MM:SS] at the beginning of each line
@@ -449,14 +523,69 @@ export async function generateMeditationContentAction({
       [02:00] Notice the rhythm of your breathing...
       [02:20] Let each breath bring you deeper into stillness...
       
-      Continue this pattern, building a complete 10-minute guided experience that flows naturally for TTS audio.`,
-      schema: z.object({
-        title: z.string().describe("A meaningful title for the meditation"),
-        content: z.string().describe("The complete guided meditation script with clear instructions"),
+      Continue this pattern, building a complete 10-minute guided experience that flows naturally for TTS audio.`,      schema: z.object({
+        title: z.string().describe(language === "hebrew" 
+          ? "A meaningful title for the meditation IN HEBREW WITH COMPLETE ניקוד (vowel marks)"
+          : "A meaningful title for the meditation"),
+        content: z.string().describe(language === "hebrew" 
+          ? "The complete guided meditation script IN HEBREW WITH FULL ניקוד on every word. VERIFY: Every Hebrew letter that can receive vowel marks MUST have them."
+          : "The complete guided meditation script with clear instructions"),
         estimatedDuration: z.string().describe("Estimated time needed for this meditation"),
-        keyBenefits: z.array(z.string()).describe("Key benefits this meditation provides"),
+        keyBenefits: z.array(z.string()).describe(language === "hebrew"
+          ? "Key benefits this meditation provides IN HEBREW WITH COMPLETE ניקוד"
+          : "Key benefits this meditation provides"),
       }),
     });
+
+    // Additional validation for Hebrew content
+    if (language === "hebrew") {
+      const hebrewVowelMarks = /[\u05B0-\u05BC\u05C1\u05C2\u05C4\u05C5\u05C7]/; // Hebrew vowel mark Unicode ranges
+      const hasHebrewVowels = hebrewVowelMarks.test(meditationContent.content);
+      
+      if (!hasHebrewVowels) {
+        console.warn("Generated Hebrew content lacks proper ניקוד, attempting regeneration...");        // If no vowel marks detected, try one more time with even more explicit instruction
+        const { object: retriedContent } = await generateObject({
+          model: geminiFlashModel,
+          prompt: `CRITICAL HEBREW REQUIREMENT: You MUST generate Hebrew meditation content with COMPLETE ניקוד on EVERY word in EVERY timeline entry.
+          
+          Type: ${type}
+          Duration: ${duration}
+          Context: ${contextPrompt}
+          
+          MANDATORY TIMELINE FORMAT WITH ניקוד:
+          [00:00] בְּרוּכִים הַבָּאִים לִמְדִיטַצְיַת הַשַּׁלְוָה הַזֹּאת
+          [00:30] קְחוּ נְשִׁימָה עֲמֻקָּה וְהַרְגִּישׁוּ אֶת הַגּוּף מִתְרַגֵּעַ
+          [01:00] הַאֲזִינוּ לְקוֹל הַנְּשִׁימָה שֶׁלָּכֶם וְהִתְמַקְּדוּ בָּרֶגַע הַזֶּה
+          [01:30] כָּל נְשִׁימָה מְבִיאָה אֶתְכֶם יוֹתֵר עָמֹק לְתוֹךְ הַשַּׁלְוָה
+          [02:00] הַרְגִּישׁוּ אֶת הַמַּתְח נֶעְלָם מִן הַכְּתֵפַיִם וְהַצַּוָּאר
+          [02:20] תְּנוּ לַגּוּף שֶׁלָּכֶם לְהַרְגִּישׁ כָּבֵד וְרָגוּעַ יוֹתֵר
+          [02:50] עַכְשָׁיו הַקְּדִישׁוּ תַּשׂוּמֶת לֵב לְמַחְשְׁבוֹתֵיכֶם
+          [03:20] אַל תִּלָּחֲמוּ בַּמַּחְשָׁבוֹת, פָּשׁוּט צְפוּ בָּהֶן
+          [03:50] תְּנוּ לַמַּחְשָׁבוֹת לַחֲלֹף כְּמוֹ עֲנָנִים בַּשָּׁמַיִם
+          [04:20] חִזְרוּ אֶל הַנְּשִׁימָה כָּל פַּעַם שֶׁאַתֶּם מְרַכְּזִים דַּעְתְּכֶם
+          
+          EVERY SINGLE HEBREW WORD MUST HAVE VOWEL MARKS. NO EXCEPTIONS.
+          
+          Generate a complete ${duration} meditation following this exact format.`,
+          schema: z.object({
+            title: z.string().describe("Title IN HEBREW WITH COMPLETE ניקוד"),
+            content: z.string().describe("Complete meditation timeline IN HEBREW WITH FULL ניקוד on every word"),
+            estimatedDuration: z.string().describe("Estimated duration"),
+            keyBenefits: z.array(z.string()).describe("Benefits IN HEBREW WITH ניקוד"),
+          }),
+        });
+        
+        return {
+          type,
+          title: retriedContent.title,
+          content: retriedContent.content,
+          duration: retriedContent.estimatedDuration,
+          keyBenefits: retriedContent.keyBenefits,
+          language,
+          status: "generated" as const
+        };
+      }
+    }
 
     return {
       type,
@@ -464,6 +593,7 @@ export async function generateMeditationContentAction({
       content: meditationContent.content,
       duration: meditationContent.estimatedDuration,
       keyBenefits: meditationContent.keyBenefits,
+      language,
       status: "generated" as const
     };
   } catch (error) {

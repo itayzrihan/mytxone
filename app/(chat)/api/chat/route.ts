@@ -19,6 +19,7 @@ import {
   forgetMemoryAction,
   showMeditationTypeSelectorAction,
   showMeditationPromptSelectorAction,
+  showMeditationLanguageSelectorAction,
   createMeditationAction,
   listMeditationsAction,
   getMeditationAction,
@@ -134,7 +135,8 @@ export async function POST(request: Request) {
           - when user asks for meditation or you recognize they might need one, ALWAYS use showMeditationTypeSelector tool to show the UI cards
           - DO NOT ask what type of meditation they want - always show the UI selector instead
           - after they select a type (they will tell you which one), use showMeditationPromptSelector tool to show the intention options
-          - then proceed with generateMeditationContent based on their choice
+          - after they select their prompt/intention, use showMeditationLanguageSelector tool to show Hebrew/English options
+          - then proceed with generateMeditationContent based on their choices (type, intention/chat history, and language)
           - IMPORTANT: When generating meditation content, format it with precise timing for TTS playback:
             * Use timestamp format [MM:SS] at the beginning of each line
             * Start with [00:00] for the opening
@@ -392,8 +394,7 @@ export async function POST(request: Request) {
         execute: async () => {
           return await showMeditationTypeSelectorAction();
         },
-      },
-      showMeditationPromptSelector: {
+      },      showMeditationPromptSelector: {
         description: "Show UI options to choose between chat history or custom intention for meditation creation. Use this after user selects a meditation type.",
         parameters: z.object({
           type: z.string().describe("The type of meditation selected by the user"),
@@ -402,16 +403,27 @@ export async function POST(request: Request) {
           return await showMeditationPromptSelectorAction({ type });
         },
       },
-      generateMeditationContent: {
+      showMeditationLanguageSelector: {
+        description: "Show language selection UI (Hebrew/English) before generating meditation content. Use this after user selects meditation prompt/intention.",
+        parameters: z.object({
+          type: z.string().describe("The type of meditation selected by the user"),
+          intention: z.string().optional().describe("User's specific intention or goal for the meditation"),
+          chatHistory: z.string().optional().describe("Recent chat history to base meditation on"),
+        }),
+        execute: async ({ type, intention, chatHistory }) => {
+          return await showMeditationLanguageSelectorAction({ type, intention, chatHistory });
+        },
+      },      generateMeditationContent: {
         description: "Generate custom meditation content based on user intentions or chat history. Returns meditation content that can optionally be saved.",
         parameters: z.object({
           type: z.string().describe("Type of meditation: visualization, mindfulness, sleep story, loving kindness, chakra balancing, breath awareness, affirmations, concentration, body scan, or memory palace enhancement"),
           intention: z.string().optional().describe("User's specific intention or goal for the meditation"),
           chatHistory: z.string().optional().describe("Recent chat history to base meditation on"),
           duration: z.string().optional().describe("Desired meditation duration (e.g., '5 minutes', '10 minutes')"),
+          language: z.string().optional().describe("Language for meditation content: 'english' or 'hebrew' (with ניקוד)"),
         }),
-        execute: async ({ type, intention, chatHistory, duration }) => {
-          return await generateMeditationContentAction({ type, intention, chatHistory, duration });
+        execute: async ({ type, intention, chatHistory, duration, language }) => {
+          return await generateMeditationContentAction({ type, intention, chatHistory, duration, language });
         },
       },
       createMeditation: {
