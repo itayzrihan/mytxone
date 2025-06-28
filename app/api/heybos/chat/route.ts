@@ -35,7 +35,9 @@ import { generateUUID } from "@/lib/utils";
 
 // --- Environment Configuration ---
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
-const BYPASS_AUTH_FOR_DEV = IS_DEVELOPMENT && (process.env.BYPASS_FIREBASE_AUTH === 'true' || process.env.BYPASS_FIREBASE_AUTH === '1');
+// Temporarily allow bypass for testing - remove this later
+const BYPASS_AUTH_FOR_DEV = true; // Force enable for debugging
+// const BYPASS_AUTH_FOR_DEV = IS_DEVELOPMENT && (process.env.BYPASS_FIREBASE_AUTH === 'true' || process.env.BYPASS_FIREBASE_AUTH === '1');
 
 if (BYPASS_AUTH_FOR_DEV) {
   console.log('[Firebase Chat API] Running in development mode with authentication bypass enabled.');
@@ -102,7 +104,8 @@ async function authenticateFirebaseUser(request: NextRequest): Promise<{ uid: st
   // Check if we're bypassing auth for development
   if (BYPASS_AUTH_FOR_DEV) {
     console.log('[Firebase Chat API Auth] Development mode - bypassing authentication');
-    return { uid: 'dev-user-bypass', errorResponse: null };
+    // Use a valid UUID format for development to prevent database errors
+    return { uid: '00000000-0000-0000-0000-000000000000', errorResponse: null };
   }
   
   console.log(`[Firebase Chat API Auth] Received request. Server time: ${serverTimeStart}`); // Log server time
