@@ -152,18 +152,31 @@ export async function addTaskAction({
   dueDate?: string;
   relatedTo?: string[];
 }) {
-  console.log(`Action: Adding HeyBos task instruction: ${taskDescription} for user ${userId}`);
+  console.log(`Action: Adding HeyBos task with details:`, {
+    taskDescription,
+    taskType,
+    priority,
+    dueDate,
+    relatedTo
+  });
+  
+  // Parse the task description to extract name and description
+  // If the description contains multiple sentences, use first as name, rest as description
+  const sentences = taskDescription.split('.').map(s => s.trim()).filter(s => s.length > 0);
+  const name = sentences[0] || taskDescription;
+  const description = sentences.length > 1 ? sentences.slice(1).join('. ') : null;
+  
   // Return instruction for TheBaze to handle locally using the real HeyBos task system
   return { 
     action: "addTask",
-    name: taskDescription,
-    description: taskDescription,
+    name: name,
+    description: description || taskDescription,
     taskType,
     priority,
     dueDate,
     relatedTo: relatedTo || [],
     status: "added" as const,
-    message: `I'll add "${taskDescription}" to your tasks.`
+    message: `I'll add "${name}" as a ${taskType} task with ${priority} priority${dueDate ? ` due ${new Date(dueDate).toLocaleDateString()}` : ''}.`
   };
 }
 

@@ -12,9 +12,10 @@ import {
   generateSampleSeatSelection,
   addTaskAction,
   listTasksAction,
-  markTaskCompleteAction,
+  updateTaskAction,
+  finishTaskAction,
   deleteTaskAction,
-  updateTaskNameAction,
+  searchTasksAction,
   saveMemoryAction,
   recallMemoriesAction,
   forgetMemoryAction,
@@ -255,10 +256,36 @@ export async function POST(request: NextRequest) {
           - create reservation (ask user whether to proceed with payment or change reservation)
           - authorize payment (requires user consent, wait for user to finish payment and let you know when done)
           - display boarding pass (DO NOT display boarding pass without verifying payment)
-        - here's the optimal task management flow
-          - add a task
-          - list tasks (automatically show the list after adding or completing a task)
-          - mark a task as complete        - here's the optimal memory management flow
+        - here's the optimal task management flow:
+          - When adding a task, ALWAYS parse the user's request carefully:
+            * Extract the main task name/action (keep concise, avoid repetition)
+            * Detect task type from keywords (EXACT VALUES: 'onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'):
+              - "daily", "every day", "each day", "יומי" → daily
+              - "weekly", "every week", "each week", "שבועי" → weekly  
+              - "monthly", "every month", "each month", "חודשי" → monthly
+              - "quarterly", "every quarter", "רבעוני" → quarterly
+              - "yearly", "every year", "annually", "שנתי" → yearly
+              - Default or "one time", "once", "חד פעמי" → onetime
+            * Detect priority from keywords (EXACT VALUES: 'low', 'medium', 'high'):
+              - "urgent", "important", "asap", "critical", "high priority", "גבוהה" → high
+              - "later", "whenever", "low priority", "not urgent", "נמוכה" → low
+              - Default, "normal", "regular", "בינונית" → medium
+            * Parse due dates:
+              - "tomorrow", "מחר" → next day
+              - "next Friday", "Monday", "יום שני" → specific weekday
+              - "June 30th", "30/6", "30 ביוני" → specific date
+              - Convert to ISO 8601 format (2025-06-29T10:00:00.000Z)
+            * IMPORTANT: Status values are 'pending', 'running', 'paused', 'finished', 'skipped' (Hebrew: ממתין, פועל, מושהה, הושלם, דולג)
+          - Examples of good parsing:
+            * "Add daily exercise task for tomorrow" → taskDescription: "exercise", taskType: "daily", dueDate: "2025-06-29T10:00:00.000Z"
+            * "Urgent: finish report by Friday" → taskDescription: "finish report", priority: "high", dueDate: "next Friday"
+            * "Weekly team meeting" → taskDescription: "team meeting", taskType: "weekly"
+            * "Monthly budget review with low priority" → taskDescription: "budget review", taskType: "monthly", priority: "low"
+          - After adding a task, automatically list tasks to show the updated list
+          - For task updates, allow editing any field: name, description, type, priority, status, due date
+          - Use finishTask to mark tasks as completed
+          - Use searchTasks when user wants to find specific tasks
+          - When listing tasks, use appropriate filters (active, finished, all) based on user request        - here's the optimal memory management flow
           - save a memory (e.g., "Remember my favorite color is blue")
           - recall memories (e.g., "What do you remember?", "What is my favorite color?")
           - forget a memory: 
@@ -447,32 +474,52 @@ export async function POST(request: NextRequest) {
         },
         addTask: {
           description:
-            "Add a task for the user to complete later.",
+            "Add a task for the user. IMPORTANT: Parse the user's request to extract task details properly. Use EXACT enum values only.",
           parameters: z.object({
-            taskDescription: z.string().describe(
-              "Description of the task to add.",
-            ),
+            taskDescription: z.string().describe("The main description/name of the task. Keep this concise - extract the core task, not all details."),
+            taskType: z.enum(['onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']).optional().describe("Type of task. EXACT VALUES ONLY: 'onetime' (default), 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'. Parse from keywords: daily/יומי, weekly/שבועי, monthly/חודשי, quarterly/רבעוני, yearly/שנתי."),
+            priority: z.enum(['low', 'medium', 'high']).optional().describe("Priority level. EXACT VALUES ONLY: 'low', 'medium' (default), 'high'. Parse from keywords: urgent/important/asap→high, later/whenever→low, otherwise→medium."),
+            dueDate: z.string().optional().describe("Due date in ISO 8601 format. Parse dates like 'tomorrow', 'next Friday', 'June 30th', etc. Format as '2025-06-29T10:00:00.000Z'."),
           }),
-          execute: async ({ taskDescription }) => {
-            return await addTaskAction({ taskDescription, userId: uid });
+          execute: async ({ taskDescription, taskType, priority, dueDate }) => {
+            return await addTaskAction({ taskDescription, taskType, priority, dueDate, userId: uid });
           },
         },
         listTasks: {
           description:
-            "List all tasks for the user, including pending and completed tasks.",
-          parameters: z.object({}),
-          execute: async () => {
-            return await listTasksAction({ userId: uid });
+            "List tasks for the user with optional filtering and pagination.",
+          parameters: z.object({
+            filter: z.enum(['active', 'finished', 'all']).optional().describe("Filter tasks by status - defaults to 'active'."),
+            limit: z.number().optional().describe("Number of tasks to return - defaults to 20."),
+            offset: z.number().optional().describe("Number of tasks to skip - defaults to 0."),
+            searchQuery: z.string().optional().describe("Search query to filter tasks by name or description."),
+          }),
+          execute: async ({ filter, limit, offset, searchQuery }) => {
+            return await listTasksAction({ filter, limit, offset, searchQuery, userId: uid });
           },
         },
-        markTaskComplete: {
-          description: "Mark a specific task as complete or incomplete. If the task is already completed, it will be marked as incomplete instead.",
+        updateTask: {
+          description: "Update an existing task's details. Use the exact enum values for taskType, priority, and status.",
           parameters: z.object({
-            taskId: z.string().describe("The ID of the task to toggle completion status."),
-            setComplete: z.boolean().optional().describe("Optional: true to mark as complete, false to mark as incomplete. If not provided, the status will be toggled."),
+            taskId: z.string().describe("The ID of the task to update."),
+            name: z.string().optional().describe("New name for the task."),
+            description: z.string().optional().describe("New description for the task."),
+            taskType: z.enum(['onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']).optional().describe("New task type. EXACT VALUES ONLY: onetime, daily, weekly, monthly, quarterly, yearly."),
+            priority: z.enum(['low', 'medium', 'high']).optional().describe("New priority level. EXACT VALUES ONLY: low, medium, high."),
+            status: z.enum(['pending', 'running', 'paused', 'finished', 'skipped']).optional().describe("New status. EXACT VALUES ONLY: pending, running, paused, finished, skipped."),
+            dueDate: z.string().optional().describe("New due date in ISO 8601 format."),
           }),
-          execute: async ({ taskId, setComplete }) => {
-            return await markTaskCompleteAction({ taskId, userId: uid, setComplete });
+          execute: async ({ taskId, name, description, taskType, priority, status, dueDate }) => {
+            return await updateTaskAction({ taskId, name, description, taskType, priority, status, dueDate, userId: uid });
+          },
+        },
+        finishTask: {
+          description: "Mark a specific task as finished.",
+          parameters: z.object({
+            taskId: z.string().describe("The ID of the task to finish."),
+          }),
+          execute: async ({ taskId }) => {
+            return await finishTaskAction({ taskId, userId: uid });
           },
         },
         deleteTask: {
@@ -484,14 +531,14 @@ export async function POST(request: NextRequest) {
             return await deleteTaskAction({ taskId, userId: uid });
           },
         },
-        updateTaskName: {
-          description: "Update the name/description of an existing task.",
+        searchTasks: {
+          description: "Search for tasks by name or description.",
           parameters: z.object({
-            taskId: z.string().describe("The ID of the task to update."),
-            newDescription: z.string().describe("The new description for the task."),
+            query: z.string().describe("Search query to find tasks."),
+            limit: z.number().optional().describe("Number of results to return - defaults to 20."),
           }),
-          execute: async ({ taskId, newDescription }) => {
-            return await updateTaskNameAction({ taskId, userId: uid, newDescription });
+          execute: async ({ query, limit }) => {
+            return await searchTasksAction({ query, limit, userId: uid });
           },
         },
         saveMemory: {
