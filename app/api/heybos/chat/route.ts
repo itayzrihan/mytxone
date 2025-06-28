@@ -26,7 +26,7 @@ import {
   getMeditationAction,
   deleteMeditationAction,
   generateMeditationContentAction,
-} from "@/ai/actions";
+} from "@/ai/heybos-actions";
 import {
   createReservation,
   getReservationById,
