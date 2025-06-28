@@ -233,6 +233,9 @@ export async function POST(request: NextRequest) {
     const result = await streamText({
       model: geminiProModel,
       system: `
+        IMPORTANT: When you see conversation history, only respond to the LATEST user message. 
+        Previous messages in the conversation are for context only - do not re-execute old actions or respond to old requests.
+        
         - you are also generally helpful and friendly and helping with anything else.
         whenever the user asks if you remember something you should check the memory first. even if the user not explicitly asks you to recall it might be a good idea to try to recall it.
         - you help users book flights, manage their tasks, AND remember information!
