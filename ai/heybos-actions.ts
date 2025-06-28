@@ -134,21 +134,34 @@ export async function generateReservationPrice(props: {
   return reservation;
 }
 
-// --- Task Management Actions ---
-// These now return instructions for the client to execute locally
+// --- HeyBos Task Management Actions ---
+// These now return instructions for the client to execute locally using the real HeyBos task system
 
 export async function addTaskAction({
   taskDescription,
   userId,
+  taskType = "onetime",
+  priority = "medium",
+  dueDate,
+  relatedTo,
 }: {
   taskDescription: string;
   userId: string;
+  taskType?: "onetime" | "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+  priority?: "low" | "medium" | "high";
+  dueDate?: string;
+  relatedTo?: string[];
 }) {
-  console.log(`Action: Adding task instruction: ${taskDescription} for user ${userId}`);
-  // Return instruction for TheBaze to handle locally
+  console.log(`Action: Adding HeyBos task instruction: ${taskDescription} for user ${userId}`);
+  // Return instruction for TheBaze to handle locally using the real HeyBos task system
   return { 
     action: "addTask",
+    name: taskDescription,
     description: taskDescription,
+    taskType,
+    priority,
+    dueDate,
+    relatedTo: relatedTo || [],
     status: "added" as const,
     message: `I'll add "${taskDescription}" to your tasks.`
   };
@@ -156,36 +169,87 @@ export async function addTaskAction({
 
 export async function listTasksAction({
   userId,
+  filter = "active",
+  limit = 20,
+  offset = 0,
+  searchQuery,
 }: {
   userId: string;
+  filter?: "active" | "finished" | "all";
+  limit?: number;
+  offset?: number;
+  searchQuery?: string;
 }) {
-  console.log(`Action: Listing tasks instruction for user ${userId}`);
-  // Return instruction for TheBaze to handle locally
+  console.log(`Action: Listing HeyBos tasks instruction for user ${userId}, filter: ${filter}`);
+  // Return instruction for TheBaze to handle locally using the real HeyBos task system
   return { 
     action: "listTasks",
+    filter,
+    limit,
+    offset,
+    searchQuery,
     status: "listed" as const,
-    message: "Here are your current tasks:"
+    message: searchQuery 
+      ? `Here are your tasks matching "${searchQuery}":` 
+      : `Here are your ${filter === 'active' ? 'active' : filter === 'finished' ? 'completed' : ''} tasks:`
   };
 }
 
-export async function markTaskCompleteAction({ 
+export async function updateTaskAction({ 
   taskId,
   userId,
-  setComplete = true,
+  name,
+  description,
+  taskType,
+  priority,
+  status,
+  dueDate,
+  relatedTo,
 }: { 
   taskId: string;
   userId: string;
-  setComplete?: boolean;
+  name?: string;
+  description?: string;
+  taskType?: "onetime" | "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+  priority?: "low" | "medium" | "high";
+  status?: "pending" | "running" | "paused" | "finished" | "skipped";
+  dueDate?: string;
+  relatedTo?: string[];
 }) {
-  const action = setComplete ? "complete" : "incomplete";
-  console.log(`Action: Marking task ${taskId} as ${action} instruction for user ${userId}`);
-  // Return instruction for TheBaze to handle locally
+  console.log(`Action: Updating HeyBos task ${taskId} instruction for user ${userId}`);
+  // Return instruction for TheBaze to handle locally using the real HeyBos task system
+  const updates: any = {};
+  if (name !== undefined) updates.name = name;
+  if (description !== undefined) updates.description = description;
+  if (taskType !== undefined) updates.taskType = taskType;
+  if (priority !== undefined) updates.priority = priority;
+  if (status !== undefined) updates.status = status;
+  if (dueDate !== undefined) updates.dueDate = dueDate;
+  if (relatedTo !== undefined) updates.relatedTo = relatedTo;
+
   return { 
-    action: "markTaskComplete",
+    action: "updateTask",
     taskId,
-    setComplete,
-    status: setComplete ? "completed" : "pending" as const,
-    message: `I'll mark that task as ${action}.`
+    ...updates,
+    status: "updated" as const,
+    message: `I'll update that task for you.`
+  };
+}
+
+export async function finishTaskAction({ 
+  taskId,
+  userId,
+}: { 
+  taskId: string;
+  userId: string;
+}) {
+  console.log(`Action: Finishing HeyBos task ${taskId} instruction for user ${userId}`);
+  // Return instruction for TheBaze to handle locally using the real HeyBos task system
+  return { 
+    action: "finishTask",
+    taskId,
+    status: "finished" as const,
+    message: `I'll mark that task as finished.`
   };
 }
 
@@ -196,8 +260,8 @@ export async function deleteTaskAction({
   taskId: string;
   userId: string;
 }) {
-  console.log(`Action: Deleting task ${taskId} instruction for user ${userId}`);
-  // Return instruction for TheBaze to handle locally
+  console.log(`Action: Deleting HeyBos task ${taskId} instruction for user ${userId}`);
+  // Return instruction for TheBaze to handle locally using the real HeyBos task system
   return { 
     action: "deleteTask",
     taskId,
@@ -206,23 +270,25 @@ export async function deleteTaskAction({
   };
 }
 
-export async function updateTaskNameAction({ 
-  taskId,
+export async function searchTasksAction({
   userId,
-  newDescription,
-}: { 
-  taskId: string;
+  query,
+  limit = 20,
+}: {
   userId: string;
-  newDescription: string;
+  query: string;
+  limit?: number;
 }) {
-  console.log(`Action: Updating task ${taskId} name instruction to "${newDescription}" for user ${userId}`);
-  // Return instruction for TheBaze to handle locally
+  console.log(`Action: Searching HeyBos tasks instruction for user ${userId}, query: ${query}`);
+  // Return instruction for TheBaze to handle locally using the real HeyBos task system
   return { 
-    action: "updateTaskName",
-    taskId,
-    newDescription,
-    status: "updated" as const,
-    message: `I'll update that task to "${newDescription}".`
+    action: "listTasks",
+    filter: "all",
+    searchQuery: query,
+    limit,
+    offset: 0,
+    status: "listed" as const,
+    message: `Searching for tasks matching "${query}":`
   };
 }
 
