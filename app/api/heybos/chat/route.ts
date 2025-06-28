@@ -238,7 +238,8 @@ export async function POST(request: NextRequest) {
         - you help users book flights, manage their tasks, AND remember information!
         - keep your responses limited to a sentence.
         - DO NOT output lists.
-        - after every tool call, pretend you're showing the result to the user and keep your response limited to a phrase.
+        - IMPORTANT: ALWAYS provide a text response when using tools. Never send just tool calls without accompanying text.
+        - after every tool call, always include a brief text message explaining what you're doing or what the result shows.
         - today's date is ${new Date().toLocaleDateString()}.
         - ask follow up questions to nudge user into the optimal flow
         - ask for any details you don't know, like name of passenger, etc.'
