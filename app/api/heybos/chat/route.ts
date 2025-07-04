@@ -16,6 +16,9 @@ import {
   finishTaskAction,
   deleteTaskAction,
   searchTasksAction,
+  workflowManagerAction,
+  batchTaskOperationsAction,
+  smartTaskFinderAction,
   saveMemoryAction,
   recallMemoriesAction,
   forgetMemoryAction,
@@ -256,8 +259,9 @@ export async function POST(request: NextRequest) {
           - create reservation (ask user whether to proceed with payment or change reservation)
           - authorize payment (requires user consent, wait for user to finish payment and let you know when done)
           - display boarding pass (DO NOT display boarding pass without verifying payment)
-        - here's the optimal task management flow:
-          - When adding a task, ALWAYS parse the user's request carefully:
+        - here's the optimal task management flow (enhanced with smart tools):
+          - When adding a task, use the workflowManager for complex requests that need confirmation
+          - ALWAYS parse the user's request carefully:
             * Extract the main task name/action (keep concise, avoid repetition)
             * Detect task type from keywords (EXACT VALUES: 'onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'):
               - "daily", "every day", "each day", "יומי" → daily
@@ -276,15 +280,26 @@ export async function POST(request: NextRequest) {
               - "June 30th", "30/6", "30 ביוני" → specific date
               - Convert to ISO 8601 format (2025-06-29T10:00:00.000Z)
             * IMPORTANT: Status values are 'pending', 'running', 'paused', 'finished', 'skipped' (Hebrew: ממתין, פועל, מושהה, הושלם, דולג)
-          - Examples of good parsing:
-            * "Add daily exercise task for tomorrow" → taskDescription: "exercise", taskType: "daily", dueDate: "2025-06-29T10:00:00.000Z"
-            * "Urgent: finish report by Friday" → taskDescription: "finish report", priority: "high", dueDate: "next Friday"
-            * "Weekly team meeting" → taskDescription: "team meeting", taskType: "weekly"
-            * "Monthly budget review with low priority" → taskDescription: "budget review", taskType: "monthly", priority: "low"
-          - After adding a task, automatically list tasks to show the updated list
+          
+          - ENHANCED SMART SEARCH AND OPERATIONS:
+            * When user references a task by description (e.g., "edit the running task", "finish the exercise task"), use enhancedSearchTasks first
+            * For complex operations like "delete all finished tasks" or "add 5 tasks", use workflowManager
+            * For bulk operations, use batchTaskOperations with proper confirmation
+            * Use smartTaskFinder for advanced filtering and fuzzy matching
+            * Always show task details and ask for confirmation before destructive operations
+          
+          - WORKFLOW EXAMPLES:
+            * User: "Change the due date of my running task to tomorrow"
+              → enhancedSearchTasks for "running" → show matching tasks → ask for confirmation → updateTask
+            * User: "Add tasks for weekly meal prep, daily exercise, and monthly budget review"  
+              → workflowManager to plan multi-step addition → ask for confirmation → batchTaskOperations
+            * User: "Delete all low priority tasks that are finished"
+              → smartTaskFinder with criteria → show matching tasks → ask for confirmation → batchTaskOperations
+          
+          - After adding tasks, automatically list tasks to show the updated list
           - For task updates, allow editing any field: name, description, type, priority, status, due date
           - Use finishTask to mark tasks as completed
-          - Use searchTasks when user wants to find specific tasks
+          - Use enhancedSearchTasks when user wants to find specific tasks with smart matching
           - When listing tasks, use appropriate filters (active, finished, all) based on user request        - here's the optimal memory management flow
           - save a memory (e.g., "Remember my favorite color is blue")
           - recall memories (e.g., "What do you remember?", "What is my favorite color?")
@@ -643,6 +658,60 @@ export async function POST(request: NextRequest) {
           }),
           execute: async ({ meditationId }) => {
             return await deleteMeditationAction({ meditationId, userId: uid });
+          },
+        },
+        enhancedSearchTasks: {
+          description: "Enhanced search for tasks using intelligent keyword matching and relevance analysis. This tool provides smarter search results than the basic searchTasks tool.",
+          parameters: z.object({
+            query: z.string().describe("Search query to find tasks. Can be natural language describing what you're looking for."),
+            limit: z.number().optional().describe("Number of results to return - defaults to 20."),
+          }),
+          execute: async ({ query, limit }) => {
+            return await searchTasksAction({ query, limit, userId: uid });
+          },
+        },
+        workflowManager: {
+          description: "The 'Mother of All Tools' - an intelligent workflow manager that can orchestrate multiple tool operations, handle complex user requests, ask for confirmations, and manage multi-step processes. Use this for complex requests that involve multiple operations or when you need to be extra careful about user intent.",
+          parameters: z.object({
+            userRequest: z.string().describe("The user's original request or command"),
+            currentContext: z.any().optional().describe("Current context or data relevant to the request"),
+            previousSteps: z.array(z.string()).optional().describe("Any previous steps already taken in this workflow"),
+          }),
+          execute: async ({ userRequest, currentContext, previousSteps }) => {
+            return await workflowManagerAction({ userId: uid, userRequest, currentContext, previousSteps });
+          },
+        },
+        batchTaskOperations: {
+          description: "Execute multiple task operations (add, update, delete, finish) in a single batch. Allows for bulk operations on tasks with optional confirmation prompts.",
+          parameters: z.object({
+            operations: z.array(z.object({
+              operation: z.enum(['add', 'update', 'delete', 'finish']).describe("Type of operation to perform"),
+              taskId: z.string().optional().describe("Task ID for update, delete, or finish operations"),
+              taskData: z.any().optional().describe("Task data for add or update operations"),
+            })).describe("Array of operations to perform"),
+            confirmationRequired: z.boolean().optional().describe("Whether to ask for user confirmation before executing - defaults to true for destructive operations"),
+          }),
+          execute: async ({ operations, confirmationRequired }) => {
+            return await batchTaskOperationsAction({ userId: uid, operations, confirmationRequired });
+          },
+        },
+        smartTaskFinder: {
+          description: "Advanced task finder with intelligent matching capabilities. Can find tasks based on fuzzy matching, date ranges, and complex criteria.",
+          parameters: z.object({
+            searchCriteria: z.object({
+              keywords: z.array(z.string()).optional().describe("Keywords to search for"),
+              description: z.string().optional().describe("Description or partial description to match"),
+              status: z.string().optional().describe("Task status to filter by"),
+              priority: z.string().optional().describe("Priority level to filter by"),
+              dateRange: z.object({
+                from: z.string().optional().describe("Start date for filtering"),
+                to: z.string().optional().describe("End date for filtering"),
+              }).optional().describe("Date range for filtering tasks"),
+            }).describe("Criteria for finding tasks"),
+            fuzzyMatch: z.boolean().optional().describe("Whether to use fuzzy/approximate matching - defaults to true"),
+          }),
+          execute: async ({ searchCriteria, fuzzyMatch }) => {
+            return await smartTaskFinderAction({ userId: uid, searchCriteria, fuzzyMatch });
           },
         },      generateMeditationAudio: {
           description: "Generate TTS audio for a meditation using Gemini's text-to-speech. Returns audio URL for playback.",

@@ -292,16 +292,156 @@ export async function searchTasksAction({
   query: string;
   limit?: number;
 }) {
-  console.log(`Action: Searching HeyBos tasks instruction for user ${userId}, query: ${query}`);
-  // Return instruction for TheBaze to handle locally using the real HeyBos task system
+  console.log(`Action: Enhanced searching HeyBos tasks instruction for user ${userId}, query: ${query}`);
+  
+  // Generate relevant keywords using AI
+  const { object: searchAnalysis } = await generateObject({
+    model: geminiFlashModel,
+    prompt: `Analyze the search query "${query}" and generate relevant keywords and synonyms that might help find related tasks. Consider:
+    - Different ways to express the same action/concept
+    - Related activities or contexts
+    - Alternative spellings or phrasings
+    - Both English and Hebrew terms if applicable
+    
+    Return a comprehensive list of keywords that would help match relevant tasks.`,
+    schema: z.object({
+      primaryKeywords: z.array(z.string()).describe("Main keywords from the query"),
+      relatedKeywords: z.array(z.string()).describe("Related terms and synonyms"),
+      contextKeywords: z.array(z.string()).describe("Contextual terms that might be relevant"),
+      hebrewTerms: z.array(z.string()).describe("Hebrew equivalents if applicable"),
+    }),
+  });
+
+  // Return instruction for TheBaze to handle locally using enhanced search
   return { 
-    action: "listTasks",
-    filter: "all",
-    searchQuery: query,
+    action: "searchTasks",
+    query,
+    searchAnalysis,
     limit,
-    offset: 0,
-    status: "listed" as const,
-    message: `Searching for tasks matching "${query}":`
+    status: "searching" as const,
+    message: `Searching for tasks related to "${query}" using smart keyword matching...`
+  };
+}
+
+export async function workflowManagerAction({
+  userId,
+  userRequest,
+  currentContext,
+  previousSteps = [],
+}: {
+  userId: string;
+  userRequest: string;
+  currentContext?: any;
+  previousSteps?: string[];
+}) {
+  console.log(`Action: Workflow Manager processing request for user ${userId}: ${userRequest}`);
+  
+  // Analyze the user request and determine the workflow
+  const { object: workflowPlan } = await generateObject({
+    model: geminiFlashModel,
+    prompt: `You are the "Mother of All Tools" - an intelligent workflow manager. Analyze this user request and create a smart multi-step workflow:
+
+User Request: "${userRequest}"
+Current Context: ${JSON.stringify(currentContext)}
+Previous Steps: ${previousSteps.join(', ')}
+
+Based on the request, determine:
+1. What type of operation this is (task management, search, multi-operation, etc.)
+2. The optimal sequence of steps to fulfill this request
+3. What information you need from the user before proceeding
+4. Any confirmations needed from the user
+
+Consider these scenarios:
+- If user asks to edit a task by description (e.g., "change the running task to tomorrow"), first search for relevant tasks, then ask for confirmation
+- If user wants to add a task, break it into steps: analyze request → ask for confirmation → execute
+- If user wants to do multiple operations, plan the sequence intelligently
+- Always ask for user confirmation before destructive operations (delete, finish)
+- Use smart search to find tasks when user references them by description/keyword
+
+Return a structured workflow plan.`,
+    schema: z.object({
+      workflowType: z.enum([
+        'task_search_and_edit',
+        'task_add_confirmation',
+        'task_bulk_operations',
+        'task_smart_search',
+        'multi_step_workflow',
+        'simple_operation'
+      ]).describe("Type of workflow needed"),
+      steps: z.array(z.object({
+        stepNumber: z.number(),
+        action: z.string(),
+        description: z.string(),
+        requiresConfirmation: z.boolean(),
+        parameters: z.record(z.any()).optional(),
+      })).describe("Sequence of steps to execute"),
+      immediateAction: z.string().optional().describe("First action to take now"),
+      awaitingUserInput: z.boolean().describe("Whether we need user input before proceeding"),
+      userPrompt: z.string().optional().describe("What to ask the user"),
+      riskLevel: z.enum(['low', 'medium', 'high']).describe("Risk level of this workflow"),
+    }),
+  });
+
+  return {
+    action: "workflowManager",
+    workflowPlan,
+    userRequest,
+    currentContext,
+    previousSteps,
+    status: "planning" as const,
+    message: `I'm analyzing your request and creating a smart workflow to handle it properly...`
+  };
+}
+
+export async function batchTaskOperationsAction({
+  userId,
+  operations,
+  confirmationRequired = true,
+}: {
+  userId: string;
+  operations: Array<{
+    operation: 'add' | 'update' | 'delete' | 'finish';
+    taskId?: string;
+    taskData?: any;
+  }>;
+  confirmationRequired?: boolean;
+}) {
+  console.log(`Action: Batch task operations for user ${userId}, operations:`, operations);
+  
+  // Return instruction for TheBaze to handle locally with batch processing
+  return { 
+    action: "batchTaskOperations",
+    operations,
+    confirmationRequired,
+    status: "pending_confirmation" as const,
+    message: `I'll process ${operations.length} task operations. ${confirmationRequired ? 'Please confirm to proceed:' : 'Processing...'}`
+  };
+}
+
+export async function smartTaskFinderAction({
+  userId,
+  searchCriteria,
+  fuzzyMatch = true,
+}: {
+  userId: string;
+  searchCriteria: {
+    keywords?: string[];
+    description?: string;
+    status?: string;
+    priority?: string;
+    dateRange?: { from?: string; to?: string; };
+  };
+  fuzzyMatch?: boolean;
+}) {
+  console.log(`Action: Smart task finder for user ${userId}:`, searchCriteria);
+  
+  // Return instruction for TheBaze to handle locally with advanced matching
+  return { 
+    action: "smartTaskFinder",
+    searchCriteria,
+    fuzzyMatch,
+    status: "searching" as const,
+    message: "Using intelligent search to find matching tasks..."
   };
 }
 
