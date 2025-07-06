@@ -224,7 +224,8 @@ COMPLEXITY ANALYSIS: First analyze if the request requires single or multiple st
 
 **SINGLE STEP OPERATIONS (Use CallMytx):**
 - Add one task (simple creation)
-- Find/search for existing tasks, memories, or information
+- Find/search for existing tasks, memories, or information  
+- List or display tasks
 - Simple deletions with clear identification
 - Basic memory storage
 - Simple meditation creation
@@ -255,10 +256,12 @@ For CallStepsDesigning (Multi-step operations):
 
 **Examples:**
 - "תוסיף לי משימה לקנות חלב" → CallMytx (single add action)
+- "תראי לי משימות עם המילה ארגון" → CallMytx (single search action)
+- "תציגי אותן" → CallMytx (single display action)
+- "חפש לי משימה עם המילה ריצה" → CallMytx (single search action)
 - "תמחק משימה שנקראת לרוץ 2 קילומטר" → CallStepsDesigning (multi-step: search → identify → confirm → delete)
 - "תערוך משימה ותשנה אותה לאכול פירות" → CallStepsDesigning (multi-step: find → select → update → verify)
 - "תוסיף זיכרון ותמחק זיכרון" → CallStepsDesigning (multiple operations)
-- "חפש לי משימה עם המילה ריצה" → CallMytx (single search action)
 
 ONLY respond directly (without tools) for:
 - Simple greetings and casual conversation
@@ -354,8 +357,9 @@ Context: This request came from Anna (simple assistant) and needs to be handled 
                       try {
                         const toolData = JSON.parse(line.substring(2));
                         mytxToolInvocations.push(toolData);
+                        console.log(`[Anna CallMytx] Found tool invocation:`, toolData);
                       } catch (e) {
-                        // Ignore parse errors
+                        console.error(`[Anna CallMytx] Error parsing tool data:`, e);
                       }
                     }
                   }
@@ -363,6 +367,10 @@ Context: This request came from Anna (simple assistant) and needs to be handled 
               } catch (streamError) {
                 console.error('[Anna CallMytx] Error reading Mytx stream:', streamError);
               }
+
+              console.log(`[Anna CallMytx] Final content length: ${mytxContent.length}`);
+              console.log(`[Anna CallMytx] Total tool invocations: ${mytxToolInvocations.length}`);
+              console.log(`[Anna CallMytx] Tool invocations summary:`, mytxToolInvocations.map(t => t.toolName || 'unknown'));
 
               // Check if Mytx couldn't fulfill the request
               const isCapabilityMissing = mytxContent && (
@@ -387,7 +395,7 @@ Context: This request came from Anna (simple assistant) and needs to be handled 
               } else {
                 // For successful operations, we need to inject the Mytx tool invocations
                 // into the current stream context so they get processed by TheBaze
-                console.log(`[Anna CallMytx] Injecting ${mytxToolInvocations.length} tool invocations from Mytx`);
+                console.log(`[Anna CallMytx] Preparing to inject ${mytxToolInvocations.length} tool invocations from Mytx`);
                 
                 // Return special object that will be processed by the streaming system
                 return {
@@ -538,17 +546,44 @@ Context: This request came from Anna and requires multi-step planning and detail
         let toolInvocationsToInject: any[] = [];
         let shouldStreamSteps = false;
         let stepsContentToStream = '';
+        let hasTextContent = false;
+        
+        // Check if chunk contains text content (Anna's response)
+        hasTextContent = lines.some(line => line.startsWith('0:'));
         
         for (const line of lines) {
           if (line.startsWith('a:') || line.startsWith('9:')) {
             try {
               const toolData = JSON.parse(line.substring(2));
+              console.log(`[Anna Stream Debug] Processing tool data:`, toolData);
               
               // Handle CallMytx tool results with injection
               if (toolData?.result?.injectToolInvocations && toolData?.result?.mytxToolInvocations) {
                 shouldInjectTools = true;
                 toolInvocationsToInject = toolData.result.mytxToolInvocations;
                 console.log(`[Anna Stream] Found tool invocations to inject: ${toolInvocationsToInject.length}`);
+                console.log(`[Anna Stream] Tool invocations:`, toolInvocationsToInject);
+                
+                // Modify the tool result to only show the userAnswer
+                const modifiedResult = {
+                  type: 'success',
+                  userAnswer: toolData.result.userAnswer,
+                  showCapabilityMissing: false
+                };
+                
+                // Replace the line with the modified result
+                const newLine = line.substring(0, 2) + JSON.stringify({
+                  ...toolData,
+                  result: modifiedResult
+                });
+                modifiedChunk = modifiedChunk.replace(line, newLine);
+              }
+              // Also handle successful CallMytx results without explicit injection flag
+              else if (toolData?.result?.type === 'success' && toolData?.result?.mytxToolInvocations) {
+                shouldInjectTools = true;
+                toolInvocationsToInject = toolData.result.mytxToolInvocations;
+                console.log(`[Anna Stream] Found tool invocations (alternative path): ${toolInvocationsToInject.length}`);
+                console.log(`[Anna Stream] Tool invocations:`, toolInvocationsToInject);
                 
                 // Modify the tool result to only show the userAnswer
                 const modifiedResult = {
@@ -586,7 +621,7 @@ Context: This request came from Anna and requires multi-step planning and detail
                 modifiedChunk = modifiedChunk.replace(line, newLine);
               }
             } catch (e) {
-              // Ignore parse errors
+              console.error(`[Anna Stream] Error parsing tool data:`, e);
             }
           }
         }
@@ -594,15 +629,42 @@ Context: This request came from Anna and requires multi-step planning and detail
         // Send the (possibly modified) chunk first
         controller.enqueue(new TextEncoder().encode(modifiedChunk));
         
+        // Send agent marker for Anna's response if this is the first text content
+        if (hasTextContent) {
+          const annaStartMarker = `agent_start:${JSON.stringify({
+            agentName: 'Anna',
+            messageId: `anna-${Date.now()}`,
+            timestamp: new Date().toISOString()
+          })}\n`;
+          controller.enqueue(new TextEncoder().encode(annaStartMarker));
+        }
+        
         // If we need to inject tool invocations from Mytx, send them as additional chunks
         if (shouldInjectTools && toolInvocationsToInject.length > 0) {
+          // First, send a special marker to indicate start of Mytx agent response
+          const mytxStartMarker = `agent_start:${JSON.stringify({
+            agentName: 'Mytx Agent',
+            messageId: `mytx-${Date.now()}`,
+            timestamp: new Date().toISOString()
+          })}\n`;
+          controller.enqueue(new TextEncoder().encode(mytxStartMarker));
+          
           for (const toolInvocation of toolInvocationsToInject) {
             console.log(`[Anna Stream] Injecting tool invocation:`, toolInvocation);
             
-            // Format the tool invocation according to the AI SDK stream format
-            const injectedChunk = `a:${JSON.stringify(toolInvocation)}\n`;
+            // Format the tool invocation according to the AI SDK stream format with agent context
+            const injectedChunk = `a:${JSON.stringify({
+              ...toolInvocation,
+              agentName: 'Mytx Agent'
+            })}\n`;
             controller.enqueue(new TextEncoder().encode(injectedChunk));
           }
+          
+          // Send end marker for Mytx agent response
+          const mytxEndMarker = `agent_end:${JSON.stringify({
+            agentName: 'Mytx Agent'
+          })}\n`;
+          controller.enqueue(new TextEncoder().encode(mytxEndMarker));
         }
         
         // If we need to stream steps content, send it as text chunks
