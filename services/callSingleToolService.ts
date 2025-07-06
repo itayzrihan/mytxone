@@ -151,6 +151,9 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
         - CRITICAL FOR TASKS: When user asks to add a task, IMMEDIATELY use the addTask tool. DO NOT ask for more details.
         - TIMEZONE AWARENESS: Current user time is ${userCurrentTime} (${userTimezone} timezone).
         - When user says "in one hour" or "בעוד שעה", calculate from current user time: ${userCurrentTime}
+        - CRITICAL: When providing dueDate in tools, use ISO format but preserve the user's timezone intent.
+        - For dates, use format: YYYY-MM-DDTHH:MM:SS (local time in user's timezone)
+        - Example: if user says "בעוד שעה" at 01:30, provide dueDate as "2025-07-07T02:30:00"
         - IMPORTANT: ALWAYS provide a text response when using tools. Never send just tool calls without accompanying text.
         - after every tool call, always include a brief text message explaining what you're doing or what the result shows.
         - today's date is ${new Date().toLocaleDateString()}.
