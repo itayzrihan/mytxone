@@ -9,6 +9,7 @@ import {
   finishTaskAction,
   deleteTaskAction,
   searchTasksAction,
+  enhancedSearchTasksAction,
   batchTaskOperationsAction,
   smartTaskFinderAction,
   saveMemoryAction,
@@ -141,11 +142,34 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
             * IMPORTANT: Status values are 'pending', 'running', 'paused', 'finished', 'skipped' (Hebrew: ממתין, פועל, מושהה, הושלם, דולג)
           
           - ENHANCED SMART SEARCH AND OPERATIONS:
+            * When user wants to search for specific tasks (any search terms), ALWAYS use enhancedSearchTasks - it provides better matching and filtering
+            * Use listTasks ONLY when user asks for "all tasks", "show me my tasks", or similar general requests without search terms
             * When user references a task by description (e.g., "edit the running task", "finish the exercise task"), use enhancedSearchTasks first
+            * CRITICAL: ALWAYS parse temporal keywords from user query and set appropriate dateFilter with actual dates:
+              - "היום", "today" → dateFilter: {type: "range", startDate: "2025-07-07 00:00:00", endDate: "2025-07-07 23:59:59"}
+              - "מחר", "tomorrow" → dateFilter: {type: "range", startDate: "2025-07-08 00:00:00", endDate: "2025-07-08 23:59:59"}
+              - "לשבוע הקרוב", "next week", "השבוע הבא" → dateFilter: {type: "range", startDate: "2025-07-14 00:00:00", endDate: "2025-07-20 23:59:59"}
+              - "השבוע", "this week" → dateFilter: {type: "range", startDate: "2025-07-07 00:00:00", endDate: "2025-07-13 23:59:59"}
+              - "החודש", "this month" → dateFilter: {type: "range", startDate: "2025-07-01 00:00:00", endDate: "2025-07-31 23:59:59"}
+              - "בימים הקרובים", "next few days" → dateFilter: {type: "range", startDate: "2025-07-07 00:00:00", endDate: "2025-07-10 23:59:59"}
+              - "פג תוקף", "overdue" → dateFilter: {type: "range", startDate: "2024-07-07 00:00:00", endDate: "2025-07-06 23:59:59"}
+            * CRITICAL: ALWAYS parse priority keywords and set priorityFilter:
+              - "דחוף", "urgent", "חשוב", "important", "high priority" → priorityFilter: "high"
+              - "נמוך", "low priority", "not urgent" → priorityFilter: "low"
+            * CRITICAL: ALWAYS parse status keywords and set statusFilter:
+              - "פועל", "running", "active" → statusFilter: "running"
+              - "הושלם", "finished", "completed" → statusFilter: "finished"
+              - "ממתין", "pending" → statusFilter: "pending"
             * For complex operations like "delete all finished tasks" or "add 5 tasks", use workflowManager
             * For bulk operations, use batchTaskOperations with proper confirmation
             * Use smartTaskFinder for advanced filtering and fuzzy matching
             * Always show task details and ask for confirmation before destructive operations
+            * Examples of when to use enhancedSearchTasks:
+              - "תראי לי את כל המשימות עם המילה ארגון" → enhancedSearchTasks with query "ארגון"
+              - "find tasks due tomorrow" → enhancedSearchTasks with query "tomorrow" AND dateFilter: {type: "range", startDate: "2025-07-08 00:00:00", endDate: "2025-07-08 23:59:59"}
+              - "תראי לי את כל המשימות לשבוע הקרוב" → enhancedSearchTasks with query "לשבוע הקרוב" AND dateFilter: {type: "range", startDate: "2025-07-14 00:00:00", endDate: "2025-07-20 23:59:59"}
+              - "show high priority tasks" → enhancedSearchTasks with query "high priority" AND priorityFilter: "high"
+              - "urgent tasks" → enhancedSearchTasks with query "urgent" AND priorityFilter: "high"
           
           - WORKFLOW EXAMPLES:
             * User: "Change the due date of my running task to tomorrow"
@@ -249,13 +273,40 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
           },
         },
         searchTasks: {
-          description: "Search for tasks by name or description.",
+          description: "Basic search for tasks by name or description. Use this for simple queries without complex filtering.",
           parameters: z.object({
             query: z.string().describe("Search query to find tasks."),
             limit: z.number().optional().describe("Number of results to return - defaults to 20."),
           }),
           execute: async ({ query, limit }) => {
             return await searchTasksAction({ query, limit, userId: input.uid });
+          },
+        },
+        enhancedSearchTasks: {
+          description: "Enhanced search for tasks with AI-powered analysis, date filtering, priority matching, and tag support. Use this for any search query with specific terms or when user wants to find specific tasks. IMPORTANT: Parse temporal keywords from the query and set appropriate dateFilter.",
+          parameters: z.object({
+            query: z.string().describe("Search query to find tasks. Can include natural language like 'tasks due tomorrow', 'high priority tasks', 'tasks with ארגון', 'לשבוע הקרוב', etc."),
+            limit: z.number().optional().describe("Number of results to return - defaults to 20."),
+            dateFilter: z.object({
+              type: z.enum(['today', 'tomorrow', 'next_few_days', 'this_week', 'next_week', 'this_month', 'overdue', 'upcoming', 'range']).describe("Type of date filter - PARSE FROM QUERY: 'היום/today'→range with today's dates, 'מחר/tomorrow'→range with tomorrow's dates, 'לשבוע הקרוב/next week'→range with next week dates, 'השבוע/this week'→range with this week dates, 'החודש/this month'→range with this month dates"),
+              startDate: z.string().optional().describe("Start date for range filter in frontend format 'YYYY-MM-DD HH:mm:ss' - ALWAYS provide when using range type"),
+              endDate: z.string().optional().describe("End date for range filter in frontend format 'YYYY-MM-DD HH:mm:ss' - ALWAYS provide when using range type"),
+              includeNoDueDate: z.boolean().optional().describe("Whether to include tasks with no due date")
+            }).optional().describe("REQUIRED when query contains time references: Extract from query and calculate actual dates - 'היום'/'today'→{type:'range', startDate:'2025-07-07 00:00:00', endDate:'2025-07-07 23:59:59'}, 'לשבוע הקרוב'/'next week'→{type:'range', startDate:'2025-07-14 00:00:00', endDate:'2025-07-20 23:59:59'}"),
+            priorityFilter: z.enum(['low', 'medium', 'high', 'all']).optional().describe("Filter by priority level - PARSE FROM QUERY: 'דחוף'/'urgent'/'high'→high, 'חשוב'/'important'→high, 'נמוך'/'low'→low"),
+            statusFilter: z.enum(['pending', 'running', 'paused', 'finished', 'skipped', 'all']).optional().describe("Filter by task status - PARSE FROM QUERY: 'פועל'/'running'→running, 'הושלם'/'finished'→finished, 'ממתין'/'pending'→pending"),
+            tagFilter: z.union([z.string(), z.array(z.string())]).optional().describe("Filter by tag ID(s)")
+          }),
+          execute: async ({ query, limit, dateFilter, priorityFilter, statusFilter, tagFilter }) => {
+            return await enhancedSearchTasksAction({ 
+              query, 
+              limit, 
+              dateFilter, 
+              priorityFilter, 
+              statusFilter, 
+              tagFilter, 
+              userId: input.uid 
+            });
           },
         },
         saveMemory: {

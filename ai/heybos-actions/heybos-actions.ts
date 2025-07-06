@@ -292,7 +292,214 @@ export async function searchTasksAction({
   query: string;
   limit?: number;
 }) {
+  console.log(`Action: Basic searching HeyBos tasks for user ${userId}, query: ${query}`);
+  
+  // Return instruction for TheBaze to handle locally using basic search
+  return { 
+    action: "searchTasks",
+    query,
+    limit,
+    status: "searching" as const,
+    message: `Searching for tasks matching "${query}"...`
+  };
+}
+
+export async function enhancedSearchTasksAction({
+  userId,
+  query,
+  limit = 20,
+  dateFilter,
+  priorityFilter,
+  statusFilter,
+  tagFilter,
+}: {
+  userId: string;
+  query: string;
+  limit?: number;
+  dateFilter?: {
+    type: 'today' | 'tomorrow' | 'next_few_days' | 'this_week' | 'next_week' | 'this_month' | 'overdue' | 'upcoming' | 'range';
+    startDate?: string;
+    endDate?: string;
+    includeNoDueDate?: boolean;
+  };
+  priorityFilter?: 'low' | 'medium' | 'high' | 'all';
+  statusFilter?: 'pending' | 'running' | 'paused' | 'finished' | 'skipped' | 'all';
+  tagFilter?: string | string[];
+}) {
   console.log(`Action: Enhanced searching HeyBos tasks instruction for user ${userId}, query: ${query}`);
+  console.log(`Filters received - Date: ${JSON.stringify(dateFilter)}, Priority: ${priorityFilter}, Status: ${statusFilter}, Tag: ${tagFilter}`);
+  
+  // Auto-detect missing date filter from query if not provided and calculate actual dates
+  let autoDetectedDateFilter = dateFilter;
+  if (!dateFilter) {
+    const lowerQuery = query.toLowerCase();
+    const hebrewQuery = query;
+    const now = new Date();
+    
+    // Helper function to format date for frontend
+    const formatDateForFrontend = (date: Date): string => {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    };
+    
+    if (lowerQuery.includes('today') || hebrewQuery.includes('היום')) {
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      autoDetectedDateFilter = { 
+        type: 'range',
+        startDate: formatDateForFrontend(startOfDay),
+        endDate: formatDateForFrontend(endOfDay)
+      };
+    } else if (lowerQuery.includes('tomorrow') || hebrewQuery.includes('מחר')) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(now.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const endOfTomorrow = new Date(tomorrow);
+      endOfTomorrow.setHours(23, 59, 59, 999);
+      
+      autoDetectedDateFilter = { 
+        type: 'range',
+        startDate: formatDateForFrontend(tomorrow),
+        endDate: formatDateForFrontend(endOfTomorrow)
+      };
+    } else if (lowerQuery.includes('next week') || hebrewQuery.includes('לשבוע הקרוב') || hebrewQuery.includes('השבוע הבא')) {
+      // Next week starts from next Monday
+      const nextMonday = new Date(now);
+      const daysUntilNextMonday = (8 - now.getDay()) % 7 || 7; // If today is Monday, next Monday is in 7 days
+      nextMonday.setDate(now.getDate() + daysUntilNextMonday);
+      nextMonday.setHours(0, 0, 0, 0);
+      
+      const nextSunday = new Date(nextMonday);
+      nextSunday.setDate(nextMonday.getDate() + 6);
+      nextSunday.setHours(23, 59, 59, 999);
+      
+      autoDetectedDateFilter = { 
+        type: 'range',
+        startDate: formatDateForFrontend(nextMonday),
+        endDate: formatDateForFrontend(nextSunday)
+      };
+    } else if (lowerQuery.includes('this week') || hebrewQuery.includes('השבוע')) {
+      // This week from Monday to Sunday
+      const thisMonday = new Date(now);
+      const daysSinceMonday = (now.getDay() + 6) % 7; // Sunday = 0, Monday = 1, etc. -> Monday = 0
+      thisMonday.setDate(now.getDate() - daysSinceMonday);
+      thisMonday.setHours(0, 0, 0, 0);
+      
+      const thisSunday = new Date(thisMonday);
+      thisSunday.setDate(thisMonday.getDate() + 6);
+      thisSunday.setHours(23, 59, 59, 999);
+      
+      autoDetectedDateFilter = { 
+        type: 'range',
+        startDate: formatDateForFrontend(thisMonday),
+        endDate: formatDateForFrontend(thisSunday)
+      };
+    } else if (lowerQuery.includes('next month') || hebrewQuery.includes('לחודש הקרוב') || hebrewQuery.includes('החודש הבא')) {
+      // Next month or "לחודש הקרוב" - include tasks from yesterday through next month
+      // This is more natural for Hebrew speakers who mean "in the coming period"
+      const startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 1); // Include yesterday's tasks
+      startDate.setHours(0, 0, 0, 0);
+      
+      const endDate = new Date(now);
+      endDate.setMonth(endDate.getMonth() + 1);
+      endDate.setDate(0); // Last day of next month
+      endDate.setHours(23, 59, 59, 999);
+      
+      autoDetectedDateFilter = { 
+        type: 'range',
+        startDate: formatDateForFrontend(startDate),
+        endDate: formatDateForFrontend(endDate)
+      };
+    } else if (lowerQuery.includes('this month') || hebrewQuery.includes('החודש')) {
+      // This month from 1st to last day
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      firstDayOfMonth.setHours(0, 0, 0, 0);
+      
+      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      lastDayOfMonth.setHours(23, 59, 59, 999);
+      
+      autoDetectedDateFilter = { 
+        type: 'range',
+        startDate: formatDateForFrontend(firstDayOfMonth),
+        endDate: formatDateForFrontend(lastDayOfMonth)
+      };
+    } else if (lowerQuery.includes('next few days') || hebrewQuery.includes('בימים הקרובים')) {
+      // Next 3 days
+      const startOfToday = new Date(now);
+      startOfToday.setHours(0, 0, 0, 0);
+      
+      const endOfThreeDays = new Date(now);
+      endOfThreeDays.setDate(now.getDate() + 3);
+      endOfThreeDays.setHours(23, 59, 59, 999);
+      
+      autoDetectedDateFilter = { 
+        type: 'range',
+        startDate: formatDateForFrontend(startOfToday),
+        endDate: formatDateForFrontend(endOfThreeDays)
+      };
+    } else if (lowerQuery.includes('overdue') || hebrewQuery.includes('פג תוקף')) {
+      // Tasks due before today
+      const endOfYesterday = new Date(now);
+      endOfYesterday.setDate(now.getDate() - 1);
+      endOfYesterday.setHours(23, 59, 59, 999);
+      
+      // Start from a year ago to catch all overdue tasks
+      const yearAgo = new Date(now);
+      yearAgo.setFullYear(now.getFullYear() - 1);
+      yearAgo.setHours(0, 0, 0, 0);
+      
+      autoDetectedDateFilter = { 
+        type: 'range',
+        startDate: formatDateForFrontend(yearAgo),
+        endDate: formatDateForFrontend(endOfYesterday)
+      };
+    }
+    
+    if (autoDetectedDateFilter) {
+      console.log(`Auto-detected date filter from query: ${JSON.stringify(autoDetectedDateFilter)}`);
+    }
+  }
+  
+  // Auto-detect missing priority filter from query if not provided
+  let autoDetectedPriorityFilter = priorityFilter;
+  if (!priorityFilter) {
+    const lowerQuery = query.toLowerCase();
+    const hebrewQuery = query;
+    
+    if (lowerQuery.includes('urgent') || lowerQuery.includes('important') || lowerQuery.includes('high priority') || 
+        hebrewQuery.includes('דחוף') || hebrewQuery.includes('חשוב')) {
+      autoDetectedPriorityFilter = 'high';
+    } else if (lowerQuery.includes('low priority') || lowerQuery.includes('not urgent') || hebrewQuery.includes('נמוך')) {
+      autoDetectedPriorityFilter = 'low';
+    }
+    
+    if (autoDetectedPriorityFilter) {
+      console.log(`Auto-detected priority filter from query: ${autoDetectedPriorityFilter}`);
+    }
+  }
+  
+  // Auto-detect missing status filter from query if not provided
+  let autoDetectedStatusFilter = statusFilter;
+  if (!statusFilter) {
+    const lowerQuery = query.toLowerCase();
+    const hebrewQuery = query;
+    
+    if (lowerQuery.includes('running') || lowerQuery.includes('active') || hebrewQuery.includes('פועל')) {
+      autoDetectedStatusFilter = 'running';
+    } else if (lowerQuery.includes('finished') || lowerQuery.includes('completed') || hebrewQuery.includes('הושלם')) {
+      autoDetectedStatusFilter = 'finished';
+    } else if (lowerQuery.includes('pending') || hebrewQuery.includes('ממתין')) {
+      autoDetectedStatusFilter = 'pending';
+    }
+    
+    if (autoDetectedStatusFilter) {
+      console.log(`Auto-detected status filter from query: ${autoDetectedStatusFilter}`);
+    }
+  }
   
   // Generate relevant keywords using AI
   const { object: searchAnalysis } = await generateObject({
@@ -302,6 +509,9 @@ export async function searchTasksAction({
     - Related activities or contexts
     - Alternative spellings or phrasings
     - Both English and Hebrew terms if applicable
+    - Temporal keywords like dates if the query mentions time (today, tomorrow, next week, etc.)
+    - Priority indicators (urgent, important, low priority, etc.)
+    - Status keywords (finished, pending, running, etc.)
     
     Return a comprehensive list of keywords that would help match relevant tasks.`,
     schema: z.object({
@@ -312,12 +522,47 @@ export async function searchTasksAction({
     }),
   });
 
+  // Process date filter to ensure proper frontend format (for manually provided range filters)
+  let processedDateFilter = autoDetectedDateFilter;
+  if (processedDateFilter && processedDateFilter.type === 'range' && processedDateFilter !== autoDetectedDateFilter) {
+    // Only process if this is a manually provided range filter (not auto-detected)
+    const formatDateForFrontend = (date: Date): string => {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    };
+    
+    if (processedDateFilter.startDate && !processedDateFilter.startDate.includes(':')) {
+      // If only date is provided, add time
+      const startDate = new Date(processedDateFilter.startDate);
+      startDate.setHours(0, 0, 0, 0);
+      processedDateFilter = {
+        ...processedDateFilter,
+        startDate: formatDateForFrontend(startDate)
+      };
+    }
+    if (processedDateFilter.endDate && !processedDateFilter.endDate.includes(':')) {
+      // If only date is provided, add time
+      const endDate = new Date(processedDateFilter.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      processedDateFilter = {
+        ...processedDateFilter!,
+        endDate: formatDateForFrontend(endDate)
+      };
+    }
+  }
+
+  console.log(`Final filters - Date: ${JSON.stringify(processedDateFilter)}, Priority: ${autoDetectedPriorityFilter}, Status: ${autoDetectedStatusFilter}`);
+
   // Return instruction for TheBaze to handle locally using enhanced search
   return { 
-    action: "searchTasks",
+    action: "enhancedSearchTasks",
     query,
     searchAnalysis,
     limit,
+    dateFilter: processedDateFilter,
+    priorityFilter: autoDetectedPriorityFilter,
+    statusFilter: autoDetectedStatusFilter,
+    tagFilter,
     status: "searching" as const,
     message: `Searching for tasks related to "${query}" using smart keyword matching...`
   };
