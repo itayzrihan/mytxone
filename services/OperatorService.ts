@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { geminiProModel } from "@/ai"; // Import your configured AI model
 
 // Input validation schema
-const heybosRequestSchema = z.object({
+const operatorRequestSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string(),
@@ -12,7 +12,7 @@ const heybosRequestSchema = z.object({
 });
 
 // Interface for the service input
-export interface HeybosInput {
+export interface OperatorInput {
   messages: Array<{
     role: 'user' | 'assistant';
     content: string;
@@ -24,22 +24,22 @@ export interface HeybosInput {
 }
 
 // Interface for the service output
-export interface HeybosOutput {
+export interface OperatorOutput {
   stream: ReadableStream;
   success: boolean;
   error?: string;
 }
 
 /**
- * Heybos Service - Handles confirmation and next steps after StepsDesigning
+ * Operator Service - Handles confirmation and next steps after StepsDesigning
  * This service provides acknowledgment and readiness confirmation for complex multi-step operations
  */
-export async function heybosService(input: HeybosInput): Promise<HeybosOutput> {
+export async function OperatorService(input: OperatorInput): Promise<OperatorOutput> {
   try {
     // 1. Validate input
-    const validationResult = heybosRequestSchema.safeParse({ messages: input.messages });
+    const validationResult = operatorRequestSchema.safeParse({ messages: input.messages });
     if (!validationResult.success) {
-      console.error('[Heybos Service] Invalid request format:', validationResult.error.flatten());
+      console.error('[Operator Service] Invalid request format:', validationResult.error.flatten());
       return {
         success: false,
         error: 'Invalid request format',
@@ -62,7 +62,7 @@ export async function heybosService(input: HeybosInput): Promise<HeybosOutput> {
     const totalContentLength = coreMessages.reduce((sum, msg) => sum + (typeof msg.content === 'string' ? msg.content.length : 0), 0);
     const MAX_INPUT_LENGTH = 15000;
     if (totalContentLength > MAX_INPUT_LENGTH) {
-      console.log(`[Heybos Service] Input length exceeded for user: ${input.uid}. Length: ${totalContentLength}`);
+      console.log(`[Operator Service] Input length exceeded for user: ${input.uid}. Length: ${totalContentLength}`);
       return {
         success: false,
         error: `Input exceeds the maximum length of ${MAX_INPUT_LENGTH} characters.`,
@@ -70,10 +70,10 @@ export async function heybosService(input: HeybosInput): Promise<HeybosOutput> {
       };
     }
 
-    // 5. Call AI Model with Heybos Agent personality
+    // 5. Call AI Model with Operator Agent personality
     const result = await streamText({
       model: geminiProModel,
-      system: `You are Heybos Agent, the execution-ready assistant that works with StepsDesigning Agent to complete complex multi-step operations.
+      system: `You are Operator Agent, the execution-ready assistant that works with StepsDesigning Agent to complete complex multi-step operations.
 
 Your role:
 - Acknowledge receipt of detailed plans from StepsDesigning Agent
@@ -110,7 +110,7 @@ Ready to proceed when you give the go-ahead! 🚀"
       messages: coreMessages,
       experimental_telemetry: {
         isEnabled: true,
-        functionId: "heybos-service",
+        functionId: "operator-service",
       },
     });
 
@@ -123,7 +123,7 @@ Ready to proceed when you give the go-ahead! 🚀"
     };
 
   } catch (error: any) {
-    console.error("[Heybos Service] Error:", error);
+    console.error("[Operator Service] Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error during processing";
     
     return {

@@ -8,7 +8,7 @@ import { geminiProModel } from "@/ai"; // Import your configured AI model
 import { callMytxAction } from "@/ai/heybos-actions/anna-actions";
 import { callSingleToolService } from "@/services/callSingleToolService";
 import { stepsDesigningService } from "@/services/stepsDesigningService";
-import { heybosService } from "@/services/heybosService";
+import { OperatorService } from "@/services/OperatorService";
 
 // --- Environment Configuration ---
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
@@ -510,7 +510,7 @@ Context: This request came from Anna and requires multi-step planning and detail
 3. **Deletion Phase**: Remove confirmed tasks safely
 4. **Verification Phase**: Confirm successful completion
 
-Passing this detailed plan to Heybos Agent for execution...`;
+Passing this detailed plan to Operator Agent for execution...`;
 
                 // Stream the short summary in chunks
                 const summaryChunks = shortSummary.split('\n');
@@ -532,18 +532,18 @@ Passing this detailed plan to Heybos Agent for execution...`;
                 `agent_end:${JSON.stringify({ agentName: 'StepsDesigning' })}\n`
               ));
 
-              // Start Heybos Agent
+              // Start Operator Agent
               await new Promise((resolve) => setTimeout(resolve, 100)); // Longer delay before next agent
               controller.enqueue(new TextEncoder().encode(
                 `agent_start:${JSON.stringify({
-                  agentName: 'Heybos Agent',
-                  messageId: `heybos-${Date.now()}`,
+                  agentName: 'Operator Agent',
+                  messageId: `operator-${Date.now()}`,
                   timestamp: new Date().toISOString()
                 })}\n`
               ));
 
-              // Call Heybos service to generate confirmation message
-              const heybosResult = await heybosService({
+              // Call Operator service to generate confirmation message
+              const operatorResult = await OperatorService({
                 messages: [
                   {
                     role: 'user' as const,
@@ -556,9 +556,9 @@ Passing this detailed plan to Heybos Agent for execution...`;
                 stepsContent: fullStepsContent
               });
 
-              if (heybosResult.success && heybosResult.stream) {
+              if (operatorResult.success && operatorResult.stream) {
                 try {
-                  const reader = heybosResult.stream.getReader();
+                  const reader = operatorResult.stream.getReader();
                   while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
@@ -567,10 +567,10 @@ Passing this detailed plan to Heybos Agent for execution...`;
                     }
                   }
                 } catch (err) {
-                  console.error('[Anna->StepsDesigning->Heybos] Error streaming Heybos agent response:', err);
+                  console.error('[Anna->StepsDesigning->Operator] Error streaming Operator agent response:', err);
                 }
               } else {
-                // Fallback message if Heybos service fails
+                // Fallback message if Operator service fails
                 const fallbackMsg = `✅ Steps plan received successfully!
 
 I've got the detailed step-by-step plan from StepsDesigning Agent. Ready to proceed when you give the go-ahead! 🚀`;
@@ -581,13 +581,13 @@ I've got the detailed step-by-step plan from StepsDesigning Agent. Ready to proc
                 }
               }
 
-              // End Heybos Agent
+              // End Operator Agent
               controller.enqueue(new TextEncoder().encode(
-                `agent_end:${JSON.stringify({ agentName: 'Heybos Agent' })}\n`
+                `agent_end:${JSON.stringify({ agentName: 'Operator Agent' })}\n`
               ));
               
             } catch (err) {
-              console.error('[Anna->StepsDesigning->Heybos] Error in multi-agent flow:', err);
+              console.error('[Anna->StepsDesigning->Operator] Error in multi-agent flow:', err);
               const errorMsg = 'I encountered an error while creating the step-by-step plan. Please try again.';
               controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
             }
