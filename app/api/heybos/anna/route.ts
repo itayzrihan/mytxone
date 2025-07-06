@@ -327,89 +327,22 @@ Today's date is ${new Date().toLocaleDateString()}.`,
               console.log(`[Anna CallStepsDesigning] User Answer: ${userAnswer}`);
               console.log(`[Anna CallStepsDesigning] Steps Request: ${stepsRequest}`);
               
-              // Build the full request for StepsDesigning agent
-              const fullStepsRequest = `User Request: "${originalMessage}"
-              
-Complex Operation for StepsDesigning Agent: ${stepsRequest}
-
-Context: This request came from Anna and requires multi-step planning and detailed guidance for safe completion.`;
-
-              // Call the stepsDesigningService directly
-              const stepsResult = await stepsDesigningService({
-                messages: [
-                  {
-                    role: 'user' as const,
-                    content: fullStepsRequest
-                  }
-                ],
-                uid: uid || '00000000-0000-0000-0000-000000000000',
-                userAnswer: userAnswer,
-                originalMessage: originalMessage
-              });
-
-              if (!stepsResult.success) {
-                console.error(`[Anna CallStepsDesigning] Steps service call failed: ${stepsResult.error}`);
-                return {
-                  type: 'error',
-                  userAnswer: userAnswer,
-                  stepsResponse: "I encountered an issue while creating the step-by-step plan. Please try again in a moment.",
-                  showStepsPlanning: false
-                };
-              }
-
-              // Read the streaming response from StepsDesigning service
-              let stepsContent = "";
-              
-              try {
-                const reader = stepsResult.stream.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-
-                  buffer += decoder.decode(value, { stream: true });
-                  const lines = buffer.split('\n');
-                  buffer = lines.pop() || '';
-
-                  for (const line of lines) {
-                    if (line.trim() === '') continue;
-                    
-                    if (line.startsWith('0:')) {
-                      // Text chunks from StepsDesigning agent
-                      try {
-                        const textPart = JSON.parse(line.substring(2));
-                        if (typeof textPart === 'string') {
-                          stepsContent += textPart;
-                        }
-                      } catch (e) {
-                        // Ignore parse errors
-                      }
-                    }
-                  }
-                }
-              } catch (streamError) {
-                console.error('[Anna CallStepsDesigning] Error reading Steps stream:', streamError);
-              }
-
-              console.log(`[Anna CallStepsDesigning] Received steps content length: ${stepsContent.length}`);
-
-              // Return the steps planning result
+              // Don't call StepsDesigning here - just return the request info for streaming
+              // The actual StepsDesigning call will happen during streaming
               return {
-                type: 'steps_planning',
+                type: 'anna_then_steps',
                 userAnswer: userAnswer,
-                stepsReflectionToUser: stepsContent,
+                stepsRequest: stepsRequest,
                 originalMessage: originalMessage,
-                showStepsPlanning: true
+                annaProcessed: true
               };
 
             } catch (error) {
-              console.error('[Anna CallStepsDesigning] Error calling StepsDesigning:', error);
+              console.error('[Anna CallStepsDesigning] Error in steps preparation:', error);
               return {
                 type: 'error',
                 userAnswer: userAnswer,
-                stepsResponse: "I encountered an error while creating the step-by-step plan. Please try again.",
+                stepsResponse: "I encountered an error while preparing the step-by-step plan. Please try again.",
                 showStepsPlanning: false
               };
             }
@@ -430,7 +363,8 @@ Context: This request came from Anna and requires multi-step planning and detail
     // Custom streaming for anna_then_mytx: stream Anna, then Mytx
     const toolResults = await result.toolResults;
     const toolResult = toolResults?.[0]?.result;
-    if (toolResult && toolResult.type === 'anna_then_mytx' && 'mytxRequest' in toolResult) {
+    // Custom streaming for single-step (CallMytx) and multi-step (CallStepsDesigning) results
+    if (toolResult && (toolResult.type === 'anna_then_mytx' || toolResult.type === 'anna_then_steps')) {
       const readable = new ReadableStream({
         async start(controller) {
           // 1. Anna agent start marker
@@ -442,7 +376,7 @@ Context: This request came from Anna and requires multi-step planning and detail
             })}\n`
           ));
           // 2. Anna's userAnswer as text chunks
-          const userAnswer = toolResult.userAnswer;
+          const userAnswer = (toolResult as any).userAnswer;
           const chunkSize = 20;
           for (let i = 0; i < userAnswer.length; i += chunkSize) {
             const textChunk = userAnswer.substring(i, i + chunkSize);
@@ -453,44 +387,128 @@ Context: This request came from Anna and requires multi-step planning and detail
           controller.enqueue(new TextEncoder().encode(
             `agent_end:${JSON.stringify({ agentName: 'Anna' })}\n`
           ));
-          // 4. Mytx agent start marker
-          controller.enqueue(new TextEncoder().encode(
-            `agent_start:${JSON.stringify({
-              agentName: 'Mytx Agent',
-              messageId: `mytx-${Date.now()}`,
-              timestamp: new Date().toISOString()
-            })}\n`
-          ));
-          // 5. Call Mytx and stream its response
-          const fullMytxRequest = `User Request: "${toolResult.originalMessage}"
-\nTask for Mytx Agent: ${toolResult.mytxRequest}\n\nContext: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities.`;
-          const mytxResult = await callSingleToolService({
-            messages: [{ role: 'user' as const, content: fullMytxRequest }],
-            uid: uid || '00000000-0000-0000-0000-000000000000'
-          });
 
-          if (mytxResult && mytxResult.success && mytxResult.stream) {
-            try {
-              const reader = mytxResult.stream.getReader();
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                if (value) {
-                  controller.enqueue(value);
+          if (toolResult.type === 'anna_then_mytx') {
+            // Add a short delay to ensure frontend processes agent_end before next agent_start
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            // 4. Mytx agent start marker
+            controller.enqueue(new TextEncoder().encode(
+              `agent_start:${JSON.stringify({
+                agentName: 'Mytx Agent',
+                messageId: `mytx-${Date.now()}`,
+                timestamp: new Date().toISOString()
+              })}\n`
+            ));
+            // 5. Call Mytx and stream its response
+            const mytxRequest = (toolResult as any).mytxRequest;
+            const originalMessage = (toolResult as any).originalMessage;
+            const fullMytxRequest = `User Request: "${originalMessage}"
+\nTask for Mytx Agent: ${mytxRequest}\n\nContext: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities.`;
+            const mytxResult = await callSingleToolService({
+              messages: [{ role: 'user' as const, content: fullMytxRequest }],
+              uid: uid || '00000000-0000-0000-0000-000000000000'
+            });
+
+            if (mytxResult && mytxResult.success && mytxResult.stream) {
+              try {
+                const reader = mytxResult.stream.getReader();
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  if (value) {
+                    controller.enqueue(value);
+                  }
                 }
+              } catch (err) {
+                console.error('[Anna->Mytx] Error streaming Mytx agent response:', err);
+              }
+            } else {
+              // If no stream, send a fallback error message
+              const errorMsg = mytxResult && mytxResult.error ? mytxResult.error : 'No response from Mytx agent.';
+              controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
+            }
+            controller.enqueue(new TextEncoder().encode(
+              `agent_end:${JSON.stringify({ agentName: 'Mytx Agent' })}\n`
+            ));
+            controller.close();
+          } else if (toolResult.type === 'anna_then_steps') {
+            // Start StepsDesigning in real-time after Anna's message is sent
+            // Add a short delay to ensure frontend processes agent_end before next agent_start
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            
+            // 4. StepsDesigning agent start marker
+            controller.enqueue(new TextEncoder().encode(
+              `agent_start:${JSON.stringify({
+                agentName: 'StepsDesigning',
+                messageId: `steps-${Date.now()}`,
+                timestamp: new Date().toISOString()
+              })}\n`
+            ));
+
+            // 5. Call StepsDesigning service in real-time and stream its response
+            try {
+              const stepsRequest = (toolResult as any).stepsRequest;
+              const originalMessage = (toolResult as any).originalMessage;
+              
+              // Build the full request for StepsDesigning agent
+              const fullStepsRequest = `User Request: "${originalMessage}"
+              
+Complex Operation for StepsDesigning Agent: ${stepsRequest}
+
+Context: This request came from Anna and requires multi-step planning and detailed guidance for safe completion.`;
+
+              // Call the stepsDesigningService in real-time
+              const stepsResult = await stepsDesigningService({
+                messages: [
+                  {
+                    role: 'user' as const,
+                    content: fullStepsRequest
+                  }
+                ],
+                uid: uid || '00000000-0000-0000-0000-000000000000',
+                userAnswer: (toolResult as any).userAnswer,
+                originalMessage: originalMessage
+              });
+
+              if (stepsResult.success && stepsResult.stream) {
+                // Stream the StepsDesigning response in real-time
+                const reader = stepsResult.stream.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  buffer += decoder.decode(value, { stream: true });
+                  const lines = buffer.split('\n');
+                  buffer = lines.pop() || '';
+
+                  for (const line of lines) {
+                    if (line.trim() === '') continue;
+                    
+                    if (line.startsWith('0:')) {
+                      // Forward the text chunks directly to the client
+                      controller.enqueue(new TextEncoder().encode(line + '\n'));
+                    }
+                  }
+                }
+              } else {
+                // If no stream, send a fallback error message
+                const errorMsg = stepsResult.error || 'No response from StepsDesigning agent.';
+                controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
               }
             } catch (err) {
-              console.error('[Anna->Mytx] Error streaming Mytx agent response:', err);
+              console.error('[Anna->StepsDesigning] Error streaming StepsDesigning response:', err);
+              const errorMsg = 'I encountered an error while creating the step-by-step plan. Please try again.';
+              controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
             }
-          } else {
-            // If no stream, send a fallback error message
-            const errorMsg = mytxResult && mytxResult.error ? mytxResult.error : 'No response from Mytx agent.';
-            controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
+
+            controller.enqueue(new TextEncoder().encode(
+              `agent_end:${JSON.stringify({ agentName: 'StepsDesigning' })}\n`
+            ));
+            controller.close();
           }
-          controller.enqueue(new TextEncoder().encode(
-            `agent_end:${JSON.stringify({ agentName: 'Mytx Agent' })}\n`
-          ));
-          controller.close();
         }
       });
       // Return the streaming response
@@ -498,8 +516,7 @@ Context: This request came from Anna and requires multi-step planning and detail
       setCorsHeaders(response, origin);
       return response;
     }
-    // Fallback: return the original stream if not anna_then_mytx
-    // Fallback: return the original stream if not anna_then_mytx
+    // Fallback: return the original stream if not handled above
     const fallbackResponse = new NextResponse(originalStream.body, { status: 200 });
     setCorsHeaders(fallbackResponse, origin);
     return fallbackResponse;
