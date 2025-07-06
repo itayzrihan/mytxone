@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { geminiProModel } from "@/ai"; // Import your configured AI model
 import { callMytxAction } from "@/ai/heybos-actions/anna-actions";
 import { callSingleToolService } from "@/services/callSingleToolService";
+import { stepsDesigningService } from "@/services/stepsDesigningService";
 import { processMytxChatRequest, validateMytxChatRequest } from "@/services/mytxChatService";
 
 // --- Environment Configuration ---
@@ -217,48 +218,59 @@ Your communication style:
 - Be encouraging but realistic about what you can accomplish
 - Show empathy and understanding when appropriate
 
-Your one and only mission is to answer the user relevantly and decide if tools are needed to accomplish the user request. 
+Your mission is to answer the user relevantly and intelligently decide which tool is needed to accomplish the user request based on complexity analysis.
 
-CRITICAL RULE: You must use the CallMytx tool for ANY request that involves taking action, even if details are missing. Do NOT ask for clarification - use CallMytx and let the Mytx agent handle gathering additional details.
+COMPLEXITY ANALYSIS: First analyze if the request requires single or multiple steps:
 
-IMPORTANT: When you use the CallMytx tool, do NOT provide any additional text response. The userAnswer parameter in the tool call will be displayed to the user. Only provide text responses when NOT using tools.
+**SINGLE STEP OPERATIONS (Use CallMytx):**
+- Add one task (simple creation)
+- Find/search for existing tasks, memories, or information
+- Simple deletions with clear identification
+- Basic memory storage
+- Simple meditation creation
+- Weather lookup
+- Any action that requires only ONE step to complete
 
-Use CallMytx for:
-- Adding, creating, managing, or organizing tasks (even with minimal details)
-- Remembering, saving, or storing any information/memories  
-- Searching the web or getting external information
-- Sending messages or communications
-- Flight bookings, reservations, or travel planning
-- Meditation creation or management
-- Any action that requires data storage or external services
-- Complex planning or organization requests
+**MULTI-STEP COMPLEX OPERATIONS (Use CallStepsDesigning):**
+- Delete a specific task by name/description (requires: search → identify → confirm → delete)
+- Edit/update tasks with new information (requires: find → select → gather details → update → verify)
+- Add AND remove memories in same request (requires: multiple operations)
+- Complex task management with multiple operations
+- Operations that require confirmation or verification steps
+- Any request that clearly needs multiple steps to complete safely
+
+IMPORTANT: When you use ANY tool, do NOT provide additional text response. The userAnswer parameter will be displayed to the user.
+
+**Tool Usage Rules:**
+
+For CallMytx (Single step operations):
+1. userAnswer: "Sure, I'll help you with that" or similar friendly response
+2. mytxRequest: Clear description of the single action needed
+3. originalMessage: Exact user message
+
+For CallStepsDesigning (Multi-step operations):
+1. userAnswer: "Let me break this down into steps for you" or similar planning response
+2. stepsRequest: Detailed description of the complex operation that needs step-by-step planning
+3. originalMessage: Exact user message
+
+**Examples:**
+- "תוסיף לי משימה לקנות חלב" → CallMytx (single add action)
+- "תמחק משימה שנקראת לרוץ 2 קילומטר" → CallStepsDesigning (multi-step: search → identify → confirm → delete)
+- "תערוך משימה ותשנה אותה לאכול פירות" → CallStepsDesigning (multi-step: find → select → update → verify)
+- "תוסיף זיכרון ותמחק זיכרון" → CallStepsDesigning (multiple operations)
+- "חפש לי משימה עם המילה ריצה" → CallMytx (single search action)
 
 ONLY respond directly (without tools) for:
 - Simple greetings and casual conversation
-- General knowledge questions that don't require storage
-- Basic explanations or definitions  
+- General knowledge questions
+- Basic explanations or definitions
 - Emotional support or encouragement
-
-Examples of natural responses:
-- "תוסיף לי משימה לקנות חלב" → USE CallMytx (action needed) - NO additional text
-- "תזכור לי שיש לי פגישה מחר" → USE CallMytx (memory storage needed) - NO additional text
-- "חפש לי מידע על מזג האויר" → USE CallMytx (external search needed) - NO additional text
-- "איך מעירים?" → "היי! איך אני יכולה לעזור לך היום?" (greeting) - provide text response
-- "מה זה בינה מלאכותית?" → "בינה מלאכותית זה..." (general knowledge) - provide text response
-
-When you use CallMytx:
-1. userAnswer: Give a natural, friendly response like "Sure, I'll help you with that" or "Let me take care of this for you" (this will be shown to the user)
-2. mytxRequest: Clearly describe what action needs to be taken, even if details are missing
-3. originalMessage: Quote their exact message
-4. Do NOT provide any additional text response - the userAnswer parameter will be displayed
-
-For simple conversations, respond naturally without using any tools.
 
 Today's date is ${new Date().toLocaleDateString()}.`,
       messages: coreMessages,
       tools: {
         CallMytx: {
-          description: "Call the Mytx agent to handle complex tasks that go beyond regular conversation. Use this when the user needs: task management, memory operations, flight booking, meditation, web search, sending messages, or any action-based request.",
+          description: "Call the Mytx agent to handle SINGLE STEP operations that require immediate action. Use this for simple task additions, searches, memory storage, or other single-action requests.",
           parameters: z.object({
             userAnswer: z.string().describe("A natural, conversational response to show the user while the request is being processed. Use phrases like 'Sure, I'll help you with that', 'Let me take care of this for you', 'I'll do my best to assist you with that'. Be genuine and friendly, not overly enthusiastic."),
             mytxRequest: z.string().describe("A clear, detailed request for the Mytx agent based on the user's message. Include all relevant context and specify exactly what action needs to be taken."),
@@ -401,6 +413,107 @@ Context: This request came from Anna (simple assistant) and needs to be handled 
             }
           },
         },
+        CallStepsDesigning: {
+          description: "Call the StepsDesigning agent to handle COMPLEX MULTI-STEP operations that require careful planning and multiple phases. Use this for complex task deletions by name, task editing, multiple operations, or any request that clearly needs several steps to complete safely.",
+          parameters: z.object({
+            userAnswer: z.string().describe("A natural, conversational response to show the user while the request is being processed. Use phrases like 'Let me break this down into steps for you', 'I'll create a detailed plan for that', 'Let me structure this process for you'. Be genuine and helpful, indicating you're providing planning assistance."),
+            stepsRequest: z.string().describe("A clear, detailed description of the complex operation that needs step-by-step planning. Include all relevant context and specify exactly what multi-step process needs to be broken down."),
+            originalMessage: z.string().describe("The exact original message from the user, quoted as-is."),
+          }),
+          execute: async ({ userAnswer, stepsRequest, originalMessage }) => {
+            try {
+              console.log(`[Anna CallStepsDesigning] Processing complex request for user ${uid}`);
+              console.log(`[Anna CallStepsDesigning] User Answer: ${userAnswer}`);
+              console.log(`[Anna CallStepsDesigning] Steps Request: ${stepsRequest}`);
+              
+              // Build the full request for StepsDesigning agent
+              const fullStepsRequest = `User Request: "${originalMessage}"
+              
+Complex Operation for StepsDesigning Agent: ${stepsRequest}
+
+Context: This request came from Anna and requires multi-step planning and detailed guidance for safe completion.`;
+
+              // Call the stepsDesigningService directly
+              const stepsResult = await stepsDesigningService({
+                messages: [
+                  {
+                    role: 'user' as const,
+                    content: fullStepsRequest
+                  }
+                ],
+                uid: uid || '00000000-0000-0000-0000-000000000000',
+                userAnswer: userAnswer,
+                originalMessage: originalMessage
+              });
+
+              if (!stepsResult.success) {
+                console.error(`[Anna CallStepsDesigning] Steps service call failed: ${stepsResult.error}`);
+                return {
+                  type: 'error',
+                  userAnswer: userAnswer,
+                  stepsResponse: "I encountered an issue while creating the step-by-step plan. Please try again in a moment.",
+                  showStepsPlanning: false
+                };
+              }
+
+              // Read the streaming response from StepsDesigning service
+              let stepsContent = "";
+              
+              try {
+                const reader = stepsResult.stream.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  buffer += decoder.decode(value, { stream: true });
+                  const lines = buffer.split('\n');
+                  buffer = lines.pop() || '';
+
+                  for (const line of lines) {
+                    if (line.trim() === '') continue;
+                    
+                    if (line.startsWith('0:')) {
+                      // Text chunks from StepsDesigning agent
+                      try {
+                        const textPart = JSON.parse(line.substring(2));
+                        if (typeof textPart === 'string') {
+                          stepsContent += textPart;
+                        }
+                      } catch (e) {
+                        // Ignore parse errors
+                      }
+                    }
+                  }
+                }
+              } catch (streamError) {
+                console.error('[Anna CallStepsDesigning] Error reading Steps stream:', streamError);
+              }
+
+              console.log(`[Anna CallStepsDesigning] Received steps content length: ${stepsContent.length}`);
+
+              // Return the steps planning result
+              return {
+                type: 'steps_planning',
+                userAnswer: userAnswer,
+                stepsReflectionToUser: stepsContent,
+                originalMessage: originalMessage,
+                showStepsPlanning: true
+              };
+
+            } catch (error) {
+              console.error('[Anna CallStepsDesigning] Error calling StepsDesigning:', error);
+              return {
+                type: 'error',
+                userAnswer: userAnswer,
+                stepsResponse: "I encountered an error while creating the step-by-step plan. Please try again.",
+                showStepsPlanning: false
+              };
+            }
+          },
+        },
       },
       // Optional: Add telemetry or other options if needed
       experimental_telemetry: {
@@ -409,25 +522,29 @@ Context: This request came from Anna (simple assistant) and needs to be handled 
       },
     });
 
-    // 5. Return Streaming Response with Custom Tool Injection
-    // We need to intercept the stream to inject Mytx tool invocations when CallMytx returns them
+    // 5. Return Streaming Response with Custom Tool Injection and Steps Handling
+    // We need to intercept the stream to handle both CallMytx tool injections and CallStepsDesigning results
     const originalStream = result.toDataStreamResponse();
     
-    // Create a transform stream that can inject tool invocations
+    // Create a transform stream that can handle both tool types
     const { readable, writable } = new TransformStream({
       transform(chunk, controller) {
-        // Parse the chunk to check for CallMytx tool results
+        // Parse the chunk to check for tool results
         const chunkText = new TextDecoder().decode(chunk);
         const lines = chunkText.split('\n');
         
         let modifiedChunk = chunkText;
         let shouldInjectTools = false;
         let toolInvocationsToInject: any[] = [];
+        let shouldStreamSteps = false;
+        let stepsContentToStream = '';
         
         for (const line of lines) {
           if (line.startsWith('a:') || line.startsWith('9:')) {
             try {
               const toolData = JSON.parse(line.substring(2));
+              
+              // Handle CallMytx tool results with injection
               if (toolData?.result?.injectToolInvocations && toolData?.result?.mytxToolInvocations) {
                 shouldInjectTools = true;
                 toolInvocationsToInject = toolData.result.mytxToolInvocations;
@@ -447,16 +564,37 @@ Context: This request came from Anna (simple assistant) and needs to be handled 
                 });
                 modifiedChunk = modifiedChunk.replace(line, newLine);
               }
+              
+              // Handle CallStepsDesigning tool results
+              else if (toolData?.result?.type === 'steps_planning' && toolData?.result?.showStepsPlanning) {
+                shouldStreamSteps = true;
+                stepsContentToStream = toolData.result.stepsReflectionToUser || '';
+                console.log(`[Anna Stream] Found steps content to stream: ${stepsContentToStream.length} characters`);
+                
+                // Modify the tool result to only show the userAnswer
+                const modifiedResult = {
+                  type: 'steps_planning',
+                  userAnswer: toolData.result.userAnswer,
+                  showStepsPlanning: true
+                };
+                
+                // Replace the line with the modified result
+                const newLine = line.substring(0, 2) + JSON.stringify({
+                  ...toolData,
+                  result: modifiedResult
+                });
+                modifiedChunk = modifiedChunk.replace(line, newLine);
+              }
             } catch (e) {
               // Ignore parse errors
             }
           }
         }
         
-        // Send the (possibly modified) chunk
+        // Send the (possibly modified) chunk first
         controller.enqueue(new TextEncoder().encode(modifiedChunk));
         
-        // If we need to inject tool invocations, send them as additional chunks
+        // If we need to inject tool invocations from Mytx, send them as additional chunks
         if (shouldInjectTools && toolInvocationsToInject.length > 0) {
           for (const toolInvocation of toolInvocationsToInject) {
             console.log(`[Anna Stream] Injecting tool invocation:`, toolInvocation);
@@ -464,6 +602,19 @@ Context: This request came from Anna (simple assistant) and needs to be handled 
             // Format the tool invocation according to the AI SDK stream format
             const injectedChunk = `a:${JSON.stringify(toolInvocation)}\n`;
             controller.enqueue(new TextEncoder().encode(injectedChunk));
+          }
+        }
+        
+        // If we need to stream steps content, send it as text chunks
+        if (shouldStreamSteps && stepsContentToStream) {
+          console.log(`[Anna Stream] Streaming steps content as text chunks`);
+          
+          // Split the steps content into smaller chunks for better streaming experience
+          const chunkSize = 50; // Characters per chunk
+          for (let i = 0; i < stepsContentToStream.length; i += chunkSize) {
+            const textChunk = stepsContentToStream.substring(i, i + chunkSize);
+            const streamChunk = `0:${JSON.stringify(textChunk)}\n`;
+            controller.enqueue(new TextEncoder().encode(streamChunk));
           }
         }
       }
