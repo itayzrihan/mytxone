@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
 import { z } from "zod";
 
-import { geminiFlashModel } from "..";
+import { geminiFlashModel } from ".";
 import { generateUUID } from "@/lib/utils";
 
 export async function generateSampleFlightStatus({
@@ -16,7 +16,7 @@ export async function generateSampleFlightStatus({
     prompt: `Flight status for flight number ${flightNumber} on ${date}`,
     schema: z.object({
       flightNumber: z.string().describe("Flight number, e.g., BA123, AA31"),
-      departure: z.object({ 
+      departure: z.object({
         cityName: z.string().describe("Name of the departure city"),
         airportCode: z.string().describe("IATA code of the departure airport"),
         airportName: z.string().describe("Full name of the departure airport"),
