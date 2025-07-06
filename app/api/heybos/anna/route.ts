@@ -8,7 +8,7 @@ import { geminiProModel } from "@/ai"; // Import your configured AI model
 import { callMytxAction } from "@/ai/heybos-actions/anna-actions";
 import { callSingleToolService } from "@/services/callSingleToolService";
 import { stepsDesigningService } from "@/services/stepsDesigningService";
-import { processMytxChatRequest, validateMytxChatRequest } from "@/services/mytxChatService";
+import { heybosService } from "@/services/heybosService";
 
 // --- Environment Configuration ---
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
@@ -542,18 +542,43 @@ Passing this detailed plan to Heybos Agent for execution...`;
                 })}\n`
               ));
 
-              // Heybos Agent confirmation message
-              const heybosMessage = `✅ Steps plan received successfully!
+              // Call Heybos service to generate confirmation message
+              const heybosResult = await heybosService({
+                messages: [
+                  {
+                    role: 'user' as const,
+                    content: `Plan received from StepsDesigning Agent for: "${originalMessage}"`
+                  }
+                ],
+                uid: uid || '00000000-0000-0000-0000-000000000000',
+                userAnswer: (toolResult as any).userAnswer,
+                originalMessage: originalMessage,
+                stepsContent: fullStepsContent
+              });
 
-I've got the detailed step-by-step plan from StepsDesigning Agent. The plan includes ${fullStepsContent.length > 0 ? 'comprehensive guidance' : 'basic instructions'} for safely finding and deleting your work-related tasks.
+              if (heybosResult.success && heybosResult.stream) {
+                try {
+                  const reader = heybosResult.stream.getReader();
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    if (value) {
+                      controller.enqueue(value);
+                    }
+                  }
+                } catch (err) {
+                  console.error('[Anna->StepsDesigning->Heybos] Error streaming Heybos agent response:', err);
+                }
+              } else {
+                // Fallback message if Heybos service fails
+                const fallbackMsg = `✅ Steps plan received successfully!
 
-Ready to proceed when you give the go-ahead! 🚀`;
-
-              // Stream Heybos Agent message in chunks
-              const heybosChunks = heybosMessage.split('\n');
-              for (const chunk of heybosChunks) {
-                controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(chunk + '\n')}\n`));
-                await new Promise((resolve) => setTimeout(resolve, 30)); // Small delay for readability
+I've got the detailed step-by-step plan from StepsDesigning Agent. Ready to proceed when you give the go-ahead! 🚀`;
+                const fallbackChunks = fallbackMsg.split('\n');
+                for (const chunk of fallbackChunks) {
+                  controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(chunk + '\n')}\n`));
+                  await new Promise((resolve) => setTimeout(resolve, 30));
+                }
               }
 
               // End Heybos Agent

@@ -35,7 +35,6 @@ import {
   getReservationById,
 } from "@/db/queries";
 import { generateUUID } from "@/lib/utils";
-import { processMytxChatRequest, validateMytxChatRequest } from "@/services/mytxChatService";
 
 // --- Environment Configuration ---
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
