@@ -9,6 +9,7 @@ import { callMytxAction } from "@/ai/heybos-actions/anna-actions";
 import { callSingleToolService } from "@/services/callSingleToolService";
 import { stepsDesigningService } from "@/services/stepsDesigningService";
 import { OperatorService } from "@/services/OperatorService";
+import { createLanguageInstruction } from "@/utils/languageDetection";
 
 // --- Environment Configuration ---
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
@@ -134,6 +135,7 @@ const chatRequestSchema = z.object({
     content: z.string(),
     // Exclude tool-related fields for this endpoint
   })).min(1, "Messages array cannot be empty"), // Require at least one message
+  userLanguage: z.string().optional().default('en'), // User's detected language for consistent responses
 });
 // --- End Request Body Schema ---
 
@@ -184,6 +186,13 @@ export async function POST(request: NextRequest) {
     return res;
   }
 
+  // Extract user language from the validated request
+  const { userLanguage } = validationResult.data;
+  console.log(`[Anna API] Detected user language: ${userLanguage}`);
+  
+  // Create language instruction for all agents
+  const languageInstruction = createLanguageInstruction(userLanguage);
+
   // Add 'id' property to each message to satisfy the Message type
   const messages: Message[] = validationResult.data.messages.map((msg, idx) => ({
     ...msg,
@@ -209,7 +218,9 @@ export async function POST(request: NextRequest) {
   try {
     const result = await streamText({
       model: geminiProModel,
-      system: `You are Anna, The Personal AI Assistant by Heybos. You are a helpful, friendly, and intelligent assistant with a natural, conversational tone. You speak like a real person - not overly enthusiastic or robotic.
+      system: `${languageInstruction}
+
+You are Anna, The Personal AI Assistant by Heybos. You are a helpful, friendly, and intelligent assistant with a natural, conversational tone. You speak like a real person - not overly enthusiastic or robotic.
 
 Your communication style:
 - Be genuine and authentic in your responses
@@ -289,7 +300,8 @@ Today's date is ${new Date().toLocaleDateString()}.`,
               const result = await callMytxAction({
                 userAnswer,
                 mytxRequest,
-                originalMessage
+                originalMessage,
+                languageInstruction // Pass language instruction to ensure Mytx responds in user's language
               });
               
               console.log(`[Anna CallMytx] Action result:`, result);
@@ -334,6 +346,7 @@ Today's date is ${new Date().toLocaleDateString()}.`,
                 userAnswer: userAnswer,
                 stepsRequest: stepsRequest,
                 originalMessage: originalMessage,
+                languageInstruction: languageInstruction, // Pass language instruction to StepsDesigning
                 annaProcessed: true
               };
 
@@ -406,7 +419,8 @@ Today's date is ${new Date().toLocaleDateString()}.`,
 \nTask for Mytx Agent: ${mytxRequest}\n\nContext: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities.`;
             const mytxResult = await callSingleToolService({
               messages: [{ role: 'user' as const, content: fullMytxRequest }],
-              uid: uid || '00000000-0000-0000-0000-000000000000'
+              uid: uid || '00000000-0000-0000-0000-000000000000',
+              languageInstruction: (toolResult as any).languageInstruction // Pass language instruction to Mytx Agent
             });
 
             if (mytxResult && mytxResult.success && mytxResult.stream) {
@@ -467,7 +481,8 @@ Context: This request came from Anna and requires multi-step planning and detail
                 ],
                 uid: uid || '00000000-0000-0000-0000-000000000000',
                 userAnswer: (toolResult as any).userAnswer,
-                originalMessage: originalMessage
+                originalMessage: originalMessage,
+                languageInstruction: (toolResult as any).languageInstruction // Pass language instruction to StepsDesigning
               });
 
               let fullStepsContent = "";
@@ -553,7 +568,8 @@ Passing this detailed plan to Operator Agent for execution...`;
                 uid: uid || '00000000-0000-0000-0000-000000000000',
                 userAnswer: (toolResult as any).userAnswer,
                 originalMessage: originalMessage,
-                stepsContent: fullStepsContent
+                stepsContent: fullStepsContent,
+                languageInstruction: (toolResult as any).languageInstruction // Pass language instruction to Operator Agent
               });
 
               if (operatorResult.success && operatorResult.stream) {

@@ -48,6 +48,7 @@ export interface CallSingleToolInput {
     content: string;
   }>;
   uid: string; // User ID for authentication context
+  languageInstruction?: string; // Language instruction for consistent responses
 }
 
 // Interface for the service output
@@ -100,7 +101,8 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
     // 5. Call AI Model with Full Tools Support
     const result = await streamText({
       model: geminiProModel,
-      system: `
+      system: `${input.languageInstruction || ''}
+        
         IMPORTANT: When you see conversation history, only respond to the LATEST user message. 
         Previous messages in the conversation are for context only - do not re-execute old actions or respond to old requests.
         

@@ -5,15 +5,18 @@ export async function callMytxAction({
   userAnswer,
   mytxRequest,
   originalMessage,
+  languageInstruction,
 }: {
   userAnswer: string;
   mytxRequest: string;
   originalMessage: string;
+  languageInstruction?: string;
 }) {
   console.log(`[Anna CallMytx] Processing request`);
   console.log(`[Anna CallMytx] User Answer: ${userAnswer}`);
   console.log(`[Anna CallMytx] Mytx Request: ${mytxRequest}`);
   console.log(`[Anna CallMytx] Original Message: ${originalMessage}`);
+  console.log(`[Anna CallMytx] Language Instruction: ${languageInstruction}`);
   
   // This function now serves as a logging/tracking point for the CallMytx action
   // The actual Mytx communication is handled in the route.ts file after calling this function
@@ -25,6 +28,7 @@ export async function callMytxAction({
     userAnswer,
     mytxRequest,
     originalMessage,
+    languageInstruction,
     status: "processed" as const,
     timestamp: new Date().toISOString(),
   };

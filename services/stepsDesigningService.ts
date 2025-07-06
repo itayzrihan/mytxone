@@ -19,6 +19,7 @@ export interface StepsDesigningInput {
   uid: string; // User ID for authentication context
   userAnswer: string; // Anna's initial response to show user
   originalMessage: string; // User's original request
+  languageInstruction?: string; // Language instruction for consistent responses
 }
 
 // Interface for the service output
@@ -60,7 +61,9 @@ export async function stepsDesigningService(input: StepsDesigningInput): Promise
     // 4. Call AI Model to generate structured steps for complex multi-step operations
     const result = await streamText({
       model: geminiProModel,
-      system: `You are the StepsDesigningAgent, an enhanced AI assistant that specializes in breaking down complex user requests into clear, structured step-by-step plans for mission completion.
+      system: `${input.languageInstruction || ''}
+
+You are the StepsDesigningAgent, an enhanced AI assistant that specializes in breaking down complex user requests into clear, structured step-by-step plans for mission completion.
 
 You work as part of a crew of specialized agents, but for now, your primary function is to analyze complex requests and provide detailed step-by-step planning.
 

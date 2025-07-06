@@ -21,6 +21,7 @@ export interface OperatorInput {
   userAnswer: string; // Anna's initial response to show user
   originalMessage: string; // User's original request
   stepsContent: string; // The full steps content from StepsDesigning
+  languageInstruction?: string; // Language instruction for consistent responses
 }
 
 // Interface for the service output
@@ -73,7 +74,9 @@ export async function OperatorService(input: OperatorInput): Promise<OperatorOut
     // 5. Call AI Model with Operator Agent personality
     const result = await streamText({
       model: geminiProModel,
-      system: `You are Operator Agent, the execution-ready assistant that works with StepsDesigning Agent to complete complex multi-step operations.
+      system: `${input.languageInstruction || ''}
+
+You are Operator Agent, the execution-ready assistant that works with StepsDesigning Agent to complete complex multi-step operations.
 
 Your role:
 - Acknowledge receipt of detailed plans from StepsDesigning Agent
