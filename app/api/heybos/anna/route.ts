@@ -293,122 +293,15 @@ Today's date is ${new Date().toLocaleDateString()}.`,
               });
               
               console.log(`[Anna CallMytx] Action result:`, result);
-              
-              // Build the full request for Mytx including context
-              const fullMytxRequest = `User Request: "${originalMessage}"
-              
-Task for Mytx Agent: ${mytxRequest}
 
-Context: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities.`;
-
-              // Use the callSingleToolService directly instead of HTTP call
-              const mytxResult = await callSingleToolService({
-                messages: [
-                  {
-                    role: 'user' as const,
-                    content: fullMytxRequest
-                  }
-                ],
-                uid: uid || '00000000-0000-0000-0000-000000000000'
-              });
-
-              if (!mytxResult.success) {
-                console.error(`[Anna CallMytx] Mytx service call failed: ${mytxResult.error}`);
-                return {
-                  type: 'error',
-                  userAnswer: userAnswer,
-                  mytxResponse: "I encountered an issue while processing your request. Please try again in a moment.",
-                  showCapabilityMissing: false
-                };
-              }
-
-              // Read the streaming response from Mytx service
-              let mytxContent = "";
-              let mytxToolInvocations: any[] = [];
-              
-              try {
-                const reader = mytxResult.stream.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-
-                  buffer += decoder.decode(value, { stream: true });
-                  const lines = buffer.split('\n');
-                  buffer = lines.pop() || '';
-
-                  for (const line of lines) {
-                    if (line.trim() === '') continue;
-                    
-                    if (line.startsWith('0:')) {
-                      // Text chunks
-                      try {
-                        const textPart = JSON.parse(line.substring(2));
-                        if (typeof textPart === 'string') {
-                          mytxContent += textPart;
-                        }
-                      } catch (e) {
-                        // Ignore parse errors
-                      }
-                    } else if (line.startsWith('9:') || line.startsWith('a:')) {
-                      // Tool invocations
-                      try {
-                        const toolData = JSON.parse(line.substring(2));
-                        mytxToolInvocations.push(toolData);
-                        console.log(`[Anna CallMytx] Found tool invocation:`, toolData);
-                      } catch (e) {
-                        console.error(`[Anna CallMytx] Error parsing tool data:`, e);
-                      }
-                    }
-                  }
-                }
-              } catch (streamError) {
-                console.error('[Anna CallMytx] Error reading Mytx stream:', streamError);
-              }
-
-              console.log(`[Anna CallMytx] Final content length: ${mytxContent.length}`);
-              console.log(`[Anna CallMytx] Total tool invocations: ${mytxToolInvocations.length}`);
-              console.log(`[Anna CallMytx] Tool invocations summary:`, mytxToolInvocations.map(t => t.toolName || 'unknown'));
-
-              // Check if Mytx couldn't fulfill the request
-              const isCapabilityMissing = mytxContent && (
-                mytxContent.includes("I am sorry, I cannot fulfill this request") ||
-                mytxContent.includes("I don't have the ability") ||
-                mytxContent.includes("I cannot") ||
-                mytxContent.includes("I'm unable to") ||
-                mytxToolInvocations.length === 0
-              );
-
-              console.log(`[Anna CallMytx] Capability missing: ${isCapabilityMissing}`);
-
-              if (isCapabilityMissing) {
-                // For capability missing, return a special result that will trigger the UI
-                return {
-                  type: 'capability_missing',
-                  userAnswer: userAnswer,
-                  originalMessage: originalMessage,
-                  mytxResponse: mytxContent,
-                  showCapabilityMissing: true
-                };
-              } else {
-                // For successful operations, we need to inject the Mytx tool invocations
-                // into the current stream context so they get processed by TheBaze
-                console.log(`[Anna CallMytx] Preparing to inject ${mytxToolInvocations.length} tool invocations from Mytx`);
-                
-                // Return special object that will be processed by the streaming system
-                return {
-                  type: 'success',
-                  userAnswer: userAnswer,
-                  mytxResponse: mytxContent,
-                  mytxToolInvocations: mytxToolInvocations,
-                  originalMessage: originalMessage,
-                  showCapabilityMissing: false,
-                  // Special flag to indicate that tool invocations should be injected
-                  injectToolInvocations: true
-                };
-              }
+              // Return Anna's message and Mytx request info - the streaming handler will process this
+              return {
+                type: 'anna_then_mytx',
+                userAnswer: userAnswer,
+                mytxRequest: mytxRequest,
+                originalMessage: originalMessage,
+                annaProcessed: true
+              };
 
             } catch (error) {
               console.error('[Anna CallMytx] Error calling Mytx:', error);
@@ -531,176 +424,89 @@ Context: This request came from Anna and requires multi-step planning and detail
     });
 
     // 5. Return Streaming Response with Custom Tool Injection and Steps Handling
-    // We need to intercept the stream to handle both CallMytx tool injections and CallStepsDesigning results
+    // We need to intercept the stream to handle both CallMytx tool injections and StepsDesigning results
     const originalStream = result.toDataStreamResponse();
-    
-    // Create a transform stream that can handle both tool types
-    const { readable, writable } = new TransformStream({
-      transform(chunk, controller) {
-        // Parse the chunk to check for tool results
-        const chunkText = new TextDecoder().decode(chunk);
-        const lines = chunkText.split('\n');
-        
-        let modifiedChunk = chunkText;
-        let shouldInjectTools = false;
-        let toolInvocationsToInject: any[] = [];
-        let shouldStreamSteps = false;
-        let stepsContentToStream = '';
-        let hasTextContent = false;
-        
-        // Check if chunk contains text content (Anna's response)
-        hasTextContent = lines.some(line => line.startsWith('0:'));
-        
-        for (const line of lines) {
-          if (line.startsWith('a:') || line.startsWith('9:')) {
-            try {
-              const toolData = JSON.parse(line.substring(2));
-              console.log(`[Anna Stream Debug] Processing tool data:`, toolData);
-              
-              // Handle CallMytx tool results with injection
-              if (toolData?.result?.injectToolInvocations && toolData?.result?.mytxToolInvocations) {
-                shouldInjectTools = true;
-                toolInvocationsToInject = toolData.result.mytxToolInvocations;
-                console.log(`[Anna Stream] Found tool invocations to inject: ${toolInvocationsToInject.length}`);
-                console.log(`[Anna Stream] Tool invocations:`, toolInvocationsToInject);
-                
-                // Modify the tool result to only show the userAnswer
-                const modifiedResult = {
-                  type: 'success',
-                  userAnswer: toolData.result.userAnswer,
-                  showCapabilityMissing: false
-                };
-                
-                // Replace the line with the modified result
-                const newLine = line.substring(0, 2) + JSON.stringify({
-                  ...toolData,
-                  result: modifiedResult
-                });
-                modifiedChunk = modifiedChunk.replace(line, newLine);
-              }
-              // Also handle successful CallMytx results without explicit injection flag
-              else if (toolData?.result?.type === 'success' && toolData?.result?.mytxToolInvocations) {
-                shouldInjectTools = true;
-                toolInvocationsToInject = toolData.result.mytxToolInvocations;
-                console.log(`[Anna Stream] Found tool invocations (alternative path): ${toolInvocationsToInject.length}`);
-                console.log(`[Anna Stream] Tool invocations:`, toolInvocationsToInject);
-                
-                // Modify the tool result to only show the userAnswer
-                const modifiedResult = {
-                  type: 'success',
-                  userAnswer: toolData.result.userAnswer,
-                  showCapabilityMissing: false
-                };
-                
-                // Replace the line with the modified result
-                const newLine = line.substring(0, 2) + JSON.stringify({
-                  ...toolData,
-                  result: modifiedResult
-                });
-                modifiedChunk = modifiedChunk.replace(line, newLine);
-              }
-              
-              // Handle CallStepsDesigning tool results
-              else if (toolData?.result?.type === 'steps_planning' && toolData?.result?.showStepsPlanning) {
-                shouldStreamSteps = true;
-                stepsContentToStream = toolData.result.stepsReflectionToUser || '';
-                console.log(`[Anna Stream] Found steps content to stream: ${stepsContentToStream.length} characters`);
-                
-                // Modify the tool result to only show the userAnswer
-                const modifiedResult = {
-                  type: 'steps_planning',
-                  userAnswer: toolData.result.userAnswer,
-                  showStepsPlanning: true
-                };
-                
-                // Replace the line with the modified result
-                const newLine = line.substring(0, 2) + JSON.stringify({
-                  ...toolData,
-                  result: modifiedResult
-                });
-                modifiedChunk = modifiedChunk.replace(line, newLine);
-              }
-            } catch (e) {
-              console.error(`[Anna Stream] Error parsing tool data:`, e);
-            }
-          }
-        }
-        
-        // Send the (possibly modified) chunk first
-        controller.enqueue(new TextEncoder().encode(modifiedChunk));
-        
-        // Send agent marker for Anna's response if this is the first text content
-        if (hasTextContent) {
-          const annaStartMarker = `agent_start:${JSON.stringify({
-            agentName: 'Anna',
-            messageId: `anna-${Date.now()}`,
-            timestamp: new Date().toISOString()
-          })}\n`;
-          controller.enqueue(new TextEncoder().encode(annaStartMarker));
-        }
-        
-        // If we need to inject tool invocations from Mytx, send them as additional chunks
-        if (shouldInjectTools && toolInvocationsToInject.length > 0) {
-          // First, send a special marker to indicate start of Mytx agent response
-          const mytxStartMarker = `agent_start:${JSON.stringify({
-            agentName: 'Mytx Agent',
-            messageId: `mytx-${Date.now()}`,
-            timestamp: new Date().toISOString()
-          })}\n`;
-          controller.enqueue(new TextEncoder().encode(mytxStartMarker));
-          
-          for (const toolInvocation of toolInvocationsToInject) {
-            console.log(`[Anna Stream] Injecting tool invocation:`, toolInvocation);
-            
-            // Format the tool invocation according to the AI SDK stream format with agent context
-            const injectedChunk = `a:${JSON.stringify({
-              ...toolInvocation,
-              agentName: 'Mytx Agent'
-            })}\n`;
-            controller.enqueue(new TextEncoder().encode(injectedChunk));
-          }
-          
-          // Send end marker for Mytx agent response
-          const mytxEndMarker = `agent_end:${JSON.stringify({
-            agentName: 'Mytx Agent'
-          })}\n`;
-          controller.enqueue(new TextEncoder().encode(mytxEndMarker));
-        }
-        
-        // If we need to stream steps content, send it as text chunks
-        if (shouldStreamSteps && stepsContentToStream) {
-          console.log(`[Anna Stream] Streaming steps content as text chunks`);
-          
-          // Split the steps content into smaller chunks for better streaming experience
-          const chunkSize = 50; // Characters per chunk
-          for (let i = 0; i < stepsContentToStream.length; i += chunkSize) {
-            const textChunk = stepsContentToStream.substring(i, i + chunkSize);
+
+    // Custom streaming for anna_then_mytx: stream Anna, then Mytx
+    const toolResults = await result.toolResults;
+    const toolResult = toolResults?.[0]?.result;
+    if (toolResult && toolResult.type === 'anna_then_mytx' && 'mytxRequest' in toolResult) {
+      const readable = new ReadableStream({
+        async start(controller) {
+          // 1. Anna agent start marker
+          controller.enqueue(new TextEncoder().encode(
+            `agent_start:${JSON.stringify({
+              agentName: 'Anna',
+              messageId: `anna-${Date.now()}`,
+              timestamp: new Date().toISOString()
+            })}\n`
+          ));
+          // 2. Anna's userAnswer as text chunks
+          const userAnswer = toolResult.userAnswer;
+          const chunkSize = 20;
+          for (let i = 0; i < userAnswer.length; i += chunkSize) {
+            const textChunk = userAnswer.substring(i, i + chunkSize);
             const streamChunk = `0:${JSON.stringify(textChunk)}\n`;
             controller.enqueue(new TextEncoder().encode(streamChunk));
           }
-        }
-      }
-    });
-    
-    // Pipe the original stream through our transform
-    originalStream.body?.pipeTo(writable).catch(error => {
-      console.error('[Anna Stream] Stream error:', error);
-    });
-    
-    const nextStreamResponse = new NextResponse(readable, {
-      status: originalStream.status,
-      statusText: originalStream.statusText,
-      headers: originalStream.headers,
-    });
-    setCorsHeaders(nextStreamResponse, origin);
-    return nextStreamResponse;
+          // 3. Anna agent end marker
+          controller.enqueue(new TextEncoder().encode(
+            `agent_end:${JSON.stringify({ agentName: 'Anna' })}\n`
+          ));
+          // 4. Mytx agent start marker
+          controller.enqueue(new TextEncoder().encode(
+            `agent_start:${JSON.stringify({
+              agentName: 'Mytx Agent',
+              messageId: `mytx-${Date.now()}`,
+              timestamp: new Date().toISOString()
+            })}\n`
+          ));
+          // 5. Call Mytx and stream its response
+          const fullMytxRequest = `User Request: "${toolResult.originalMessage}"
+\nTask for Mytx Agent: ${toolResult.mytxRequest}\n\nContext: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities.`;
+          const mytxResult = await callSingleToolService({
+            messages: [{ role: 'user' as const, content: fullMytxRequest }],
+            uid: uid || '00000000-0000-0000-0000-000000000000'
+          });
 
-  } catch (error: any) {
-    console.error("[Firebase Chat API POST] Error calling AI model:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error during AI processing";
-    const res = NextResponse.json({ error: "Internal Server Error", details: errorMessage }, { status: 500 });
+          if (mytxResult && mytxResult.success && mytxResult.stream) {
+            try {
+              const reader = mytxResult.stream.getReader();
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (value) {
+                  controller.enqueue(value);
+                }
+              }
+            } catch (err) {
+              console.error('[Anna->Mytx] Error streaming Mytx agent response:', err);
+            }
+          } else {
+            // If no stream, send a fallback error message
+            const errorMsg = mytxResult && mytxResult.error ? mytxResult.error : 'No response from Mytx agent.';
+            controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
+          }
+          controller.enqueue(new TextEncoder().encode(
+            `agent_end:${JSON.stringify({ agentName: 'Mytx Agent' })}\n`
+          ));
+          controller.close();
+        }
+      });
+      // Return the streaming response
+      const response = new NextResponse(readable);
+      setCorsHeaders(response, origin);
+      return response;
+    }
+    // Fallback: return the original stream if not anna_then_mytx
+    // Fallback: return the original stream if not anna_then_mytx
+    const fallbackResponse = new NextResponse(originalStream.body, { status: 200 });
+    setCorsHeaders(fallbackResponse, origin);
+    return fallbackResponse;
+  } catch (error) {
+    console.error('[Firebase Chat API POST] Unhandled error:', error);
+    const res = NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
     setCorsHeaders(res, origin);
     return res;
   }
 }
-// --- End POST Handler ---
