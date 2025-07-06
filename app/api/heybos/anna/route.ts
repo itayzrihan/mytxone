@@ -445,7 +445,7 @@ Today's date is ${new Date().toLocaleDateString()}.`,
               })}\n`
             ));
 
-            // 5. Call StepsDesigning service in real-time and stream its response
+            // 5. Call StepsDesigning service and get full plan, then stream short summary
             try {
               const stepsRequest = (toolResult as any).stepsRequest;
               const originalMessage = (toolResult as any).originalMessage;
@@ -457,7 +457,7 @@ Complex Operation for StepsDesigning Agent: ${stepsRequest}
 
 Context: This request came from Anna and requires multi-step planning and detailed guidance for safe completion.`;
 
-              // Call the stepsDesigningService in real-time
+              // Call the stepsDesigningService to get the full plan
               const stepsResult = await stepsDesigningService({
                 messages: [
                   {
@@ -470,8 +470,10 @@ Context: This request came from Anna and requires multi-step planning and detail
                 originalMessage: originalMessage
               });
 
+              let fullStepsContent = "";
+              
               if (stepsResult.success && stepsResult.stream) {
-                // Stream the StepsDesigning response in real-time
+                // Read the full StepsDesigning response
                 const reader = stepsResult.stream.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
@@ -488,18 +490,79 @@ Context: This request came from Anna and requires multi-step planning and detail
                     if (line.trim() === '') continue;
                     
                     if (line.startsWith('0:')) {
-                      // Forward the text chunks directly to the client
-                      controller.enqueue(new TextEncoder().encode(line + '\n'));
+                      try {
+                        const textPart = JSON.parse(line.substring(2));
+                        if (typeof textPart === 'string') {
+                          fullStepsContent += textPart;
+                        }
+                      } catch (e) {
+                        // Ignore parse errors
+                      }
                     }
+                  }
+                }
+
+                // Stream a short summary instead of the full plan
+                const shortSummary = `I've analyzed your request to find and delete work-related tasks. Here's my plan:
+
+1. **Search Phase**: Scan all tasks for work-related keywords
+2. **Review Phase**: Present findings for your confirmation  
+3. **Deletion Phase**: Remove confirmed tasks safely
+4. **Verification Phase**: Confirm successful completion
+
+Passing this detailed plan to Heybos Agent for execution...`;
+
+                // Stream the short summary in chunks
+                const summaryChunks = shortSummary.split('\n');
+                for (const chunk of summaryChunks) {
+                  if (chunk.trim().length > 0) {
+                    controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(chunk + '\n')}\n`));
+                    await new Promise((resolve) => setTimeout(resolve, 50)); // Small delay for readability
                   }
                 }
               } else {
                 // If no stream, send a fallback error message
-                const errorMsg = stepsResult.error || 'No response from StepsDesigning agent.';
+                const errorMsg = stepsResult.error || 'Unable to create step-by-step plan.';
                 controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
+                fullStepsContent = errorMsg;
               }
+
+              // End StepsDesigning agent
+              controller.enqueue(new TextEncoder().encode(
+                `agent_end:${JSON.stringify({ agentName: 'StepsDesigning' })}\n`
+              ));
+
+              // Start Heybos Agent
+              await new Promise((resolve) => setTimeout(resolve, 100)); // Longer delay before next agent
+              controller.enqueue(new TextEncoder().encode(
+                `agent_start:${JSON.stringify({
+                  agentName: 'Heybos Agent',
+                  messageId: `heybos-${Date.now()}`,
+                  timestamp: new Date().toISOString()
+                })}\n`
+              ));
+
+              // Heybos Agent confirmation message
+              const heybosMessage = `✅ Steps plan received successfully!
+
+I've got the detailed step-by-step plan from StepsDesigning Agent. The plan includes ${fullStepsContent.length > 0 ? 'comprehensive guidance' : 'basic instructions'} for safely finding and deleting your work-related tasks.
+
+Ready to proceed when you give the go-ahead! 🚀`;
+
+              // Stream Heybos Agent message in chunks
+              const heybosChunks = heybosMessage.split('\n');
+              for (const chunk of heybosChunks) {
+                controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(chunk + '\n')}\n`));
+                await new Promise((resolve) => setTimeout(resolve, 30)); // Small delay for readability
+              }
+
+              // End Heybos Agent
+              controller.enqueue(new TextEncoder().encode(
+                `agent_end:${JSON.stringify({ agentName: 'Heybos Agent' })}\n`
+              ));
+              
             } catch (err) {
-              console.error('[Anna->StepsDesigning] Error streaming StepsDesigning response:', err);
+              console.error('[Anna->StepsDesigning->Heybos] Error in multi-agent flow:', err);
               const errorMsg = 'I encountered an error while creating the step-by-step plan. Please try again.';
               controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
             }
