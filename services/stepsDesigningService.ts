@@ -28,7 +28,8 @@ export interface StepsDesigningOutput {
   success: boolean;
   error?: string;
   shortSummary?: string; // Short summary for user streaming
-  detailedPlan?: string; // Full detailed plan for operator
+  steps?: { [key: string]: string }; // Dynamic step fields (step1, step2, etc.) - max 25 steps
+  totalSteps?: number; // Total number of steps for operator to report to user
 }
 
 /**
@@ -68,7 +69,7 @@ You are the StepsDesigning Agent, an enhanced AI assistant that specializes in b
 
 Your task is to create BOTH:
 1. A SHORT SUMMARY (2-3 sentences) for the user explaining that you've created a plan
-2. A DETAILED STEP-BY-STEP PLAN for the operator to execute
+2. INDIVIDUAL STEPS (maximum 25 steps) that will be passed to the operator
 
 Always respond in the user's language (Hebrew, English, Arabic, etc.)
 
@@ -81,22 +82,25 @@ SHORT_SUMMARY_START
 [Write a brief, friendly 2-3 sentence summary in the user's language explaining that you've created a detailed plan and are passing it to the operator]
 SHORT_SUMMARY_END
 
-DETAILED_PLAN_START
-[Write a comprehensive, detailed step-by-step plan with numbered steps, explanations, prerequisites, considerations, and potential challenges. Be thorough and methodical.]
-DETAILED_PLAN_END
+STEPS_START
+STEP_1: [First step description]
+STEP_2: [Second step description]
+STEP_3: [Third step description]
+... (continue with STEP_4, STEP_5, etc. up to maximum 25 steps)
+STEPS_END
 
 Example format:
 SHORT_SUMMARY_START
 יצרתי תוכנית מפורטת למציאת ומחיקת כל המשימות הקשורות לעבודה. התוכנית מועברת עכשיו לסוכן האופרטור לביצוע.
 SHORT_SUMMARY_END
 
-DETAILED_PLAN_START
-1. **חיפוש משימות עבודה**: חפש במערכת את כל המשימות המכילות את המילה "עבודה"
-2. **הצגת רשימה**: הצג למשתמש את כל המשימות שנמצאו לאישור
-3. **אישור מחיקה**: קבל אישור מפורש מהמשתמש למחיקת המשימות
-4. **ביצוע מחיקה**: מחק את כל המשימות המאושרות מהמערכת
-5. **אימות תוצאה**: ודא שהמחיקה בוצעה בהצלחה והצג הודעת אישור
-DETAILED_PLAN_END`,
+STEPS_START
+STEP_1: חיפוש משימות עבודה - חפש במערכת את כל המשימות המכילות את המילה "עבודה"
+STEP_2: הצגת רשימה - הצג למשתמש את כל המשימות שנמצאו לאישור
+STEP_3: אישור מחיקה - קבל אישור מפורש מהמשתמש למחיקת המשימות
+STEP_4: ביצוע מחיקה - מחק את כל המשימות המאושרות מהמערכת
+STEP_5: אימות תוצאה - ודא שהמחיקה בוצעה בהצלחה והצג הודעת אישור
+STEPS_END`,
       messages: coreMessages,
       experimental_telemetry: {
         isEnabled: true,
@@ -141,46 +145,66 @@ DETAILED_PLAN_END`,
 
     console.log('[StepsDesigning Service] Full content received, length:', fullContent.length);
 
-    // 6. Parse the response to extract short summary and detailed plan
+    // 6. Parse the response to extract short summary and individual steps
     let shortSummary = '';
-    let detailedPlan = '';
+    const steps: { [key: string]: string } = {};
+    let totalSteps = 0;
 
     const shortSummaryMatch = fullContent.match(/SHORT_SUMMARY_START\s*([\s\S]*?)\s*SHORT_SUMMARY_END/);
-    const detailedPlanMatch = fullContent.match(/DETAILED_PLAN_START\s*([\s\S]*?)\s*DETAILED_PLAN_END/);
+    const stepsMatch = fullContent.match(/STEPS_START\s*([\s\S]*?)\s*STEPS_END/);
 
     if (shortSummaryMatch) {
       shortSummary = shortSummaryMatch[1].trim();
     }
 
-    if (detailedPlanMatch) {
-      detailedPlan = detailedPlanMatch[1].trim();
+    if (stepsMatch) {
+      const stepsContent = stepsMatch[1].trim();
+      const stepLines = stepsContent.split('\n').filter(line => line.trim().startsWith('STEP_'));
+      
+      for (const line of stepLines) {
+        const stepMatch = line.match(/STEP_(\d+):\s*(.*)/);
+        if (stepMatch && totalSteps < 25) { // Limit to 25 steps
+          const stepNumber = stepMatch[1];
+          const stepContent = stepMatch[2].trim();
+          steps[`step${stepNumber}`] = stepContent;
+          totalSteps++;
+        }
+      }
     }
 
-    // Fallback: if parsing fails, use the full content
-    if (!shortSummary && !detailedPlan) {
+    // Fallback: if parsing fails, create a single step with the full content
+    if (!shortSummary && Object.keys(steps).length === 0) {
       console.log('[StepsDesigning Service] Parsing failed, using fallback approach');
       if (fullContent.length > 200) {
         shortSummary = fullContent.substring(0, 200) + '...';
-        detailedPlan = fullContent;
+        steps.step1 = fullContent;
+        totalSteps = 1;
       } else {
         shortSummary = fullContent;
-        detailedPlan = fullContent;
+        steps.step1 = fullContent;
+        totalSteps = 1;
       }
     } else if (!shortSummary) {
-      shortSummary = detailedPlan.substring(0, 200) + (detailedPlan.length > 200 ? '...' : '');
-    } else if (!detailedPlan) {
-      detailedPlan = shortSummary;
+      // Create summary from first step if available
+      const firstStep = Object.values(steps)[0];
+      shortSummary = firstStep ? (firstStep.substring(0, 200) + (firstStep.length > 200 ? '...' : '')) : 'Plan created successfully';
+    } else if (Object.keys(steps).length === 0) {
+      // Create a single step from summary if no steps found
+      steps.step1 = shortSummary;
+      totalSteps = 1;
     }
 
     console.log('[StepsDesigning Service] Parsed content:', {
       shortSummaryLength: shortSummary.length,
-      detailedPlanLength: detailedPlan.length
+      totalSteps: totalSteps,
+      stepKeys: Object.keys(steps)
     });
 
     return {
       success: true,
       shortSummary: shortSummary,
-      detailedPlan: detailedPlan
+      steps: steps,
+      totalSteps: totalSteps
     };
 
   } catch (error: any) {

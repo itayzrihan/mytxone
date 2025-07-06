@@ -492,21 +492,31 @@ Context: This request came from Anna and requires multi-step planning and detail
               console.log('[Anna Route] StepsDesigning result:', { 
                 success: stepsResult.success, 
                 hasShortSummary: !!stepsResult.shortSummary,
-                hasDetailedPlan: !!stepsResult.detailedPlan,
+                hasSteps: !!stepsResult.steps,
+                totalSteps: stepsResult.totalSteps,
                 error: stepsResult.error 
               });
 
               let fullStepsContent = "";
               let shortSummary = "";
+              let stepsData = {};
+              let totalSteps = 0;
               
               if (stepsResult.success) {
-                // Get both the detailed plan and short summary from the service response
-                fullStepsContent = stepsResult.detailedPlan || "";
+                // Get the steps data and short summary from the service response
+                stepsData = stepsResult.steps || {};
+                totalSteps = stepsResult.totalSteps || 0;
                 shortSummary = stepsResult.shortSummary || "";
+                
+                // Create legacy fullStepsContent for backward compatibility
+                fullStepsContent = Object.entries(stepsData)
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join('\n') || shortSummary;
 
-                console.log('[Anna Route] Got summaries:', { 
+                console.log('[Anna Route] Got steps data:', { 
                   shortSummaryLength: shortSummary.length,
-                  detailedPlanLength: fullStepsContent.length 
+                  totalSteps: totalSteps,
+                  stepKeys: Object.keys(stepsData)
                 });
 
                 // Stream the short summary to the user
@@ -561,7 +571,9 @@ Context: This request came from Anna and requires multi-step planning and detail
                 uid: uid || '00000000-0000-0000-0000-000000000000',
                 userAnswer: (toolResult as any).userAnswer,
                 originalMessage: originalMessage,
-                stepsContent: fullStepsContent,
+                stepsContent: fullStepsContent, // Legacy support
+                steps: stepsData, // New steps format
+                totalSteps: totalSteps, // Number of steps for operator to report
                 languageInstruction: (toolResult as any).languageInstruction // Pass language instruction to Operator Agent
               });
 
