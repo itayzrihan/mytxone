@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
 import { z } from "zod";
 
-import { geminiFlashModel } from ".";
+import { geminiFlashModel } from "..";
 import { generateUUID } from "@/lib/utils";
 
 export async function generateSampleFlightStatus({
@@ -323,75 +323,7 @@ export async function searchTasksAction({
   };
 }
 
-export async function workflowManagerAction({
-  userId,
-  userRequest,
-  currentContext,
-  previousSteps = [],
-}: {
-  userId: string;
-  userRequest: string;
-  currentContext?: any;
-  previousSteps?: string[];
-}) {
-  console.log(`Action: Workflow Manager processing request for user ${userId}: ${userRequest}`);
-  
-  // Analyze the user request and determine the workflow
-  const { object: workflowPlan } = await generateObject({
-    model: geminiFlashModel,
-    prompt: `You are the "Mother of All Tools" - an intelligent workflow manager. Analyze this user request and create a smart multi-step workflow:
 
-User Request: "${userRequest}"
-Current Context: ${JSON.stringify(currentContext)}
-Previous Steps: ${previousSteps.join(', ')}
-
-Based on the request, determine:
-1. What type of operation this is (task management, search, multi-operation, etc.)
-2. The optimal sequence of steps to fulfill this request
-3. What information you need from the user before proceeding
-4. Any confirmations needed from the user
-
-Consider these scenarios:
-- If user asks to edit a task by description (e.g., "change the running task to tomorrow"), first search for relevant tasks, then ask for confirmation
-- If user wants to add a task, break it into steps: analyze request → ask for confirmation → execute
-- If user wants to do multiple operations, plan the sequence intelligently
-- Always ask for user confirmation before destructive operations (delete, finish)
-- Use smart search to find tasks when user references them by description/keyword
-
-Return a structured workflow plan.`,
-    schema: z.object({
-      workflowType: z.enum([
-        'task_search_and_edit',
-        'task_add_confirmation',
-        'task_bulk_operations',
-        'task_smart_search',
-        'multi_step_workflow',
-        'simple_operation'
-      ]).describe("Type of workflow needed"),
-      steps: z.array(z.object({
-        stepNumber: z.number(),
-        action: z.string(),
-        description: z.string(),
-        requiresConfirmation: z.boolean(),
-        parameters: z.record(z.any()).optional(),
-      })).describe("Sequence of steps to execute"),
-      immediateAction: z.string().optional().describe("First action to take now"),
-      awaitingUserInput: z.boolean().describe("Whether we need user input before proceeding"),
-      userPrompt: z.string().optional().describe("What to ask the user"),
-      riskLevel: z.enum(['low', 'medium', 'high']).describe("Risk level of this workflow"),
-    }),
-  });
-
-  return {
-    action: "workflowManager",
-    workflowPlan,
-    userRequest,
-    currentContext,
-    previousSteps,
-    status: "planning" as const,
-    message: `I'm analyzing your request and creating a smart workflow to handle it properly...`
-  };
-}
 
 export async function batchTaskOperationsAction({
   userId,

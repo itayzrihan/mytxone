@@ -29,7 +29,7 @@ import {
   getMeditationAction,
   deleteMeditationAction,
   generateMeditationContentAction,
-} from "@/ai/heybos-actions/heybos-actions";
+} from "@/ai/heybos-actions/anna-actions";
 import {
   createReservation,
   getReservationById,
