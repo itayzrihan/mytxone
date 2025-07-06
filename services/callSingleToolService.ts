@@ -367,16 +367,6 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
             return await deleteMeditationAction({ meditationId, userId: input.uid });
           },
         },
-        enhancedSearchTasks: {
-          description: "Enhanced search for tasks using intelligent keyword matching and relevance analysis. This tool provides smarter search results than the basic searchTasks tool.",
-          parameters: z.object({
-            query: z.string().describe("Search query to find tasks. Can be natural language describing what you're looking for."),
-            limit: z.number().optional().describe("Number of results to return - defaults to 20."),
-          }),
-          execute: async ({ query, limit }) => {
-            return await searchTasksAction({ query, limit, userId: input.uid });
-          },
-        },
         batchTaskOperations: {
           description: "Execute multiple task operations (add, update, delete, finish) in a single batch. Allows for bulk operations on tasks with optional confirmation prompts.",
           parameters: z.object({
