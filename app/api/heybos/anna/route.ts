@@ -5,36 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { geminiProModel } from "@/ai"; // Import your configured AI model
-import {
-  generateReservationPrice,
-  generateSampleFlightSearchResults,
-  generateSampleFlightStatus,
-  generateSampleSeatSelection,
-  addTaskAction,
-  listTasksAction,
-  updateTaskAction,
-  finishTaskAction,
-  deleteTaskAction,
-  searchTasksAction,
-  batchTaskOperationsAction,
-  smartTaskFinderAction,
-  saveMemoryAction,
-  recallMemoriesAction,
-  forgetMemoryAction,
-  showMeditationTypeSelectorAction,
-  showMeditationPromptSelectorAction,
-  showMeditationLanguageSelectorAction,
-  createMeditationAction,
-  listMeditationsAction,
-  getMeditationAction,
-  deleteMeditationAction,
-  generateMeditationContentAction,
-} from "@/ai/heybos-actions/anna-actions";
-import {
-  createReservation,
-  getReservationById,
-} from "@/db/queries";
-import { generateUUID } from "@/lib/utils";
+import { BASE_URL } from "@/components/internalurls"; // Import the base URL for internal links
+import { callMytxAction } from "@/ai/heybos-actions/anna-actions";
 
 // --- Environment Configuration ---
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
@@ -231,515 +203,201 @@ export async function POST(request: NextRequest) {
       return res;
   }
 
-  // 4. Call AI Model with Full Tools Support
+  // 4. Call AI Model with Only CallMytx Tool Support
   try {
     const result = await streamText({
       model: geminiProModel,
-      system: `
-        IMPORTANT: When you see conversation history, only respond to the LATEST user message. 
-        Previous messages in the conversation are for context only - do not re-execute old actions or respond to old requests.
-        
-        - you are also generally helpful and friendly and helping with anything else.
-        whenever the user asks if you remember something you should check the memory first. even if the user not explicitly asks you to recall it might be a good idea to try to recall it.
-        - you help users book flights, manage their tasks, AND remember information!
-        - keep your responses limited to a sentence.
-        - DO NOT output lists.
-        - IMPORTANT: ALWAYS provide a text response when using tools. Never send just tool calls without accompanying text.
-        - after every tool call, always include a brief text message explaining what you're doing or what the result shows.
-        - today's date is ${new Date().toLocaleDateString()}.
-        - ask follow up questions to nudge user into the optimal flow
-        - ask for any details you don't know, like name of passenger, etc.'
-        - C and D are aisle seats, A and F are window seats, B and E are middle seats
-        - assume the most popular airports for the origin and destination
-        - here's the optimal flight booking flow
-          - search for flights
-          - choose flight
-          - select seats
-          - create reservation (ask user whether to proceed with payment or change reservation)
-          - authorize payment (requires user consent, wait for user to finish payment and let you know when done)
-          - display boarding pass (DO NOT display boarding pass without verifying payment)
-        - here's the optimal task management flow (enhanced with smart tools):
-          - When adding a task, use the workflowManager for complex requests that need confirmation
-          - ALWAYS parse the user's request carefully:
-            * Extract the main task name/action (keep concise, avoid repetition)
-            * Detect task type from keywords (EXACT VALUES: 'onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'):
-              - "daily", "every day", "each day", "יומי" → daily
-              - "weekly", "every week", "each week", "שבועי" → weekly  
-              - "monthly", "every month", "each month", "חודשי" → monthly
-              - "quarterly", "every quarter", "רבעוני" → quarterly
-              - "yearly", "every year", "annually", "שנתי" → yearly
-              - Default or "one time", "once", "חד פעמי" → onetime
-            * Detect priority from keywords (EXACT VALUES: 'low', 'medium', 'high'):
-              - "urgent", "important", "asap", "critical", "high priority", "גבוהה" → high
-              - "later", "whenever", "low priority", "not urgent", "נמוכה" → low
-              - Default, "normal", "regular", "בינונית" → medium
-            * Parse due dates:
-              - "tomorrow", "מחר" → next day
-              - "next Friday", "Monday", "יום שני" → specific weekday
-              - "June 30th", "30/6", "30 ביוני" → specific date
-              - Convert to ISO 8601 format (2025-06-29T10:00:00.000Z)
-            * IMPORTANT: Status values are 'pending', 'running', 'paused', 'finished', 'skipped' (Hebrew: ממתין, פועל, מושהה, הושלם, דולג)
-          
-          - ENHANCED SMART SEARCH AND OPERATIONS:
-            * When user references a task by description (e.g., "edit the running task", "finish the exercise task"), use enhancedSearchTasks first
-            * For complex operations like "delete all finished tasks" or "add 5 tasks", use workflowManager
-            * For bulk operations, use batchTaskOperations with proper confirmation
-            * Use smartTaskFinder for advanced filtering and fuzzy matching
-            * Always show task details and ask for confirmation before destructive operations
-          
-          - WORKFLOW EXAMPLES:
-            * User: "Change the due date of my running task to tomorrow"
-              → enhancedSearchTasks for "running" → show matching tasks → ask for confirmation → updateTask
-            * User: "Add tasks for weekly meal prep, daily exercise, and monthly budget review"  
-              → workflowManager to plan multi-step addition → ask for confirmation → batchTaskOperations
-            * User: "Delete all low priority tasks that are finished"
-              → smartTaskFinder with criteria → show matching tasks → ask for confirmation → batchTaskOperations
-          
-          - After adding tasks, automatically list tasks to show the updated list
-          - For task updates, allow editing any field: name, description, type, priority, status, due date
-          - Use finishTask to mark tasks as completed
-          - Use enhancedSearchTasks when user wants to find specific tasks with smart matching
-          - When listing tasks, use appropriate filters (active, finished, all) based on user request        - here's the optimal memory management flow
-          - save a memory (e.g., "Remember my favorite color is blue")
-          - recall memories (e.g., "What do you remember?", "What is my favorite color?")
-          - forget a memory: 
-            - If the user asks to forget something specific (e.g., "forget my name", "forget my favorite color"), FIRST use the recallMemories tool internally (don't show the user the full list yet). 
-            - Check if the recalled memories contain a SINGLE, clear match for the user's request. 
-            - If ONE match is found, ask the user for confirmation: "Are you sure you want me to forget that [memory content]? (ID: [memory ID])". 
-            - If the user confirms, THEN use the forgetMemory tool with that specific ID. 
-            - If there are multiple matches, no matches, or the user's request was vague (e.g., "forget something"), THEN use the recallMemories tool to show the user the list and ask them to provide the ID for the forgetMemory tool.        - here's the optimal meditation flow
-          - when user asks for meditation or you recognize they might need one, ALWAYS use showMeditationTypeSelector tool to show the UI cards
-          - DO NOT ask what type of meditation they want - always show the UI selector instead
-          - after they select a type (they will tell you which one), use showMeditationPromptSelector tool to show the intention options
-          - after they select their prompt/intention, use showMeditationLanguageSelector tool to show Hebrew/English options
-          - then proceed with generateMeditationContent based on their choices (type, intention/chat history, and language)
-          - IMPORTANT: When generating meditation content, format it with precise timing for TTS playback:
-            * Use timestamp format [MM:SS] at the beginning of each line
-            * Start with [00:00] for the opening
-            * Use larger gaps (30-60 seconds) at the beginning for smooth entry
-            * Use smaller gaps (10-20 seconds) for continuing parts to maintain flow
-            * Target 12 minutes total duration with the last line at [10:00] (leaving 2 minutes for closing silence)
-            * Example format:
-              [00:00] Welcome to this peaceful meditation...
-              [00:45] Take a deep breath and settle into your space...
-              [01:30] Feel your body beginning to relax...
-            * This creates perfect pacing for TTS audio meditation experience
-        '
-      `,
+      system: `You are Anna, The Personal AI Assistant by Heybos. You are very kind, helpful and smart. You can answer any question, you use NLP and Psychology to answer relevantly. If needed, you use humor and human slang.
+
+Your one and only mission is to answer the user relevantly and decide if tools are needed to accomplish the user request. 
+
+CRITICAL RULE: You must use the CallMytx tool for ANY request that involves taking action, even if details are missing. Do NOT ask for clarification - use CallMytx and let the Mytx agent handle gathering additional details.
+
+IMPORTANT: When you use the CallMytx tool, do NOT provide any additional text response. The userAnswer parameter in the tool call will be displayed to the user. Only provide text responses when NOT using tools.
+
+Use CallMytx for:
+- Adding, creating, managing, or organizing tasks (even with minimal details)
+- Remembering, saving, or storing any information/memories  
+- Searching the web or getting external information
+- Sending messages or communications
+- Flight bookings, reservations, or travel planning
+- Meditation creation or management
+- Any action that requires data storage or external services
+- Complex planning or organization requests
+
+ONLY respond directly (without tools) for:
+- Simple greetings and casual conversation
+- General knowledge questions that don't require storage
+- Basic explanations or definitions  
+- Emotional support or encouragement
+
+Examples:
+- "תוסיף לי משימה לקנות חלב" → USE CallMytx (action needed) - NO additional text
+- "תזכור לי שיש לי פגישה מחר" → USE CallMytx (memory storage needed) - NO additional text
+- "חפש לי מידע על מזג האויר" → USE CallMytx (external search needed) - NO additional text
+- "איך מעירים?" → Answer directly (greeting) - provide text response
+- "מה זה בינה מלאכותית?" → Answer directly (general knowledge) - provide text response
+
+When you use CallMytx:
+1. userAnswer: Give an immediate friendly response showing you're handling their request (this will be shown to the user)
+2. mytxRequest: Clearly describe what action needs to be taken, even if details are missing
+3. originalMessage: Quote their exact message
+4. Do NOT provide any additional text response - the userAnswer parameter will be displayed
+
+For simple conversations, respond directly without using any tools.
+
+Today's date is ${new Date().toLocaleDateString()}.`,
       messages: coreMessages,
       tools: {
-        getWeather: {
-          description: "Get the current weather at a location",
+        CallMytx: {
+          description: "Call the Mytx agent to handle complex tasks that go beyond regular conversation. Use this when the user needs: task management, memory operations, flight booking, meditation, web search, sending messages, or any action-based request.",
           parameters: z.object({
-            latitude: z.number().describe("Latitude coordinate"),
-            longitude: z.number().describe("Longitude coordinate"),
+            userAnswer: z.string().describe("A friendly, conversational response to show the user while the request is being processed. Keep it encouraging and let them know you're working on their request."),
+            mytxRequest: z.string().describe("A clear, detailed request for the Mytx agent based on the user's message. Include all relevant context and specify exactly what action needs to be taken."),
+            originalMessage: z.string().describe("The exact original message from the user, quoted as-is."),
           }),
-          execute: async ({ latitude, longitude }) => {
-            const response = await fetch(
-              `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&hourly=temperature_2m&daily=sunrise,sunset&timezone=auto`,
-            );
-
-            const weatherData = await response.json();
-            return weatherData;
-          },
-        },
-        displayFlightStatus: {
-          description: "Display the status of a flight",
-          parameters: z.object({
-            flightNumber: z.string().describe("Flight number"),
-            date: z.string().describe("Date of the flight"),
-          }),
-          execute: async ({ flightNumber, date }) => {
-            const flightStatus = await generateSampleFlightStatus({
-              flightNumber,
-              date,
-            });
-
-            return flightStatus;
-          },
-        },
-        searchFlights: {
-          description: "Search for flights based on the given parameters",
-          parameters: z.object({
-            origin: z.string().describe("Origin airport or city"),
-            destination: z.string().describe("Destination airport or city"),
-          }),
-          execute: async ({ origin, destination }) => {
-            const results = await generateSampleFlightSearchResults({
-              origin,
-              destination,
-            });
-
-            return results;
-          },
-        },
-        selectSeats: {
-          description: "Select seats for a flight",
-          parameters: z.object({
-            flightNumber: z.string().describe("Flight number"),
-          }),
-          execute: async ({ flightNumber }) => {
-            const seats = await generateSampleSeatSelection({ flightNumber });
-            return seats;
-          },
-        },
-        createReservation: {
-          description: "Display pending reservation details",
-          parameters: z.object({
-            seats: z.string().array().describe("Array of selected seat numbers"),
-            flightNumber: z.string().describe("Flight number"),
-            departure: z.object({
-              cityName: z.string().describe("Name of the departure city"),
-              airportCode: z.string().describe("Code of the departure airport"),
-              timestamp: z.string().describe("ISO 8601 date of departure"),
-              gate: z.string().describe("Departure gate"),
-              terminal: z.string().describe("Departure terminal"),
-            }),
-            arrival: z.object({
-              cityName: z.string().describe("Name of the arrival city"),
-              airportCode: z.string().describe("Code of the arrival airport"),
-              timestamp: z.string().describe("ISO 8601 date of arrival"),
-              gate: z.string().describe("Arrival gate"),
-              terminal: z.string().describe("Arrival terminal"),
-            }),
-            passengerName: z.string().describe("Name of the passenger"),
-          }),
-          execute: async (props) => {
-            const { totalPriceInUSD } = await generateReservationPrice(props);
-
-            const id = generateUUID();
-
-            // Use the Firebase UID for creating reservations in TheBaze context
-            if (uid) {
-              await createReservation({
-                id,
-                userId: uid,
-                details: { ...props, totalPriceInUSD },
-              });
-
-              return { id, ...props, totalPriceInUSD };
-            } else {
-              return {
-                error: "User is not signed in to perform this action!",
-              };
-            }
-          },
-        },
-        authorizePayment: {
-          description:
-            "User will enter credentials to authorize payment, wait for user to repond when they are done",
-          parameters: z.object({
-            reservationId: z
-              .string()
-              .describe("Unique identifier for the reservation"),
-          }),
-          execute: async ({ reservationId }) => {
-            return { reservationId };
-          },
-        },
-        verifyPayment: {
-          description: "Verify payment status",
-          parameters: z.object({
-            reservationId: z
-              .string()
-              .describe("Unique identifier for the reservation"),
-          }),
-          execute: async ({ reservationId }) => {
-            const reservation = await getReservationById({ id: reservationId });
-
-            if (reservation.hasCompletedPayment) {
-              return { hasCompletedPayment: true };
-            } else {
-              return { hasCompletedPayment: false };
-            }
-          },
-        },
-        displayBoardingPass: {
-          description: "Display a boarding pass",
-          parameters: z.object({
-            reservationId: z
-              .string()
-              .describe("Unique identifier for the reservation"),
-            passengerName: z
-              .string()
-              .describe("Name of the passenger, in title case"),
-            flightNumber: z.string().describe("Flight number"),
-            seat: z.string().describe("Seat number"),
-            departure: z.object({
-              cityName: z.string().describe("Name of the departure city"),
-              airportCode: z.string().describe("Code of the departure airport"),
-              airportName: z.string().describe("Name of the departure airport"),
-              timestamp: z.string().describe("ISO 8601 date of departure"),
-              terminal: z.string().describe("Departure terminal"),
-              gate: z.string().describe("Departure gate"),
-            }),
-            arrival: z.object({
-              cityName: z.string().describe("Name of the arrival city"),
-              airportCode: z.string().describe("Code of the arrival airport"),
-              airportName: z.string().describe("Name of the arrival airport"),
-              timestamp: z.string().describe("ISO 8601 date of arrival"),
-              terminal: z.string().describe("Arrival terminal"),
-              gate: z.string().describe("Arrival gate"),
-            }),
-          }),
-          execute: async (boardingPass) => {
-            return boardingPass;
-          },
-        },
-        addTask: {
-          description:
-            "Add a task for the user. IMPORTANT: Parse the user's request to extract task details properly. Use EXACT enum values only.",
-          parameters: z.object({
-            taskDescription: z.string().describe("The main description/name of the task. Keep this concise - extract the core task, not all details."),
-            taskType: z.enum(['onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']).optional().describe("Type of task. EXACT VALUES ONLY: 'onetime' (default), 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'. Parse from keywords: daily/יומי, weekly/שבועי, monthly/חודשי, quarterly/רבעוני, yearly/שנתי."),
-            priority: z.enum(['low', 'medium', 'high']).optional().describe("Priority level. EXACT VALUES ONLY: 'low', 'medium' (default), 'high'. Parse from keywords: urgent/important/asap→high, later/whenever→low, otherwise→medium."),
-            dueDate: z.string().optional().describe("Due date in ISO 8601 format. Parse dates like 'tomorrow', 'next Friday', 'June 30th', etc. Format as '2025-06-29T10:00:00.000Z'."),
-          }),
-          execute: async ({ taskDescription, taskType, priority, dueDate }) => {
-            return await addTaskAction({ taskDescription, taskType, priority, dueDate, userId: uid });
-          },
-        },
-        listTasks: {
-          description:
-            "List tasks for the user with optional filtering and pagination.",
-          parameters: z.object({
-            filter: z.enum(['active', 'finished', 'all']).optional().describe("Filter tasks by status - defaults to 'active'."),
-            limit: z.number().optional().describe("Number of tasks to return - defaults to 20."),
-            offset: z.number().optional().describe("Number of tasks to skip - defaults to 0."),
-            searchQuery: z.string().optional().describe("Search query to filter tasks by name or description."),
-          }),
-          execute: async ({ filter, limit, offset, searchQuery }) => {
-            return await listTasksAction({ filter, limit, offset, searchQuery, userId: uid });
-          },
-        },
-        updateTask: {
-          description: "Update an existing task's details. Use the exact enum values for taskType, priority, and status.",
-          parameters: z.object({
-            taskId: z.string().describe("The ID of the task to update."),
-            name: z.string().optional().describe("New name for the task."),
-            description: z.string().optional().describe("New description for the task."),
-            taskType: z.enum(['onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']).optional().describe("New task type. EXACT VALUES ONLY: onetime, daily, weekly, monthly, quarterly, yearly."),
-            priority: z.enum(['low', 'medium', 'high']).optional().describe("New priority level. EXACT VALUES ONLY: low, medium, high."),
-            status: z.enum(['pending', 'running', 'paused', 'finished', 'skipped']).optional().describe("New status. EXACT VALUES ONLY: pending, running, paused, finished, skipped."),
-            dueDate: z.string().optional().describe("New due date in ISO 8601 format."),
-          }),
-          execute: async ({ taskId, name, description, taskType, priority, status, dueDate }) => {
-            return await updateTaskAction({ taskId, name, description, taskType, priority, status, dueDate, userId: uid });
-          },
-        },
-        finishTask: {
-          description: "Mark a specific task as finished.",
-          parameters: z.object({
-            taskId: z.string().describe("The ID of the task to finish."),
-          }),
-          execute: async ({ taskId }) => {
-            return await finishTaskAction({ taskId, userId: uid });
-          },
-        },
-        deleteTask: {
-          description: "Delete a specific task.",
-          parameters: z.object({
-            taskId: z.string().describe("The ID of the task to delete."),
-          }),
-          execute: async ({ taskId }) => {
-            return await deleteTaskAction({ taskId, userId: uid });
-          },
-        },
-        searchTasks: {
-          description: "Search for tasks by name or description.",
-          parameters: z.object({
-            query: z.string().describe("Search query to find tasks."),
-            limit: z.number().optional().describe("Number of results to return - defaults to 20."),
-          }),
-          execute: async ({ query, limit }) => {
-            return await searchTasksAction({ query, limit, userId: uid });
-          },
-        },
-        saveMemory: {
-          description:
-            "Save a piece of information provided by the user for later recall.",
-          parameters: z.object({
-            content: z
-              .string()
-              .describe("The specific piece of information to remember."),
-          }),
-          execute: async ({ content }) => {
-            return await saveMemoryAction({ userId: uid, content });
-          },
-        },
-        recallMemories: {
-          description:
-            "Recall all pieces of information previously saved by the user. Also used internally to find a specific memory before forgetting.",
-          parameters: z.object({}),
-          execute: async () => {
-            return await recallMemoriesAction({ userId: uid });
-          },
-        },      forgetMemory: {
-          description:
-            "Forget a specific piece of information previously saved. Requires the memory ID. Usually, you should recall memories first to find the correct ID and ask for user confirmation if a specific memory was requested to be forgotten.",
-          parameters: z.object({
-            memoryId: z.string().describe(
-              "The unique ID of the memory to forget.",
-            ),
-          }),
-          execute: async ({ memoryId }) => {
-            return await forgetMemoryAction({ memoryId, userId: uid });
-          },      },
-        showMeditationTypeSelector: {
-          description: "Show UI cards with different meditation types for the user to select from. Use this when user asks for meditation or you recognize they might need one.",
-          parameters: z.object({}),
-          execute: async () => {
-            return await showMeditationTypeSelectorAction();
-          },
-        },      showMeditationPromptSelector: {
-          description: "Show UI options to choose between chat history or custom intention for meditation creation. Use this after user selects a meditation type.",
-          parameters: z.object({
-            type: z.string().describe("The type of meditation selected by the user"),
-          }),
-          execute: async ({ type }) => {
-            return await showMeditationPromptSelectorAction({ type });
-          },
-        },
-        showMeditationLanguageSelector: {
-          description: "Show language selection UI (Hebrew/English) before generating meditation content. Use this after user selects meditation prompt/intention.",
-          parameters: z.object({
-            type: z.string().describe("The type of meditation selected by the user"),
-            intention: z.string().optional().describe("User's specific intention or goal for the meditation"),
-            chatHistory: z.string().optional().describe("Recent chat history to base meditation on"),
-          }),
-          execute: async ({ type, intention, chatHistory }) => {
-            return await showMeditationLanguageSelectorAction({ type, intention, chatHistory });
-          },
-        },      generateMeditationContent: {
-          description: "Generate custom meditation content based on user intentions or chat history. Returns meditation content that can optionally be saved.",
-          parameters: z.object({
-            type: z.string().describe("Type of meditation: visualization, mindfulness, sleep story, loving kindness, chakra balancing, breath awareness, affirmations, concentration, body scan, or memory palace enhancement"),
-            intention: z.string().optional().describe("User's specific intention or goal for the meditation"),
-            chatHistory: z.string().optional().describe("Recent chat history to base meditation on"),
-            duration: z.string().optional().describe("Desired meditation duration (e.g., '5 minutes', '10 minutes')"),
-            language: z.string().optional().describe("Language for meditation content: 'english' or 'hebrew' (with ניקוד)"),
-          }),
-          execute: async ({ type, intention, chatHistory, duration, language }) => {
-            return await generateMeditationContentAction({ type, intention, chatHistory, duration, language });
-          },
-        },
-        createMeditation: {
-          description: "Save a meditation session for the user. Use this after generating meditation content to save it.",
-          parameters: z.object({
-            type: z.string().describe("Type of meditation"),
-            title: z.string().describe("Title for the meditation"),
-            content: z.string().describe("The full meditation content/script"),
-            duration: z.string().optional().describe("Duration of the meditation"),
-          }),
-          execute: async ({ type, title, content, duration }) => {
-            return await createMeditationAction({ userId: uid, type, title, content, duration });
-          },
-        },
-        listMeditations: {
-          description: "List all saved meditations for the user.",
-          parameters: z.object({}),
-          execute: async () => {
-            return await listMeditationsAction({ userId: uid });
-          },
-        },
-        getMeditation: {
-          description: "Get the full content of a specific saved meditation.",
-          parameters: z.object({
-            meditationId: z.string().describe("The ID of the meditation to retrieve"),
-          }),
-          execute: async ({ meditationId }) => {
-            return await getMeditationAction({ meditationId, userId: uid });
-          },
-        },      deleteMeditation: {
-          description: "Delete a specific saved meditation.",
-          parameters: z.object({
-            meditationId: z.string().describe("The ID of the meditation to delete"),
-          }),
-          execute: async ({ meditationId }) => {
-            return await deleteMeditationAction({ meditationId, userId: uid });
-          },
-        },
-        enhancedSearchTasks: {
-          description: "Enhanced search for tasks using intelligent keyword matching and relevance analysis. This tool provides smarter search results than the basic searchTasks tool.",
-          parameters: z.object({
-            query: z.string().describe("Search query to find tasks. Can be natural language describing what you're looking for."),
-            limit: z.number().optional().describe("Number of results to return - defaults to 20."),
-          }),
-          execute: async ({ query, limit }) => {
-            return await searchTasksAction({ query, limit, userId: uid });
-          },
-        },
-
-        batchTaskOperations: {
-          description: "Execute multiple task operations (add, update, delete, finish) in a single batch. Allows for bulk operations on tasks with optional confirmation prompts.",
-          parameters: z.object({
-            operations: z.array(z.object({
-              operation: z.enum(['add', 'update', 'delete', 'finish']).describe("Type of operation to perform"),
-              taskId: z.string().optional().describe("Task ID for update, delete, or finish operations"),
-              taskData: z.any().optional().describe("Task data for add or update operations"),
-            })).describe("Array of operations to perform"),
-            confirmationRequired: z.boolean().optional().describe("Whether to ask for user confirmation before executing - defaults to true for destructive operations"),
-          }),
-          execute: async ({ operations, confirmationRequired }) => {
-            return await batchTaskOperationsAction({ userId: uid, operations, confirmationRequired });
-          },
-        },
-        smartTaskFinder: {
-          description: "Advanced task finder with intelligent matching capabilities. Can find tasks based on fuzzy matching, date ranges, and complex criteria.",
-          parameters: z.object({
-            searchCriteria: z.object({
-              keywords: z.array(z.string()).optional().describe("Keywords to search for"),
-              description: z.string().optional().describe("Description or partial description to match"),
-              status: z.string().optional().describe("Task status to filter by"),
-              priority: z.string().optional().describe("Priority level to filter by"),
-              dateRange: z.object({
-                from: z.string().optional().describe("Start date for filtering"),
-                to: z.string().optional().describe("End date for filtering"),
-              }).optional().describe("Date range for filtering tasks"),
-            }).describe("Criteria for finding tasks"),
-            fuzzyMatch: z.boolean().optional().describe("Whether to use fuzzy/approximate matching - defaults to true"),
-          }),
-          execute: async ({ searchCriteria, fuzzyMatch }) => {
-            return await smartTaskFinderAction({ userId: uid, searchCriteria, fuzzyMatch });
-          },
-        },      generateMeditationAudio: {
-          description: "Generate TTS audio for a meditation using Gemini's text-to-speech. Returns audio URL for playback.",
-          parameters: z.object({
-            content: z.string().describe("The meditation content with timestamps"),
-            meditationId: z.string().optional().describe("Optional meditation ID for audio file naming"),
-            voiceName: z.string().optional().describe("Voice to use for meditation (Enceladus, Callirrhoe, Vindemiatrix, Sulafat, Aoede)"),
-          }),
-          execute: async ({ content, meditationId, voiceName }) => {
+          execute: async ({ userAnswer, mytxRequest, originalMessage }) => {
             try {
-              const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/tts`, {
+              console.log(`[Anna CallMytx] Processing request for user ${uid}`);
+              console.log(`[Anna CallMytx] User Answer: ${userAnswer}`);
+              console.log(`[Anna CallMytx] Mytx Request: ${mytxRequest}`);
+              
+              // Use the callMytxAction function from anna-actions.ts
+              const result = await callMytxAction({
+                userAnswer,
+                mytxRequest,
+                originalMessage
+              });
+              
+              console.log(`[Anna CallMytx] Action result:`, result);
+              
+              // Build the full request for Mytx including context
+              const fullMytxRequest = `User Request: "${originalMessage}"
+              
+Task for Mytx Agent: ${mytxRequest}
+
+Context: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities.`;
+
+              // Call the main chat endpoint and handle streaming response
+              const mytxResponse = await fetch(`${BASE_URL}/api/heybos/chat`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
+                  'Authorization': request.headers.get('Authorization') || '',
+                  'Origin': request.headers.get('Origin') || '',
                 },
                 body: JSON.stringify({
-                  content,
-                  meditationId: meditationId || `meditation_${Date.now()}`,
-                  voiceName: voiceName || 'Enceladus'
+                  messages: [
+                    {
+                      role: 'user',
+                      content: fullMytxRequest
+                    }
+                  ]
                 }),
               });
 
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to generate audio');
+              if (!mytxResponse.ok) {
+                console.error(`[Anna CallMytx] Mytx API call failed: ${mytxResponse.status}`);
+                return {
+                  type: 'error',
+                  userAnswer: userAnswer,
+                  mytxResponse: "I encountered an issue while processing your request. Please try again in a moment.",
+                  showCapabilityMissing: false
+                };
               }
 
-              const data = await response.json();
-              return {
-                audioUrl: data.audioUrl,
-                segments: data.segments,
-                success: true,
-                message: "Audio generated successfully! You can now play your meditation."
-              };
+              // Read the streaming response from Mytx
+              let mytxContent = "";
+              let mytxToolInvocations = [];
+              
+              try {
+                const reader = mytxResponse.body?.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                if (reader) {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                      if (line.trim() === '') continue;
+                      
+                      if (line.startsWith('0:')) {
+                        // Text chunks
+                        try {
+                          const textPart = JSON.parse(line.substring(2));
+                          if (typeof textPart === 'string') {
+                            mytxContent += textPart;
+                          }
+                        } catch (e) {
+                          // Ignore parse errors
+                        }
+                      } else if (line.startsWith('9:') || line.startsWith('a:')) {
+                        // Tool invocations
+                        try {
+                          const toolData = JSON.parse(line.substring(2));
+                          mytxToolInvocations.push(toolData);
+                        } catch (e) {
+                          // Ignore parse errors
+                        }
+                      }
+                    }
+                  }
+                }
+              } catch (streamError) {
+                console.error('[Anna CallMytx] Error reading Mytx stream:', streamError);
+              }
+
+              // Check if Mytx couldn't fulfill the request
+              const isCapabilityMissing = mytxContent && (
+                mytxContent.includes("I am sorry, I cannot fulfill this request") ||
+                mytxContent.includes("I don't have the ability") ||
+                mytxContent.includes("I cannot") ||
+                mytxContent.includes("I'm unable to") ||
+                mytxToolInvocations.length === 0
+              );
+
+              console.log(`[Anna CallMytx] Capability missing: ${isCapabilityMissing}`);
+
+              if (isCapabilityMissing) {
+                // For capability missing, return a special result that will trigger the UI
+                return {
+                  type: 'capability_missing',
+                  userAnswer: userAnswer,
+                  originalMessage: originalMessage,
+                  mytxResponse: mytxContent,
+                  showCapabilityMissing: true
+                };
+              } else {
+                // For successful operations, we need to inject the Mytx tool invocations
+                // into the current stream context so they get processed by TheBaze
+                console.log(`[Anna CallMytx] Injecting ${mytxToolInvocations.length} tool invocations from Mytx`);
+                
+                // Return special object that will be processed by the streaming system
+                return {
+                  type: 'success',
+                  userAnswer: userAnswer,
+                  mytxResponse: mytxContent,
+                  mytxToolInvocations: mytxToolInvocations,
+                  originalMessage: originalMessage,
+                  showCapabilityMissing: false,
+                  // Special flag to indicate that tool invocations should be injected
+                  injectToolInvocations: true
+                };
+              }
+
             } catch (error) {
-              console.error('Error generating meditation audio:', error);
+              console.error('[Anna CallMytx] Error calling Mytx:', error);
               return {
-                success: false,
-                error: error instanceof Error ? error.message : 'Failed to generate audio'
+                type: 'error',
+                userAnswer: userAnswer,
+                mytxResponse: "I encountered an error while processing your request. Please try again.",
+                showCapabilityMissing: false
               };
             }
           },
@@ -748,17 +406,79 @@ export async function POST(request: NextRequest) {
       // Optional: Add telemetry or other options if needed
       experimental_telemetry: {
         isEnabled: true,
-        functionId: "heybos-stream-text",
+        functionId: "anna-simple-chat",
       },
     });
 
-    // 5. Return Streaming Response
-    // Apply CORS headers to the actual response stream
-    const streamResponse = result.toDataStreamResponse();
-    const nextStreamResponse = new NextResponse(streamResponse.body, {
-      status: streamResponse.status,
-      statusText: streamResponse.statusText,
-      headers: streamResponse.headers,
+    // 5. Return Streaming Response with Custom Tool Injection
+    // We need to intercept the stream to inject Mytx tool invocations when CallMytx returns them
+    const originalStream = result.toDataStreamResponse();
+    
+    // Create a transform stream that can inject tool invocations
+    const { readable, writable } = new TransformStream({
+      transform(chunk, controller) {
+        // Parse the chunk to check for CallMytx tool results
+        const chunkText = new TextDecoder().decode(chunk);
+        const lines = chunkText.split('\n');
+        
+        let modifiedChunk = chunkText;
+        let shouldInjectTools = false;
+        let toolInvocationsToInject: any[] = [];
+        
+        for (const line of lines) {
+          if (line.startsWith('a:') || line.startsWith('9:')) {
+            try {
+              const toolData = JSON.parse(line.substring(2));
+              if (toolData?.result?.injectToolInvocations && toolData?.result?.mytxToolInvocations) {
+                shouldInjectTools = true;
+                toolInvocationsToInject = toolData.result.mytxToolInvocations;
+                console.log(`[Anna Stream] Found tool invocations to inject: ${toolInvocationsToInject.length}`);
+                
+                // Modify the tool result to only show the userAnswer
+                const modifiedResult = {
+                  type: 'success',
+                  userAnswer: toolData.result.userAnswer,
+                  showCapabilityMissing: false
+                };
+                
+                // Replace the line with the modified result
+                const newLine = line.substring(0, 2) + JSON.stringify({
+                  ...toolData,
+                  result: modifiedResult
+                });
+                modifiedChunk = modifiedChunk.replace(line, newLine);
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+        
+        // Send the (possibly modified) chunk
+        controller.enqueue(new TextEncoder().encode(modifiedChunk));
+        
+        // If we need to inject tool invocations, send them as additional chunks
+        if (shouldInjectTools && toolInvocationsToInject.length > 0) {
+          for (const toolInvocation of toolInvocationsToInject) {
+            console.log(`[Anna Stream] Injecting tool invocation:`, toolInvocation);
+            
+            // Format the tool invocation according to the AI SDK stream format
+            const injectedChunk = `a:${JSON.stringify(toolInvocation)}\n`;
+            controller.enqueue(new TextEncoder().encode(injectedChunk));
+          }
+        }
+      }
+    });
+    
+    // Pipe the original stream through our transform
+    originalStream.body?.pipeTo(writable).catch(error => {
+      console.error('[Anna Stream] Stream error:', error);
+    });
+    
+    const nextStreamResponse = new NextResponse(readable, {
+      status: originalStream.status,
+      statusText: originalStream.statusText,
+      headers: originalStream.headers,
     });
     setCorsHeaders(nextStreamResponse, origin);
     return nextStreamResponse;
