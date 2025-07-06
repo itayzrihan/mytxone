@@ -438,7 +438,10 @@ Today's date is ${new Date().toLocaleDateString()}.`,
               }
             } else {
               // If no stream, send a fallback error message
-              const errorMsg = mytxResult && mytxResult.error ? mytxResult.error : 'No response from Mytx agent.';
+              const errorMsg = mytxResult && mytxResult.error ? mytxResult.error : 
+                (userLanguage === 'he' ? 'לא התקבלה תגובה מה-Mytx agent.' :
+                 userLanguage === 'ar' ? 'لم يتم الحصول على استجابة من Mytx agent.' :
+                 'No response from Mytx agent.');
               controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
             }
             controller.enqueue(new TextEncoder().encode(
@@ -488,7 +491,7 @@ Context: This request came from Anna and requires multi-step planning and detail
               let fullStepsContent = "";
               
               if (stepsResult.success && stepsResult.stream) {
-                // Read the full StepsDesigning response
+                // Stream the StepsDesigning response directly to maintain language consistency
                 const reader = stepsResult.stream.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
@@ -509,6 +512,8 @@ Context: This request came from Anna and requires multi-step planning and detail
                         const textPart = JSON.parse(line.substring(2));
                         if (typeof textPart === 'string') {
                           fullStepsContent += textPart;
+                          // Stream the content directly to maintain language consistency
+                          controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(textPart)}\n`));
                         }
                       } catch (e) {
                         // Ignore parse errors
@@ -516,28 +521,12 @@ Context: This request came from Anna and requires multi-step planning and detail
                     }
                   }
                 }
-
-                // Stream a short summary instead of the full plan
-                const shortSummary = `I've analyzed your request to find and delete work-related tasks. Here's my plan:
-
-1. **Search Phase**: Scan all tasks for work-related keywords
-2. **Review Phase**: Present findings for your confirmation  
-3. **Deletion Phase**: Remove confirmed tasks safely
-4. **Verification Phase**: Confirm successful completion
-
-Passing this detailed plan to Operator Agent for execution...`;
-
-                // Stream the short summary in chunks
-                const summaryChunks = shortSummary.split('\n');
-                for (const chunk of summaryChunks) {
-                  if (chunk.trim().length > 0) {
-                    controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(chunk + '\n')}\n`));
-                    await new Promise((resolve) => setTimeout(resolve, 50)); // Small delay for readability
-                  }
-                }
               } else {
                 // If no stream, send a fallback error message
-                const errorMsg = stepsResult.error || 'Unable to create step-by-step plan.';
+                const errorMsg = stepsResult.error || 
+                  (userLanguage === 'he' ? 'לא ניתן ליצור תוכנית מפורטת.' :
+                   userLanguage === 'ar' ? 'غير قادر على إنشاء خطة مفصلة.' :
+                   'Unable to create step-by-step plan.');
                 controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
                 fullStepsContent = errorMsg;
               }
@@ -586,8 +575,16 @@ Passing this detailed plan to Operator Agent for execution...`;
                   console.error('[Anna->StepsDesigning->Operator] Error streaming Operator agent response:', err);
                 }
               } else {
-                // Fallback message if Operator service fails
-                const fallbackMsg = `✅ Steps plan received successfully!
+                // Fallback message if Operator service fails - use language-appropriate message
+                const fallbackMsg = userLanguage === 'he' 
+                  ? `✅ קיבלתי בהצלחה את תוכנית השלבים!
+
+יש לי את התוכנית המפורטת מ-StepsDesigning Agent. מוכן להתחיל כשאתה מאשר! 🚀`
+                  : userLanguage === 'ar'
+                  ? `✅ تم استلام خطة الخطوات بنجاح!
+
+لدي الخطة المفصلة من StepsDesigning Agent. جاهز للبدء عندما تعطي الموافقة! 🚀`
+                  : `✅ Steps plan received successfully!
 
 I've got the detailed step-by-step plan from StepsDesigning Agent. Ready to proceed when you give the go-ahead! 🚀`;
                 const fallbackChunks = fallbackMsg.split('\n');
@@ -604,7 +601,11 @@ I've got the detailed step-by-step plan from StepsDesigning Agent. Ready to proc
               
             } catch (err) {
               console.error('[Anna->StepsDesigning->Operator] Error in multi-agent flow:', err);
-              const errorMsg = 'I encountered an error while creating the step-by-step plan. Please try again.';
+              const errorMsg = userLanguage === 'he' 
+                ? 'נתקלתי בשגיאה בעת יצירת התוכנית המפורטת. אנא נסה שוב.'
+                : userLanguage === 'ar'
+                ? 'واجهت خطأ أثناء إنشاء الخطة المفصلة. يرجى المحاولة مرة أخرى.'
+                : 'I encountered an error while creating the step-by-step plan. Please try again.';
               controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
             }
 
