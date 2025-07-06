@@ -20,6 +20,7 @@ export interface StepsDesigningInput {
   userAnswer: string; // Anna's initial response to show user
   originalMessage: string; // User's original request
   languageInstruction?: string; // Language instruction for consistent responses
+  userTimezone?: string; // User's timezone for date/time calculations
 }
 
 // Interface for the service output

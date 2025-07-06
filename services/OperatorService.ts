@@ -24,6 +24,7 @@ export interface OperatorInput {
   steps?: { [key: string]: string }; // Dynamic step fields (step1, step2, etc.) from StepsDesigning
   totalSteps?: number; // Total number of steps received
   languageInstruction?: string; // Language instruction for consistent responses
+  userTimezone?: string; // User's timezone for date/time calculations
 }
 
 // Interface for the service output

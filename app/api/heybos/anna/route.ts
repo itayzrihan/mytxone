@@ -136,6 +136,7 @@ const chatRequestSchema = z.object({
     // Exclude tool-related fields for this endpoint
   })).min(1, "Messages array cannot be empty"), // Require at least one message
   userLanguage: z.string().optional().default('en'), // User's detected language for consistent responses
+  userTimezone: z.string().optional(), // User's timezone for date/time calculations
 });
 // --- End Request Body Schema ---
 
@@ -186,9 +187,9 @@ export async function POST(request: NextRequest) {
     return res;
   }
 
-  // Extract user language from the validated request
-  const { userLanguage } = validationResult.data;
-  console.log(`[Anna API] Detected user language: ${userLanguage}`);
+  // Extract user language and timezone from the validated request
+  const { userLanguage, userTimezone } = validationResult.data;
+  console.log(`[Anna API] Detected user language: ${userLanguage}, timezone: ${userTimezone || 'not provided'}`);
   
   // Create language instruction for all agents
   const languageInstruction = createLanguageInstruction(userLanguage);
@@ -301,7 +302,8 @@ Today's date is ${new Date().toLocaleDateString()}.`,
                 userAnswer,
                 mytxRequest,
                 originalMessage,
-                languageInstruction // Pass language instruction to ensure Mytx responds in user's language
+                languageInstruction, // Pass language instruction to ensure Mytx responds in user's language
+                userTimezone // Pass user's timezone for date/time calculations
               });
               
               console.log(`[Anna CallMytx] Action result:`, result);
@@ -420,7 +422,8 @@ Today's date is ${new Date().toLocaleDateString()}.`,
             const mytxResult = await callSingleToolService({
               messages: [{ role: 'user' as const, content: fullMytxRequest }],
               uid: uid || '00000000-0000-0000-0000-000000000000',
-              languageInstruction: (toolResult as any).languageInstruction // Pass language instruction to Mytx Agent
+              languageInstruction: (toolResult as any).languageInstruction, // Pass language instruction to Mytx Agent
+              userTimezone: userTimezone // Pass user's timezone for date/time calculations
             });
 
             if (mytxResult && mytxResult.success && mytxResult.stream) {
@@ -486,7 +489,8 @@ Context: This request came from Anna and requires multi-step planning and detail
                 uid: uid || '00000000-0000-0000-0000-000000000000',
                 userAnswer: (toolResult as any).userAnswer,
                 originalMessage: originalMessage,
-                languageInstruction: (toolResult as any).languageInstruction // Pass language instruction to StepsDesigning
+                languageInstruction: (toolResult as any).languageInstruction, // Pass language instruction to StepsDesigning
+                userTimezone: userTimezone // Pass user's timezone for date/time calculations
               });
 
               console.log('[Anna Route] StepsDesigning result:', { 
@@ -574,7 +578,8 @@ Context: This request came from Anna and requires multi-step planning and detail
                 stepsContent: fullStepsContent, // Legacy support
                 steps: stepsData, // New steps format
                 totalSteps: totalSteps, // Number of steps for operator to report
-                languageInstruction: (toolResult as any).languageInstruction // Pass language instruction to Operator Agent
+                languageInstruction: (toolResult as any).languageInstruction, // Pass language instruction to Operator Agent
+                userTimezone: userTimezone // Pass user's timezone for date/time calculations
               });
 
               if (operatorResult.success && operatorResult.stream) {

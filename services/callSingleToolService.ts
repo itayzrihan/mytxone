@@ -43,6 +43,7 @@ export interface CallSingleToolInput {
   }>;
   uid: string; // User ID for authentication context
   languageInstruction?: string; // Language instruction for consistent responses
+  userTimezone?: string; // User's timezone (e.g., 'Asia/Jerusalem', 'America/New_York')
 }
 
 // Interface for the service output
@@ -92,10 +93,51 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
       };
     }
 
+    // Helper function to get user's current time
+    const getUserCurrentTime = () => {
+      const now = new Date();
+      const timezone = input.userTimezone || 'UTC';
+      try {
+        return now.toLocaleString('en-US', { 
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit', 
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+      } catch (error) {
+        console.warn(`Invalid timezone: ${timezone}, falling back to UTC`);
+        return now.toLocaleString('en-US', { 
+          timeZone: 'UTC',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit', 
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+      }
+    };
+
+    const userCurrentTime = getUserCurrentTime();
+    const userTimezone = input.userTimezone || 'UTC';
+
     // 5. Call AI Model with Full Tools Support
     const result = await streamText({
       model: geminiProModel,
-      system: `${input.languageInstruction || ''}
+      system: `${input.languageInstruction ? `LANGUAGE REQUIREMENT: ${input.languageInstruction}` : 'LANGUAGE REQUIREMENT: Respond in the same language as the user\'s message.'}
+        
+        CRITICAL: If user writes in Hebrew (עברית), respond in Hebrew. If user writes in English, respond in English.
+        Hebrew responses should include: "אני אוסיף", "המשימה נוספה", "מתי צריך לסיים", "איזו עדיפות", etc.
+        
+        TIMEZONE: User is in ${userTimezone} timezone. Current user local time: ${userCurrentTime}
+        When calculating relative times (בעוד שעה, in 2 hours, מחר), use the user's timezone: ${userTimezone}
+        
+        IMMEDIATE ACTION PROTOCOL: Take action immediately for ALL user requests unless critical information is missing.
         
         IMPORTANT: When you see conversation history, only respond to the LATEST user message. 
         Previous messages in the conversation are for context only - do not re-execute old actions or respond to old requests.
@@ -105,11 +147,16 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
         - you help users book flights, manage their tasks, AND remember information!
         - keep your responses limited to a sentence.
         - DO NOT output lists.
+        - CRITICAL FOR ALL OPERATIONS: Take immediate action for ANY user request. DO NOT ask follow-up questions unless CRITICAL information is missing.
+        - CRITICAL FOR TASKS: When user asks to add a task, IMMEDIATELY use the addTask tool. DO NOT ask for more details.
+        - TIMEZONE AWARENESS: Current user time is ${userCurrentTime} (${userTimezone} timezone).
+        - When user says "in one hour" or "בעוד שעה", calculate from current user time: ${userCurrentTime}
         - IMPORTANT: ALWAYS provide a text response when using tools. Never send just tool calls without accompanying text.
         - after every tool call, always include a brief text message explaining what you're doing or what the result shows.
         - today's date is ${new Date().toLocaleDateString()}.
-        - ask follow up questions to nudge user into the optimal flow
-        - ask for any details you don't know, like name of passenger, etc.'
+        - IMMEDIATE ACTION RULE: Take action immediately for ALL requests (tasks, searches, memories, etc.) unless critical info is missing.
+        - ONLY ask follow-up questions if absolutely critical information is missing (like flight origin/destination, passenger name for reservations).
+        - For tasks, searches, memories: act immediately with available information and smart defaults.
         - C and D are aisle seats, A and F are window seats, B and E are middle seats
         - assume the most popular airports for the origin and destination
         - here's the optimal flight booking flow
@@ -120,7 +167,20 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
           - authorize payment (requires user consent, wait for user to finish payment and let you know when done)
           - display boarding pass (DO NOT display boarding pass without verifying payment)
         - here's the optimal task management flow (enhanced with smart tools):
-          - When adding a task, use the workflowManager for complex requests that need confirmation
+          - LANGUAGE REQUIREMENT: If the user speaks Hebrew, respond in Hebrew. If English, respond in English.
+          - IMMEDIATE ACTION RULE: ALWAYS add tasks immediately without asking for additional details.
+          - Parse whatever information is available and use smart defaults:
+            * If no due date provided: set as null (no due date)
+            * If no priority provided: default to "medium"
+            * If no task type provided: default to "onetime"
+            * Extract task name from user's description and clean it up
+          - NEVER ask "What priority?" or "When is it due?" - just add the task immediately
+          - User can always edit the task later if they want to change details
+          - For Hebrew users, use Hebrew responses like:
+            * Adding task: "אוסיף את המשימה [task name]" / "המשימה '[task name]' נוספה"
+            * With due date: "המשימה נוספה למועד [date]"
+            * Success: "המשימה נוספה בהצלחה"
+          - When adding a task, use addTask tool directly with available information
           - ALWAYS parse the user's request carefully:
             * Extract the main task name/action (keep concise, avoid repetition)
             * Detect task type from keywords (EXACT VALUES: 'onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'):
@@ -140,6 +200,15 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
               - "June 30th", "30/6", "30 ביוני" → specific date
               - Convert to ISO 8601 format (2025-06-29T10:00:00.000Z)
             * IMPORTANT: Status values are 'pending', 'running', 'paused', 'finished', 'skipped' (Hebrew: ממתין, פועל, מושהה, הושלם, דולג)
+          
+          - TASK CREATION EXAMPLES - ALWAYS ACT IMMEDIATELY:
+            * User: "תוסיף משימה לאכול בעוד שעה" → IMMEDIATELY use addTask with name "אכול", dueDate calculated as current Israel time + 1 hour
+            * User: "add task to call mom" → IMMEDIATELY use addTask with name "call mom", default priority "medium", no due date
+            * User: "תוסיף משימה דחופה לסיים הפרויקט מחר" → IMMEDIATELY use addTask with name "סיים הפרויקט", priority "high", dueDate tomorrow Israel time
+            * User: "add daily exercise task" → IMMEDIATELY use addTask with name "exercise", taskType "daily"
+          - TIMEZONE CALCULATION: When user says relative times like "בעוד שעה", "in 2 hours", "מחר", always calculate from Israel timezone (GMT+2/+3).
+          - Current Israel time reference: ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}
+          - DO NOT ask follow-up questions for task creation - parse available info and use smart defaults
           
           - ENHANCED SMART SEARCH AND OPERATIONS:
             * When user wants to search for specific tasks (any search terms), ALWAYS use enhancedSearchTasks - it provides better matching and filtering
