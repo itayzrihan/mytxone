@@ -283,7 +283,7 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
           },
         },
         enhancedSearchTasks: {
-          description: "Enhanced search for tasks with AI-powered analysis, date filtering, priority matching, and tag support. Use this for any search query with specific terms or when user wants to find specific tasks. IMPORTANT: Parse temporal keywords from the query and set appropriate dateFilter.",
+          description: "Enhanced search for tasks with AI-powered analysis, date filtering, priority matching, and advanced tag support using AND logic. IMPORTANT: Uses keywords to find tag IDs, then filters tasks that have those tag IDs (AND logic). Parse temporal keywords from the query and set appropriate dateFilter.",
           parameters: z.object({
             query: z.string().describe("Search query to find tasks. Can include natural language like 'tasks due tomorrow', 'high priority tasks', 'tasks with ארגון', 'לשבוע הקרוב', etc."),
             limit: z.number().optional().describe("Number of results to return - defaults to 20."),

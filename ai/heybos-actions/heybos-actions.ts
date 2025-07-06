@@ -501,7 +501,7 @@ export async function enhancedSearchTasksAction({
     }
   }
   
-  // Generate relevant keywords using AI
+  // Generate relevant keywords using AI with explicit tag search instructions
   const { object: searchAnalysis } = await generateObject({
     model: geminiFlashModel,
     prompt: `Analyze the search query "${query}" and generate relevant keywords and synonyms that might help find related tasks. Consider:
@@ -512,13 +512,25 @@ export async function enhancedSearchTasksAction({
     - Temporal keywords like dates if the query mentions time (today, tomorrow, next week, etc.)
     - Priority indicators (urgent, important, low priority, etc.)
     - Status keywords (finished, pending, running, etc.)
+    - Tag-related keywords that might match tag names (e.g., "work", "personal", "urgent", "project names", etc.)
     
-    Return a comprehensive list of keywords that would help match relevant tasks.`,
+    IMPORTANT FOR TAG SEARCH:
+    - The frontend will use these keywords to find tags by name/description
+    - Tasks are then filtered to include only those with matching tag IDs (AND logic)
+    - This means tasks must have tags that match the keyword search
+    - Include both broad category terms and specific descriptive words
+    - Consider synonyms and related terms for tag matching
+    
+    Example: If query is "work", include keywords like ["work", "job", "office", "business", "professional"] 
+    so the frontend can find tags named "Work", "Business", "Office", etc.
+    
+    Return a comprehensive list of keywords that would help match relevant tasks and their associated tags.`,
     schema: z.object({
       primaryKeywords: z.array(z.string()).describe("Main keywords from the query"),
       relatedKeywords: z.array(z.string()).describe("Related terms and synonyms"),
       contextKeywords: z.array(z.string()).describe("Contextual terms that might be relevant"),
       hebrewTerms: z.array(z.string()).describe("Hebrew equivalents if applicable"),
+      tagKeywords: z.array(z.string()).describe("Keywords that might be tag names or relate to tags/categories - these are used for tag ID matching with AND logic"),
     }),
   });
 
