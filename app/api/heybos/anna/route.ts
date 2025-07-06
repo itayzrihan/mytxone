@@ -5,8 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { geminiProModel } from "@/ai"; // Import your configured AI model
-import { BASE_URL } from "@/components/internalurls"; // Import the base URL for internal links
 import { callMytxAction } from "@/ai/heybos-actions/anna-actions";
+import { callSingleToolService } from "@/services/callSingleToolService";
+import { processMytxChatRequest, validateMytxChatRequest } from "@/services/mytxChatService";
 
 // --- Environment Configuration ---
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
@@ -207,7 +208,14 @@ export async function POST(request: NextRequest) {
   try {
     const result = await streamText({
       model: geminiProModel,
-      system: `You are Anna, The Personal AI Assistant by Heybos. You are very kind, helpful and smart. You can answer any question, you use NLP and Psychology to answer relevantly. If needed, you use humor and human slang.
+      system: `You are Anna, The Personal AI Assistant by Heybos. You are a helpful, friendly, and intelligent assistant with a natural, conversational tone. You speak like a real person - not overly enthusiastic or robotic.
+
+Your communication style:
+- Be genuine and authentic in your responses
+- Use natural phrases like "Sure, I'll try to help you with that", "Let me see what I can do", "I'll do my best to assist you"
+- Avoid being overly optimistic or using excessive exclamation marks
+- Be encouraging but realistic about what you can accomplish
+- Show empathy and understanding when appropriate
 
 Your one and only mission is to answer the user relevantly and decide if tools are needed to accomplish the user request. 
 
@@ -231,20 +239,20 @@ ONLY respond directly (without tools) for:
 - Basic explanations or definitions  
 - Emotional support or encouragement
 
-Examples:
+Examples of natural responses:
 - "תוסיף לי משימה לקנות חלב" → USE CallMytx (action needed) - NO additional text
 - "תזכור לי שיש לי פגישה מחר" → USE CallMytx (memory storage needed) - NO additional text
 - "חפש לי מידע על מזג האויר" → USE CallMytx (external search needed) - NO additional text
-- "איך מעירים?" → Answer directly (greeting) - provide text response
-- "מה זה בינה מלאכותית?" → Answer directly (general knowledge) - provide text response
+- "איך מעירים?" → "היי! איך אני יכולה לעזור לך היום?" (greeting) - provide text response
+- "מה זה בינה מלאכותית?" → "בינה מלאכותית זה..." (general knowledge) - provide text response
 
 When you use CallMytx:
-1. userAnswer: Give an immediate friendly response showing you're handling their request (this will be shown to the user)
+1. userAnswer: Give a natural, friendly response like "Sure, I'll help you with that" or "Let me take care of this for you" (this will be shown to the user)
 2. mytxRequest: Clearly describe what action needs to be taken, even if details are missing
 3. originalMessage: Quote their exact message
 4. Do NOT provide any additional text response - the userAnswer parameter will be displayed
 
-For simple conversations, respond directly without using any tools.
+For simple conversations, respond naturally without using any tools.
 
 Today's date is ${new Date().toLocaleDateString()}.`,
       messages: coreMessages,
@@ -252,7 +260,7 @@ Today's date is ${new Date().toLocaleDateString()}.`,
         CallMytx: {
           description: "Call the Mytx agent to handle complex tasks that go beyond regular conversation. Use this when the user needs: task management, memory operations, flight booking, meditation, web search, sending messages, or any action-based request.",
           parameters: z.object({
-            userAnswer: z.string().describe("A friendly, conversational response to show the user while the request is being processed. Keep it encouraging and let them know you're working on their request."),
+            userAnswer: z.string().describe("A natural, conversational response to show the user while the request is being processed. Use phrases like 'Sure, I'll help you with that', 'Let me take care of this for you', 'I'll do my best to assist you with that'. Be genuine and friendly, not overly enthusiastic."),
             mytxRequest: z.string().describe("A clear, detailed request for the Mytx agent based on the user's message. Include all relevant context and specify exactly what action needs to be taken."),
             originalMessage: z.string().describe("The exact original message from the user, quoted as-is."),
           }),
@@ -278,26 +286,19 @@ Task for Mytx Agent: ${mytxRequest}
 
 Context: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities.`;
 
-              // Call the main chat endpoint and handle streaming response
-              const mytxResponse = await fetch(`${BASE_URL}/api/heybos/chat`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': request.headers.get('Authorization') || '',
-                  'Origin': request.headers.get('Origin') || '',
-                },
-                body: JSON.stringify({
-                  messages: [
-                    {
-                      role: 'user',
-                      content: fullMytxRequest
-                    }
-                  ]
-                }),
+              // Use the callSingleToolService directly instead of HTTP call
+              const mytxResult = await callSingleToolService({
+                messages: [
+                  {
+                    role: 'user' as const,
+                    content: fullMytxRequest
+                  }
+                ],
+                uid: uid || '00000000-0000-0000-0000-000000000000'
               });
 
-              if (!mytxResponse.ok) {
-                console.error(`[Anna CallMytx] Mytx API call failed: ${mytxResponse.status}`);
+              if (!mytxResult.success) {
+                console.error(`[Anna CallMytx] Mytx service call failed: ${mytxResult.error}`);
                 return {
                   type: 'error',
                   userAnswer: userAnswer,
@@ -306,45 +307,43 @@ Context: This request came from Anna (simple assistant) and needs to be handled 
                 };
               }
 
-              // Read the streaming response from Mytx
+              // Read the streaming response from Mytx service
               let mytxContent = "";
-              let mytxToolInvocations = [];
+              let mytxToolInvocations: any[] = [];
               
               try {
-                const reader = mytxResponse.body?.getReader();
+                const reader = mytxResult.stream.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
 
-                if (reader) {
-                  while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
 
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
+                  buffer += decoder.decode(value, { stream: true });
+                  const lines = buffer.split('\n');
+                  buffer = lines.pop() || '';
 
-                    for (const line of lines) {
-                      if (line.trim() === '') continue;
-                      
-                      if (line.startsWith('0:')) {
-                        // Text chunks
-                        try {
-                          const textPart = JSON.parse(line.substring(2));
-                          if (typeof textPart === 'string') {
-                            mytxContent += textPart;
-                          }
-                        } catch (e) {
-                          // Ignore parse errors
+                  for (const line of lines) {
+                    if (line.trim() === '') continue;
+                    
+                    if (line.startsWith('0:')) {
+                      // Text chunks
+                      try {
+                        const textPart = JSON.parse(line.substring(2));
+                        if (typeof textPart === 'string') {
+                          mytxContent += textPart;
                         }
-                      } else if (line.startsWith('9:') || line.startsWith('a:')) {
-                        // Tool invocations
-                        try {
-                          const toolData = JSON.parse(line.substring(2));
-                          mytxToolInvocations.push(toolData);
-                        } catch (e) {
-                          // Ignore parse errors
-                        }
+                      } catch (e) {
+                        // Ignore parse errors
+                      }
+                    } else if (line.startsWith('9:') || line.startsWith('a:')) {
+                      // Tool invocations
+                      try {
+                        const toolData = JSON.parse(line.substring(2));
+                        mytxToolInvocations.push(toolData);
+                      } catch (e) {
+                        // Ignore parse errors
                       }
                     }
                   }

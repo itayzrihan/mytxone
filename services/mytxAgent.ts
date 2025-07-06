@@ -1,0 +1,131 @@
+import { convertToCoreMessages, Message, streamText } from "ai";
+import { z } from 'zod';
+import { geminiProModel } from "@/ai";
+
+// Input validation schema
+const mytxAgentRequestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string(),
+  })).min(1, "Messages array cannot be empty"),
+});
+
+// Interface for the service input
+export interface MytxAgentInput {
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+  }>;
+  uid: string; // User ID for authentication context
+  userAnswer: string; // Anna's initial response to show user
+  originalMessage: string; // User's original request
+}
+
+// Interface for the service output
+export interface MytxAgentOutput {
+  stream: ReadableStream;
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * MytxAgent Service - Handles complex multi-step tasks by structuring steps
+ * This service analyzes complex requests and provides structured step-by-step plans
+ */
+export async function mytxAgentService(input: MytxAgentInput): Promise<MytxAgentOutput> {
+  try {
+    // 1. Validate input
+    const validationResult = mytxAgentRequestSchema.safeParse({ messages: input.messages });
+    if (!validationResult.success) {
+      console.error('[MytxAgent Service] Invalid request format:', validationResult.error.flatten());
+      return {
+        success: false,
+        error: 'Invalid request format',
+        stream: new ReadableStream()
+      };
+    }
+
+    // 2. Prepare messages with IDs
+    const messages: Message[] = validationResult.data.messages.map((msg, idx) => ({
+      ...msg,
+      id: `msg-${idx}-${Date.now()}`
+    }));
+
+    // 3. Convert to core messages
+    const coreMessages = convertToCoreMessages(messages).filter(
+      (message) => message.content.length > 0 && (message.role === 'user' || message.role === 'assistant')
+    );
+
+    // 4. Call AI Model to generate structured steps
+    const result = await streamText({
+      model: geminiProModel,
+      system: `You are MytxAgent, an enhanced AI assistant that specializes in breaking down complex user requests into clear, structured step-by-step plans.
+
+You are a separate agent from Anna. Anna has already acknowledged the user's request, and now you are providing your own independent response with detailed planning.
+
+Your communication style:
+- Introduce yourself as MytxAgent when appropriate
+- Acknowledge that Anna has already responded to the user
+- Focus on providing comprehensive, structured planning
+- Always respond in the user's language
+- Be thorough and professional in your step-by-step breakdown
+
+Your role:
+- Analyze complex multi-step requests from users
+- Create detailed, actionable step-by-step plans
+- Structure the response in a clear, easy-to-follow format
+- Provide comprehensive planning rather than executing actions
+
+IMPORTANT GUIDELINES:
+1. Start by briefly acknowledging the user's request and that you're providing the detailed plan
+2. Break down the task into logical, sequential steps
+3. Be specific about what each step involves
+4. Use clear formatting with numbered steps or bullet points
+5. Include any prerequisites or considerations
+6. End with a summary or next steps
+
+USER'S ORIGINAL REQUEST: "${input.originalMessage}"
+ANNA'S RESPONSE: "${input.userAnswer}"
+
+Your task is to provide a detailed step-by-step plan for accomplishing the user's request. Create a comprehensive plan that the user can follow or that can guide further automation.
+
+Examples of good responses:
+- For "delete task called run 2 miles": 
+  "Here's my detailed plan for deleting your task:
+
+  📋 **Step-by-Step Plan:**
+  1. **Search Phase**: Look through your task list for entries containing "run 2 miles"
+  2. **Identification**: Review found tasks to identify the exact one you want to delete
+  3. **Confirmation**: Verify the task details before deletion
+  4. **Execution**: Delete the specified task from your list
+  5. **Verification**: Confirm the task has been successfully removed
+
+  This approach ensures we find the right task and avoid accidentally deleting the wrong item."
+
+Focus on being thorough, helpful, and providing clear guidance.`,
+      messages: coreMessages,
+      experimental_telemetry: {
+        isEnabled: true,
+        functionId: "mytx-agent-service",
+      },
+    });
+
+    // 5. Return the stream result
+    const streamResponse = result.toDataStreamResponse();
+    
+    return {
+      success: true,
+      stream: streamResponse.body || new ReadableStream()
+    };
+
+  } catch (error: any) {
+    console.error("[MytxAgent Service] Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error during processing";
+    
+    return {
+      success: false,
+      error: errorMessage,
+      stream: new ReadableStream()
+    };
+  }
+}

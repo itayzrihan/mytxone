@@ -1,7 +1,4 @@
 import { convertToCoreMessages, Message, streamText } from "ai";
-import admin from 'firebase-admin';
-import { decode } from 'jsonwebtoken';
-import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { geminiProModel } from "@/ai"; // Import your configured AI model
@@ -35,205 +32,72 @@ import {
   getReservationById,
 } from "@/db/queries";
 import { generateUUID } from "@/lib/utils";
-import { processMytxChatRequest, validateMytxChatRequest } from "@/services/mytxChatService";
 
-// --- Environment Configuration ---
-const IS_DEVELOPMENT = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
-// Temporarily allow bypass for testing - remove this later
-const BYPASS_AUTH_FOR_DEV = true; // Force enable for debugging
-// const BYPASS_AUTH_FOR_DEV = IS_DEVELOPMENT && (process.env.BYPASS_FIREBASE_AUTH === 'true' || process.env.BYPASS_FIREBASE_AUTH === '1');
-
-if (BYPASS_AUTH_FOR_DEV) {
-  console.log('[Firebase Chat API] Running in development mode with authentication bypass enabled.');
-}
-// --- End Environment Configuration ---
-
-// --- Firebase Admin Initialization ---
-// Ensure Firebase Admin SDK is initialized
-if (!admin.apps.length) {
-  try {
-    const serviceAccount = {
-      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    };
-    // Check if all required service account details are present
-    if (!serviceAccount.projectId || !serviceAccount.clientEmail || !serviceAccount.privateKey) {
-      throw new Error("Missing Firebase Admin SDK configuration details in environment variables.");
-    }
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-    console.log('[Firebase Chat API] Firebase Admin initialized.');
-  } catch (error)
-  {
-    console.error('[Firebase Chat API] Firebase Admin initialization failed:', error);
-    // We might want to prevent the API from running if Firebase Admin fails to initialize,
-    // depending on the desired behavior. For now, we log the error.
-  }
-} else {
-  console.log('[Firebase Chat API] Firebase Admin already initialized.');
-}
-// --- End Firebase Admin Initialization ---
-
-// --- CORS Helper ---
-const setCorsHeaders = (response: NextResponse, origin: string | null) => {
-  // Allow only specific origins
-  const allowedOrigins = [
-    'http://localhost:8081',
-    'http://localhost:3000',
-    'https://heybos.me',
-    'https://heybos.com',
-    'http://10.100.102.8:8081',
-    'https://10.100.102.8:8081',
-    'https://mytx-ai.vercel.app'
-  ];
-  let allowedOrigin = '';
-  if (origin && allowedOrigins.includes(origin)) {
-    allowedOrigin = origin;
-  } else {
-    allowedOrigin = 'null'; // Disallow by setting to 'null'
-  }
-  response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
-  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  response.headers.set('Access-Control-Allow-Credentials', 'true');
-};
-// --- End CORS Helper ---
-
-// --- Authentication Helper ---
-async function authenticateFirebaseUser(request: NextRequest): Promise<{ uid: string | null; errorResponse: NextResponse | null }> {
-  const serverTimeStart = Date.now(); // Log server time at start
-  const origin = request.headers.get('Origin');
-  const authHeader = request.headers.get('Authorization');
-  
-  // Check if we're bypassing auth for development
-  if (BYPASS_AUTH_FOR_DEV) {
-    console.log('[Firebase Chat API Auth] Development mode - bypassing authentication');
-    // Use a valid UUID format for development to prevent database errors
-    return { uid: '00000000-0000-0000-0000-000000000000', errorResponse: null };
-  }
-  
-  console.log(`[Firebase Chat API Auth] Received request. Server time: ${serverTimeStart}`); // Log server time
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    const res = NextResponse.json({ error: 'Missing or invalid Authorization header' }, { status: 401 });
-    setCorsHeaders(res, origin);
-    console.error('[Firebase Chat API Auth] Missing or invalid Authorization header.');
-    return { uid: null, errorResponse: res };
-  }
-
-  const token = authHeader.split(' ')[1];
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    console.log(`[Firebase Chat API Auth] Token verified successfully for UID: ${decodedToken.uid}. Server time: ${Date.now()}`);
-    return { uid: decodedToken.uid, errorResponse: null };
-  } catch (error) {
-    const serverTimeError = Date.now(); // Log server time at error
-    console.error(`[Firebase Chat API Auth] Firebase token verification failed. Server time: ${serverTimeError}`, error);
-
-    // Decode token for debugging (without verification)
-    try {
-        const decoded = decode(token);
-        if (decoded && typeof decoded === 'object') {
-             // Safely access claims with checks
-             const iat = decoded.iat ? `${decoded.iat} (${new Date(decoded.iat * 1000).toISOString()})` : 'undefined';
-             const exp = decoded.exp ? `${decoded.exp} (${new Date(decoded.exp * 1000).toISOString()})` : 'undefined';
-             const auth_time = decoded.auth_time ? `${decoded.auth_time} (${new Date(decoded.auth_time * 1000).toISOString()})` : 'undefined';
-
-             console.error(`[Firebase Chat API Auth Debug] Decoded token claims: iat=${iat}, exp=${exp}, auth_time=${auth_time}. Current Server Time (epoch): ${Math.floor(serverTimeError / 1000)}`);
-        } else {
-             console.error("[Firebase Chat API Auth Debug] Could not decode token or token format unexpected.");
-        }
-    } catch (decodeError) {
-         console.error("[Firebase Chat API Auth Debug] Error decoding token:", decodeError);
-    }
-
-    const res = NextResponse.json({ error: 'Unauthorized - Invalid Firebase token' }, { status: 401 });
-    setCorsHeaders(res, origin);
-    return { uid: null, errorResponse: res };
-  }
-}
-// --- End Authentication Helper ---
-
-// --- Request Body Schema ---
+// Input validation schema
 const chatRequestSchema = z.object({
   messages: z.array(z.object({
-    role: z.enum(['user', 'assistant']), // Only user and assistant roles for clean chat
+    role: z.enum(['user', 'assistant']),
     content: z.string(),
-    // Exclude tool-related fields for this endpoint
-  })).min(1, "Messages array cannot be empty"), // Require at least one message
+  })).min(1, "Messages array cannot be empty"),
 });
-// --- End Request Body Schema ---
 
-// --- OPTIONS Handler (for CORS Preflight) ---
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('Origin');
-  const response = new NextResponse(null, { status: 204 }); // Use 204 No Content for OPTIONS
-  setCorsHeaders(response, origin);
-  console.log('[Firebase Chat API OPTIONS] Responding to preflight request.');
-  return response;
+// Interface for the service input
+export interface CallMytxInput {
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+  }>;
+  uid: string; // User ID for authentication context
 }
-// --- End OPTIONS Handler ---
 
-// --- POST Handler ---
-export async function POST(request: NextRequest) {
-  const origin = request.headers.get('Origin');
+// Interface for the service output
+export interface CallMytxOutput {
+  stream: ReadableStream;
+  success: boolean;
+  error?: string;
+}
 
-  // 1. Authenticate User
-  const { uid, errorResponse } = await authenticateFirebaseUser(request);
-  if (errorResponse) {
-    return errorResponse; // Return the authentication error response
-  }
-  if (!uid) {
-    // Should not happen if errorResponse is null, but good practice
-    const res = NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
-    setCorsHeaders(res, origin);
-    return res;
-  }
-
-  console.log(`[Firebase Chat API POST] Request authenticated for user UID: ${uid}`);
-
-  // 2. Parse and Validate Request Body
-  let body;
+/**
+ * CallMytx Service - Handles Mytx chat functionality without HTTP overhead
+ * This service contains all the logic from the /chat endpoint but as a reusable component
+ */
+export async function callMytxService(input: CallMytxInput): Promise<CallMytxOutput> {
   try {
-    body = await request.json();
-  } catch (error) {
-    console.error('[Firebase Chat API POST] Invalid JSON in request body:', error);
-    const res = NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
-    setCorsHeaders(res, origin);
-    return res;
-  }
+    // 1. Validate input
+    const validationResult = chatRequestSchema.safeParse({ messages: input.messages });
+    if (!validationResult.success) {
+      console.error('[CallMytx Service] Invalid request format:', validationResult.error.flatten());
+      return {
+        success: false,
+        error: 'Invalid request format',
+        stream: new ReadableStream()
+      };
+    }
 
-  const validationResult = chatRequestSchema.safeParse(body);
-  if (!validationResult.success) {
-    console.error('[Firebase Chat API POST] Invalid request body format:', validationResult.error.flatten());
-    const res = NextResponse.json({ error: 'Invalid request body format', details: validationResult.error.flatten() }, { status: 400 });
-    setCorsHeaders(res, origin);
-    return res;
-  }
+    // 2. Prepare messages with IDs
+    const messages: Message[] = validationResult.data.messages.map((msg, idx) => ({
+      ...msg,
+      id: `msg-${idx}-${Date.now()}`
+    }));
 
-  // Add 'id' property to each message to satisfy the Message type
-  const messages: Message[] = validationResult.data.messages.map((msg, idx) => ({
-    ...msg,
-    id: `msg-${idx}-${Date.now()}`
-  }));
+    // 3. Convert to core messages
+    const coreMessages = convertToCoreMessages(messages).filter(
+      (message) => message.content.length > 0 && (message.role === 'user' || message.role === 'assistant')
+    );
 
-  // 3. Prepare Messages for AI SDK
-  const coreMessages = convertToCoreMessages(messages).filter(
-    (message) => message.content.length > 0 && (message.role === 'user' || message.role === 'assistant')
-  );
+    // 4. Input length check
+    const totalContentLength = coreMessages.reduce((sum, msg) => sum + (typeof msg.content === 'string' ? msg.content.length : 0), 0);
+    const MAX_INPUT_LENGTH = 20000;
+    if (totalContentLength > MAX_INPUT_LENGTH) {
+      console.log(`[CallMytx Service] Input length exceeded for user: ${input.uid}. Length: ${totalContentLength}`);
+      return {
+        success: false,
+        error: `Input exceeds the maximum length of ${MAX_INPUT_LENGTH} characters.`,
+        stream: new ReadableStream()
+      };
+    }
 
-  // Basic input length check (optional, adjust as needed)
-  const totalContentLength = coreMessages.reduce((sum, msg) => sum + (typeof msg.content === 'string' ? msg.content.length : 0), 0);
-  const MAX_INPUT_LENGTH = 20000; // Example limit
-  if (totalContentLength > MAX_INPUT_LENGTH) {
-      console.log(`[Firebase Chat API POST] Input length exceeded for user: ${uid}. Length: ${totalContentLength}`);
-      const res = NextResponse.json({ error: `Input exceeds the maximum length of ${MAX_INPUT_LENGTH} characters.` }, { status: 400 });
-      setCorsHeaders(res, origin);
-      return res;
-  }
-
-  // 4. Call AI Model with Full Tools Support
-  try {
+    // 5. Call AI Model with Full Tools Support
     const result = await streamText({
       model: geminiProModel,
       system: `
@@ -410,11 +274,11 @@ export async function POST(request: NextRequest) {
 
             const id = generateUUID();
 
-            // Use the Firebase UID for creating reservations in TheBaze context
-            if (uid) {
+            // Use the provided UID for creating reservations
+            if (input.uid) {
               await createReservation({
                 id,
-                userId: uid,
+                userId: input.uid,
                 details: { ...props, totalPriceInUSD },
               });
 
@@ -497,7 +361,7 @@ export async function POST(request: NextRequest) {
             dueDate: z.string().optional().describe("Due date in ISO 8601 format. Parse dates like 'tomorrow', 'next Friday', 'June 30th', etc. Format as '2025-06-29T10:00:00.000Z'."),
           }),
           execute: async ({ taskDescription, taskType, priority, dueDate }) => {
-            return await addTaskAction({ taskDescription, taskType, priority, dueDate, userId: uid });
+            return await addTaskAction({ taskDescription, taskType, priority, dueDate, userId: input.uid });
           },
         },
         listTasks: {
@@ -510,7 +374,7 @@ export async function POST(request: NextRequest) {
             searchQuery: z.string().optional().describe("Search query to filter tasks by name or description."),
           }),
           execute: async ({ filter, limit, offset, searchQuery }) => {
-            return await listTasksAction({ filter, limit, offset, searchQuery, userId: uid });
+            return await listTasksAction({ filter, limit, offset, searchQuery, userId: input.uid });
           },
         },
         updateTask: {
@@ -525,7 +389,7 @@ export async function POST(request: NextRequest) {
             dueDate: z.string().optional().describe("New due date in ISO 8601 format."),
           }),
           execute: async ({ taskId, name, description, taskType, priority, status, dueDate }) => {
-            return await updateTaskAction({ taskId, name, description, taskType, priority, status, dueDate, userId: uid });
+            return await updateTaskAction({ taskId, name, description, taskType, priority, status, dueDate, userId: input.uid });
           },
         },
         finishTask: {
@@ -534,7 +398,7 @@ export async function POST(request: NextRequest) {
             taskId: z.string().describe("The ID of the task to finish."),
           }),
           execute: async ({ taskId }) => {
-            return await finishTaskAction({ taskId, userId: uid });
+            return await finishTaskAction({ taskId, userId: input.uid });
           },
         },
         deleteTask: {
@@ -543,7 +407,7 @@ export async function POST(request: NextRequest) {
             taskId: z.string().describe("The ID of the task to delete."),
           }),
           execute: async ({ taskId }) => {
-            return await deleteTaskAction({ taskId, userId: uid });
+            return await deleteTaskAction({ taskId, userId: input.uid });
           },
         },
         searchTasks: {
@@ -553,7 +417,7 @@ export async function POST(request: NextRequest) {
             limit: z.number().optional().describe("Number of results to return - defaults to 20."),
           }),
           execute: async ({ query, limit }) => {
-            return await searchTasksAction({ query, limit, userId: uid });
+            return await searchTasksAction({ query, limit, userId: input.uid });
           },
         },
         saveMemory: {
@@ -565,7 +429,7 @@ export async function POST(request: NextRequest) {
               .describe("The specific piece of information to remember."),
           }),
           execute: async ({ content }) => {
-            return await saveMemoryAction({ userId: uid, content });
+            return await saveMemoryAction({ userId: input.uid, content });
           },
         },
         recallMemories: {
@@ -573,9 +437,10 @@ export async function POST(request: NextRequest) {
             "Recall all pieces of information previously saved by the user. Also used internally to find a specific memory before forgetting.",
           parameters: z.object({}),
           execute: async () => {
-            return await recallMemoriesAction({ userId: uid });
+            return await recallMemoriesAction({ userId: input.uid });
           },
-        },      forgetMemory: {
+        },
+        forgetMemory: {
           description:
             "Forget a specific piece of information previously saved. Requires the memory ID. Usually, you should recall memories first to find the correct ID and ask for user confirmation if a specific memory was requested to be forgotten.",
           parameters: z.object({
@@ -584,15 +449,17 @@ export async function POST(request: NextRequest) {
             ),
           }),
           execute: async ({ memoryId }) => {
-            return await forgetMemoryAction({ memoryId, userId: uid });
-          },      },
+            return await forgetMemoryAction({ memoryId, userId: input.uid });
+          },
+        },
         showMeditationTypeSelector: {
           description: "Show UI cards with different meditation types for the user to select from. Use this when user asks for meditation or you recognize they might need one.",
           parameters: z.object({}),
           execute: async () => {
             return await showMeditationTypeSelectorAction();
           },
-        },      showMeditationPromptSelector: {
+        },
+        showMeditationPromptSelector: {
           description: "Show UI options to choose between chat history or custom intention for meditation creation. Use this after user selects a meditation type.",
           parameters: z.object({
             type: z.string().describe("The type of meditation selected by the user"),
@@ -611,7 +478,8 @@ export async function POST(request: NextRequest) {
           execute: async ({ type, intention, chatHistory }) => {
             return await showMeditationLanguageSelectorAction({ type, intention, chatHistory });
           },
-        },      generateMeditationContent: {
+        },
+        generateMeditationContent: {
           description: "Generate custom meditation content based on user intentions or chat history. Returns meditation content that can optionally be saved.",
           parameters: z.object({
             type: z.string().describe("Type of meditation: visualization, mindfulness, sleep story, loving kindness, chakra balancing, breath awareness, affirmations, concentration, body scan, or memory palace enhancement"),
@@ -633,14 +501,14 @@ export async function POST(request: NextRequest) {
             duration: z.string().optional().describe("Duration of the meditation"),
           }),
           execute: async ({ type, title, content, duration }) => {
-            return await createMeditationAction({ userId: uid, type, title, content, duration });
+            return await createMeditationAction({ userId: input.uid, type, title, content, duration });
           },
         },
         listMeditations: {
           description: "List all saved meditations for the user.",
           parameters: z.object({}),
           execute: async () => {
-            return await listMeditationsAction({ userId: uid });
+            return await listMeditationsAction({ userId: input.uid });
           },
         },
         getMeditation: {
@@ -649,15 +517,16 @@ export async function POST(request: NextRequest) {
             meditationId: z.string().describe("The ID of the meditation to retrieve"),
           }),
           execute: async ({ meditationId }) => {
-            return await getMeditationAction({ meditationId, userId: uid });
+            return await getMeditationAction({ meditationId, userId: input.uid });
           },
-        },      deleteMeditation: {
+        },
+        deleteMeditation: {
           description: "Delete a specific saved meditation.",
           parameters: z.object({
             meditationId: z.string().describe("The ID of the meditation to delete"),
           }),
           execute: async ({ meditationId }) => {
-            return await deleteMeditationAction({ meditationId, userId: uid });
+            return await deleteMeditationAction({ meditationId, userId: input.uid });
           },
         },
         enhancedSearchTasks: {
@@ -667,10 +536,9 @@ export async function POST(request: NextRequest) {
             limit: z.number().optional().describe("Number of results to return - defaults to 20."),
           }),
           execute: async ({ query, limit }) => {
-            return await searchTasksAction({ query, limit, userId: uid });
+            return await searchTasksAction({ query, limit, userId: input.uid });
           },
         },
-
         batchTaskOperations: {
           description: "Execute multiple task operations (add, update, delete, finish) in a single batch. Allows for bulk operations on tasks with optional confirmation prompts.",
           parameters: z.object({
@@ -682,7 +550,7 @@ export async function POST(request: NextRequest) {
             confirmationRequired: z.boolean().optional().describe("Whether to ask for user confirmation before executing - defaults to true for destructive operations"),
           }),
           execute: async ({ operations, confirmationRequired }) => {
-            return await batchTaskOperationsAction({ userId: uid, operations, confirmationRequired });
+            return await batchTaskOperationsAction({ userId: input.uid, operations, confirmationRequired });
           },
         },
         smartTaskFinder: {
@@ -701,9 +569,10 @@ export async function POST(request: NextRequest) {
             fuzzyMatch: z.boolean().optional().describe("Whether to use fuzzy/approximate matching - defaults to true"),
           }),
           execute: async ({ searchCriteria, fuzzyMatch }) => {
-            return await smartTaskFinderAction({ userId: uid, searchCriteria, fuzzyMatch });
+            return await smartTaskFinderAction({ userId: input.uid, searchCriteria, fuzzyMatch });
           },
-        },      generateMeditationAudio: {
+        },
+        generateMeditationAudio: {
           description: "Generate TTS audio for a meditation using Gemini's text-to-speech. Returns audio URL for playback.",
           parameters: z.object({
             content: z.string().describe("The meditation content with timestamps"),
@@ -746,30 +615,28 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-      // Optional: Add telemetry or other options if needed
       experimental_telemetry: {
         isEnabled: true,
-        functionId: "heybos-stream-text",
+        functionId: "callmytx-service",
       },
     });
 
-    // 5. Return Streaming Response
-    // Apply CORS headers to the actual response stream
+    // 6. Return the stream result
     const streamResponse = result.toDataStreamResponse();
-    const nextStreamResponse = new NextResponse(streamResponse.body, {
-      status: streamResponse.status,
-      statusText: streamResponse.statusText,
-      headers: streamResponse.headers,
-    });
-    setCorsHeaders(nextStreamResponse, origin);
-    return nextStreamResponse;
+    
+    return {
+      success: true,
+      stream: streamResponse.body || new ReadableStream()
+    };
 
   } catch (error: any) {
-    console.error("[Firebase Chat API POST] Error calling AI model:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error during AI processing";
-    const res = NextResponse.json({ error: "Internal Server Error", details: errorMessage }, { status: 500 });
-    setCorsHeaders(res, origin);
-    return res;
+    console.error("[CallMytx Service] Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error during processing";
+    
+    return {
+      success: false,
+      error: errorMessage,
+      stream: new ReadableStream()
+    };
   }
 }
-// --- End POST Handler ---
