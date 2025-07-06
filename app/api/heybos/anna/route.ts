@@ -474,7 +474,8 @@ Complex Operation for StepsDesigning Agent: ${stepsRequest}
 
 Context: This request came from Anna and requires multi-step planning and detailed guidance for safe completion.`;
 
-              // Call the stepsDesigningService to get the full plan
+              // Call the stepsDesigningService to get both short summary and detailed plan
+              console.log('[Anna Route] Calling stepsDesigningService...');
               const stepsResult = await stepsDesigningService({
                 messages: [
                   {
@@ -488,47 +489,50 @@ Context: This request came from Anna and requires multi-step planning and detail
                 languageInstruction: (toolResult as any).languageInstruction // Pass language instruction to StepsDesigning
               });
 
+              console.log('[Anna Route] StepsDesigning result:', { 
+                success: stepsResult.success, 
+                hasShortSummary: !!stepsResult.shortSummary,
+                hasDetailedPlan: !!stepsResult.detailedPlan,
+                error: stepsResult.error 
+              });
+
               let fullStepsContent = "";
+              let shortSummary = "";
               
-              if (stepsResult.success && stepsResult.stream) {
-                // Stream the StepsDesigning response directly to maintain language consistency
-                const reader = stepsResult.stream.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
+              if (stepsResult.success) {
+                // Get both the detailed plan and short summary from the service response
+                fullStepsContent = stepsResult.detailedPlan || "";
+                shortSummary = stepsResult.shortSummary || "";
 
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
+                console.log('[Anna Route] Got summaries:', { 
+                  shortSummaryLength: shortSummary.length,
+                  detailedPlanLength: fullStepsContent.length 
+                });
 
-                  buffer += decoder.decode(value, { stream: true });
-                  const lines = buffer.split('\n');
-                  buffer = lines.pop() || '';
-
-                  for (const line of lines) {
-                    if (line.trim() === '') continue;
-                    
-                    if (line.startsWith('0:')) {
-                      try {
-                        const textPart = JSON.parse(line.substring(2));
-                        if (typeof textPart === 'string') {
-                          fullStepsContent += textPart;
-                          // Stream the content directly to maintain language consistency
-                          controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(textPart)}\n`));
-                        }
-                      } catch (e) {
-                        // Ignore parse errors
-                      }
+                // Stream the short summary to the user
+                if (shortSummary) {
+                  console.log('[Anna Route] Streaming short summary to user...');
+                  const summaryChunks = shortSummary.split('\n');
+                  for (const chunk of summaryChunks) {
+                    if (chunk.trim()) {
+                      controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(chunk + '\n')}\n`));
+                      await new Promise((resolve) => setTimeout(resolve, 50));
                     }
                   }
+                  console.log('[Anna Route] Finished streaming short summary');
+                } else {
+                  console.log('[Anna Route] No short summary to stream');
                 }
               } else {
-                // If no stream, send a fallback error message
+                console.log('[Anna Route] StepsDesigning failed:', stepsResult.error);
+                // If no success, send error message
                 const errorMsg = stepsResult.error || 
                   (userLanguage === 'he' ? 'לא ניתן ליצור תוכנית מפורטת.' :
                    userLanguage === 'ar' ? 'غير قادر على إنشاء خطة مفصلة.' :
                    'Unable to create step-by-step plan.');
                 controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
                 fullStepsContent = errorMsg;
+                shortSummary = errorMsg;
               }
 
               // End StepsDesigning agent
