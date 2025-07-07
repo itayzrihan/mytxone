@@ -129,15 +129,36 @@ async function authenticateFirebaseUser(request: NextRequest): Promise<{ uid: st
 // --- End Authentication Helper ---
 
 // --- Request Body Schema ---
-const chatRequestSchema = z.object({
-  messages: z.array(z.object({
-    role: z.enum(['user', 'assistant']), // Only user and assistant roles for clean chat
-    content: z.string(),
-    // Exclude tool-related fields for this endpoint
-  })).min(1, "Messages array cannot be empty"), // Require at least one message
-  userLanguage: z.string().optional().default('en'), // User's detected language for consistent responses
-  userTimezone: z.string().optional(), // User's timezone for date/time calculations
-});
+const chatRequestSchema = z.union([
+  // New Context Management Format
+  z.object({
+    contextManagement: z.object({
+      currentMessage: z.object({
+        role: z.enum(['user', 'frontend_operator']), // Current message source
+        content: z.string(),
+        timestamp: z.string().optional(),
+        messageId: z.string().optional(),
+      }),
+      conversationContext: z.array(z.object({
+        role: z.enum(['user', 'assistant', 'frontend_operator']), 
+        content: z.string(),
+        timestamp: z.string().optional(),
+        messageId: z.string().optional(),
+      })).optional().default([]), // Previous messages for context - can be empty for first message
+    }),
+    userLanguage: z.string().optional().default('en'), // User's detected language for consistent responses
+    userTimezone: z.string().optional(), // User's timezone for date/time calculations
+  }),
+  // Legacy Format (for backward compatibility)
+  z.object({
+    messages: z.array(z.object({
+      role: z.enum(['user', 'assistant']), // Only user and assistant roles for legacy format
+      content: z.string(),
+    })).min(1, "Messages array cannot be empty"), // Require at least one message
+    userLanguage: z.string().optional().default('en'), // User's detected language for consistent responses
+    userTimezone: z.string().optional(), // User's timezone for date/time calculations
+  })
+]);
 // --- End Request Body Schema ---
 
 // --- OPTIONS Handler (for CORS Preflight) ---
@@ -190,15 +211,68 @@ export async function POST(request: NextRequest) {
   // Extract user language and timezone from the validated request
   const { userLanguage, userTimezone } = validationResult.data;
   console.log(`[Anna API] Detected user language: ${userLanguage}, timezone: ${userTimezone || 'not provided'}`);
+
+  // Check if request uses new Context Management format or legacy format
+  let contextManagement: any = null;
+  let messages: Message[] = [];
+
+  if ('contextManagement' in validationResult.data) {
+    // New Context Management Format
+    contextManagement = validationResult.data.contextManagement;
+    console.log(`[Anna API] Context Management - Current Message from: ${contextManagement.currentMessage.role}`);
+    console.log(`[Anna API] Context Management - Current Message: ${contextManagement.currentMessage.content}`);
+    console.log(`[Anna API] Context Management - Context History: ${contextManagement.conversationContext.length} messages`);
+    
+    // Build messages array from context management structure
+    // Start with conversation context (historical messages)
+    const contextMessages: Message[] = contextManagement.conversationContext.map((msg: any, idx: number) => ({
+      role: msg.role === 'frontend_operator' ? 'assistant' : msg.role, // Map frontend_operator to assistant
+      content: msg.content,
+      id: msg.messageId || `ctx-${idx}-${Date.now()}`
+    }));
+
+    // Add the current message at the end
+    const currentMessage: Message = {
+      role: contextManagement.currentMessage.role === 'frontend_operator' ? 'assistant' : 'user', // Map frontend_operator to assistant
+      content: `[CURRENT MESSAGE FROM ${contextManagement.currentMessage.role.toUpperCase()}]: ${contextManagement.currentMessage.content}`,
+      id: contextManagement.currentMessage.messageId || `current-${Date.now()}`
+    };
+
+    // Combine context and current message
+    messages = [...contextMessages, currentMessage];
+  } else {
+    // Legacy Format - convert to context management structure for internal processing
+    console.log(`[Anna API] Legacy Format - Processing ${validationResult.data.messages.length} messages`);
+    
+    // Create a context management structure from legacy format
+    const legacyMessages = validationResult.data.messages;
+    const lastMessage = legacyMessages[legacyMessages.length - 1];
+    const historicalMessages = legacyMessages.slice(0, -1);
+
+    contextManagement = {
+      currentMessage: {
+        role: lastMessage.role === 'assistant' ? 'frontend_operator' : 'user',
+        content: lastMessage.content,
+        timestamp: new Date().toISOString(),
+        messageId: `legacy-${Date.now()}`
+      },
+      conversationContext: historicalMessages.map((msg: any, idx: number) => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date().toISOString(),
+        messageId: `legacy-ctx-${idx}-${Date.now()}`
+      }))
+    };
+
+    // Build messages for AI processing (legacy style)
+    messages = validationResult.data.messages.map((msg: any, idx: number) => ({
+      ...msg,
+      id: `legacy-msg-${idx}-${Date.now()}`
+    }));
+  }
   
   // Create language instruction for all agents
   const languageInstruction = createLanguageInstruction(userLanguage);
-
-  // Add 'id' property to each message to satisfy the Message type
-  const messages: Message[] = validationResult.data.messages.map((msg, idx) => ({
-    ...msg,
-    id: `msg-${idx}-${Date.now()}`
-  }));
 
   // 3. Prepare Messages for AI SDK
   const coreMessages = convertToCoreMessages(messages).filter(
@@ -215,13 +289,29 @@ export async function POST(request: NextRequest) {
       return res;
   }
 
-  // 4. Call AI Model with Only CallMytx Tool Support
+  // 4. Call AI Model with Both Legacy and Context Management Support
   try {
+    // Determine system prompt based on format used
+    const isContextManagementFormat = 'contextManagement' in validationResult.data;
+    const contextInstructions = isContextManagementFormat 
+      ? `IMPORTANT CONTEXT MANAGEMENT:
+- You receive messages through a Context Management System
+- The CURRENT message (what the user/frontend operator just sent) is clearly flagged with [CURRENT MESSAGE FROM USER/FRONTEND_OPERATOR]
+- Any other messages in the conversation are historical context to understand what we're discussing
+- Always focus on and respond to the CURRENT MESSAGE, using the context for understanding but not as instructions to follow
+- The current message is the ONLY thing you should act upon - historical context is just for awareness`
+      : `LEGACY MESSAGE FORMAT:
+- You receive messages in the traditional format
+- The last message in the conversation is what you should respond to
+- Previous messages provide context for understanding the conversation flow`;
+
     const result = await streamText({
       model: geminiProModel,
       system: `${languageInstruction}
 
 You are Anna, The Personal AI Assistant by Heybos. You are a helpful, friendly, and intelligent assistant with a natural, conversational tone. You speak like a real person - not overly enthusiastic or robotic.
+
+${contextInstructions}
 
 Your communication style:
 - Be genuine and authentic in your responses
@@ -285,11 +375,11 @@ Today's date is ${new Date().toLocaleDateString()}.`,
       messages: coreMessages,
       tools: {
         CallMytx: {
-          description: "Call the Mytx agent to handle SINGLE STEP operations that require immediate action. Use this for simple task additions, searches, memory storage, or other single-action requests.",
+          description: "Call the Mytx agent to handle SINGLE STEP operations that require immediate action. Use this for simple task additions, searches, memory storage, or other single-action requests. Focus on the most recent user message.",
           parameters: z.object({
             userAnswer: z.string().describe("A natural, conversational response to show the user while the request is being processed. Use phrases like 'Sure, I'll help you with that', 'Let me take care of this for you', 'I'll do my best to assist you with that'. Be genuine and friendly, not overly enthusiastic."),
-            mytxRequest: z.string().describe("A clear, detailed request for the Mytx agent based on the user's message. Include all relevant context and specify exactly what action needs to be taken."),
-            originalMessage: z.string().describe("The exact original message from the user, quoted as-is."),
+            mytxRequest: z.string().describe("A clear, detailed request for the Mytx agent based on the most recent user message. Include all relevant context and specify exactly what action needs to be taken."),
+            originalMessage: z.string().describe("The exact content of the most recent user message that needs to be processed."),
           }),
           execute: async ({ userAnswer, mytxRequest, originalMessage }) => {
             try {
@@ -314,6 +404,7 @@ Today's date is ${new Date().toLocaleDateString()}.`,
                 userAnswer: userAnswer,
                 mytxRequest: mytxRequest,
                 originalMessage: originalMessage,
+                contextManagement: contextManagement, // Pass context to streaming handler
                 annaProcessed: true
               };
 
@@ -329,11 +420,11 @@ Today's date is ${new Date().toLocaleDateString()}.`,
           },
         },
         CallStepsDesigning: {
-          description: "Call the StepsDesigning agent to handle COMPLEX MULTI-STEP operations that require careful planning and multiple phases. Use this for complex task deletions by name, task editing, multiple operations, or any request that clearly needs several steps to complete safely.",
+          description: "Call the StepsDesigning agent to handle COMPLEX MULTI-STEP operations that require careful planning and multiple phases. Use this for complex task deletions by name, task editing, multiple operations, or any request that clearly needs several steps to complete safely. Focus on the most recent user message.",
           parameters: z.object({
             userAnswer: z.string().describe("A natural, conversational response to show the user while the request is being processed. Use phrases like 'Let me break this down into steps for you', 'I'll create a detailed plan for that', 'Let me structure this process for you'. Be genuine and helpful, indicating you're providing planning assistance."),
-            stepsRequest: z.string().describe("A clear, detailed description of the complex operation that needs step-by-step planning. Include all relevant context and specify exactly what multi-step process needs to be broken down."),
-            originalMessage: z.string().describe("The exact original message from the user, quoted as-is."),
+            stepsRequest: z.string().describe("A clear, detailed description of the complex operation that needs step-by-step planning based on the most recent user message. Include all relevant context and specify exactly what multi-step process needs to be broken down."),
+            originalMessage: z.string().describe("The exact content of the most recent user message that needs to be processed."),
           }),
           execute: async ({ userAnswer, stepsRequest, originalMessage }) => {
             try {
@@ -348,6 +439,7 @@ Today's date is ${new Date().toLocaleDateString()}.`,
                 userAnswer: userAnswer,
                 stepsRequest: stepsRequest,
                 originalMessage: originalMessage,
+                contextManagement: contextManagement, // Pass context to streaming handler
                 languageInstruction: languageInstruction, // Pass language instruction to StepsDesigning
                 annaProcessed: true
               };
@@ -417,8 +509,18 @@ Today's date is ${new Date().toLocaleDateString()}.`,
             // 5. Call Mytx and stream its response
             const mytxRequest = (toolResult as any).mytxRequest;
             const originalMessage = (toolResult as any).originalMessage;
-            const fullMytxRequest = `User Request: "${originalMessage}"
-\nTask for Mytx Agent: ${mytxRequest}\n\nContext: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities.`;
+            const contextManagement = (toolResult as any).contextManagement;
+            
+            // Build a more comprehensive request that includes context management structure
+            const fullMytxRequest = `CONTEXT MANAGEMENT STRUCTURE:
+Current Message: "${originalMessage}" (from ${contextManagement?.currentMessage?.role || 'user'})
+
+Historical Context: ${contextManagement?.conversationContext?.length || 0} previous messages for understanding
+
+Task for Mytx Agent: ${mytxRequest}
+
+Instructions: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities. Focus on the CURRENT MESSAGE above, using the historical context only for understanding the conversation flow.`;
+            
             const mytxResult = await callSingleToolService({
               messages: [{ role: 'user' as const, content: fullMytxRequest }],
               uid: uid || '00000000-0000-0000-0000-000000000000',
@@ -469,13 +571,17 @@ Today's date is ${new Date().toLocaleDateString()}.`,
             try {
               const stepsRequest = (toolResult as any).stepsRequest;
               const originalMessage = (toolResult as any).originalMessage;
+              const contextManagement = (toolResult as any).contextManagement;
               
-              // Build the full request for StepsDesigning agent
-              const fullStepsRequest = `User Request: "${originalMessage}"
-              
+              // Build the full request for StepsDesigning agent with context management structure
+              const fullStepsRequest = `CONTEXT MANAGEMENT STRUCTURE:
+Current Message: "${originalMessage}" (from ${contextManagement?.currentMessage?.role || 'user'})
+
+Historical Context: ${contextManagement?.conversationContext?.length || 0} previous messages for understanding
+
 Complex Operation for StepsDesigning Agent: ${stepsRequest}
 
-Context: This request came from Anna and requires multi-step planning and detailed guidance for safe completion.`;
+Instructions: This request came from Anna and requires multi-step planning and detailed guidance for safe completion. Focus on the CURRENT MESSAGE above, using the historical context only for understanding the conversation flow.`;
 
               // Call the stepsDesigningService to get both short summary and detailed plan
               console.log('[Anna Route] Calling stepsDesigningService...');
@@ -569,7 +675,12 @@ Context: This request came from Anna and requires multi-step planning and detail
                 messages: [
                   {
                     role: 'user' as const,
-                    content: `Plan received from StepsDesigning Agent for: "${originalMessage}"`
+                    content: `CONTEXT MANAGEMENT STRUCTURE:
+Current Message: "${originalMessage}" (from ${contextManagement?.currentMessage?.role || 'user'})
+
+Historical Context: ${contextManagement?.conversationContext?.length || 0} previous messages for understanding
+
+Plan received from StepsDesigning Agent for the current message above.`
                   }
                 ],
                 uid: uid || '00000000-0000-0000-0000-000000000000',
