@@ -1,0 +1,13 @@
+{
+  "chatId": "8519396b-a373-426b-be99-e4781047cf12",
+  "interaction": 1,
+  "contextObject": {
+    "userMessage": "היי",
+    "timestamp": 1752003151044,
+    "date": "2025-07-08T19:32:31.044Z",
+    "userLanguage": "he",
+    "userTimezone": "Asia/Jerusalem",
+    "conversationContext": []
+  },
+  "savedAt": "2025-07-08T19:32:31.270Z"
+}

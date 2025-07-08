@@ -130,33 +130,93 @@ async function authenticateFirebaseUser(request: NextRequest): Promise<{ uid: st
 
 // --- Request Body Schema ---
 const chatRequestSchema = z.union([
-  // New Context Management Format
+  // Direct Context Format (new primary format from ContextManagerSender)
   z.object({
+    chatId: z.string().optional(),
+    context: z.object({
+      currentMessage: z.string(),
+      timestamp: z.union([z.number(), z.string()]),
+      date: z.string().optional(),
+      userLanguage: z.string().optional(),
+      userTimezone: z.string().optional(),
+      MessagesHistory: z.array(z.object({
+        content: z.string(),
+        timestamp: z.string().optional(),
+        role: z.enum(['user', 'assistant', 'frontend_operator']).optional(),
+        messageId: z.string().optional(),
+      })).optional(),
+      conversationContext: z.array(z.object({
+        role: z.enum(['user', 'assistant', 'frontend_operator']),
+        content: z.string(),
+        timestamp: z.string().optional(),
+        messageId: z.string().optional(),
+      })).optional(),
+    }),
+    interactionId: z.string().optional(),
+    savedAt: z.string().optional(),
+  }),
+  // New Context Object Format (primary format from frontend)
+  z.object({
+    id: z.string().optional(), // chatId
+    messages: z.array(z.object({
+      role: z.string(),
+      contextObject: z.object({
+        userMessage: z.string(),
+        timestamp: z.union([z.number(), z.string()]).optional(),
+        date: z.string().optional(),
+        userLanguage: z.string().optional(),
+        userTimezone: z.string().optional(),
+        // Optional conversation context if available
+        conversationContext: z.array(z.object({
+          role: z.string(),
+          content: z.string(),
+          timestamp: z.any().optional(),
+          messageId: z.string().optional(),
+        })).optional().default([]),
+        // Current message details
+        currentMessage: z.object({
+          role: z.string(),
+          content: z.string(),
+          timestamp: z.any().optional(),
+          messageId: z.string().optional(),
+        }).optional(),
+      })
+    })).min(1, "Messages array cannot be empty"),
+    userLanguage: z.string().optional().default('en'),
+    userTimezone: z.string().optional(),
+    context: z.string().optional(), // Full context from context manager
+  }),
+  // Context Management Format (alternative format)
+  z.object({
+    id: z.string().optional(),
     contextManagement: z.object({
       currentMessage: z.object({
-        role: z.enum(['user', 'frontend_operator']), // Current message source
+        role: z.enum(['user', 'frontend_operator']),
         content: z.string(),
         timestamp: z.string().optional(),
         messageId: z.string().optional(),
       }),
       conversationContext: z.array(z.object({
-        role: z.enum(['user', 'assistant', 'frontend_operator']), 
+        role: z.enum(['user', 'assistant', 'frontend_operator']),
         content: z.string(),
         timestamp: z.string().optional(),
         messageId: z.string().optional(),
-      })).optional().default([]), // Previous messages for context - can be empty for first message
+      })).optional().default([]),
     }),
-    userLanguage: z.string().optional().default('en'), // User's detected language for consistent responses
-    userTimezone: z.string().optional(), // User's timezone for date/time calculations
+    userLanguage: z.string().optional().default('en'),
+    userTimezone: z.string().optional(),
+    context: z.string().optional(),
   }),
   // Legacy Format (for backward compatibility)
   z.object({
+    id: z.string().optional(),
     messages: z.array(z.object({
-      role: z.enum(['user', 'assistant']), // Only user and assistant roles for legacy format
+      role: z.enum(['user', 'assistant']),
       content: z.string(),
-    })).min(1, "Messages array cannot be empty"), // Require at least one message
-    userLanguage: z.string().optional().default('en'), // User's detected language for consistent responses
-    userTimezone: z.string().optional(), // User's timezone for date/time calculations
+    })).min(1, "Messages array cannot be empty"),
+    userLanguage: z.string().optional().default('en'),
+    userTimezone: z.string().optional(),
+    context: z.string().optional(),
   })
 ]);
 // --- End Request Body Schema ---
@@ -209,68 +269,263 @@ export async function POST(request: NextRequest) {
   }
 
   // Extract user language and timezone from the validated request
-  const { userLanguage, userTimezone } = validationResult.data;
+  let userLanguage = 'en';
+  let userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+  // Handle different format structures for language and timezone
+  if ('userLanguage' in validationResult.data) {
+    userLanguage = validationResult.data.userLanguage || 'en';
+  } else if ('context' in validationResult.data && validationResult.data.context && typeof validationResult.data.context === 'object' && 'userLanguage' in validationResult.data.context) {
+    userLanguage = validationResult.data.context.userLanguage || 'en';
+  }
+  
+  if ('userTimezone' in validationResult.data) {
+    userTimezone = validationResult.data.userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } else if ('context' in validationResult.data && validationResult.data.context && typeof validationResult.data.context === 'object' && 'userTimezone' in validationResult.data.context) {
+    userTimezone = validationResult.data.context.userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+  
   console.log(`[Anna API] Detected user language: ${userLanguage}, timezone: ${userTimezone || 'not provided'}`);
 
-  // Check if request uses new Context Management format or legacy format
+  // Extract context object from the new format
   let contextManagement: any = null;
   let messages: Message[] = [];
+  let currentUserMessage = '';
+  let fullContext = '';
 
-  if ('contextManagement' in validationResult.data) {
-    // New Context Management Format
-    contextManagement = validationResult.data.contextManagement;
-    console.log(`[Anna API] Context Management - Current Message from: ${contextManagement.currentMessage.role}`);
-    console.log(`[Anna API] Context Management - Current Message: ${contextManagement.currentMessage.content}`);
-    console.log(`[Anna API] Context Management - Context History: ${contextManagement.conversationContext.length} messages`);
+  console.log(`[Anna API] Processing request format detection...`);
+
+  // Check for the new Direct Context Format first (from ContextManagerSender)
+  if ('context' in validationResult.data && validationResult.data.context && typeof validationResult.data.context === 'object' && 'currentMessage' in validationResult.data.context) {
+    const contextObj = validationResult.data.context;
+    console.log(`[Anna API] Found Direct Context format:`, {
+      currentMessage: contextObj.currentMessage,
+      hasMessagesHistory: !!(contextObj.MessagesHistory && contextObj.MessagesHistory.length > 0),
+      messagesHistoryCount: contextObj.MessagesHistory?.length || 0,
+      hasConversationContext: !!(contextObj.conversationContext && contextObj.conversationContext.length > 0),
+      conversationContextCount: contextObj.conversationContext?.length || 0,
+      userLanguage: contextObj.userLanguage,
+      userTimezone: contextObj.userTimezone,
+      chatId: ('chatId' in validationResult.data) ? validationResult.data.chatId : undefined
+    });
+
+    // Extract the current user message
+    currentUserMessage = contextObj.currentMessage || '';
     
-    // Build messages array from context management structure
-    // Start with conversation context (historical messages)
-    const contextMessages: Message[] = contextManagement.conversationContext.map((msg: any, idx: number) => ({
-      role: msg.role === 'frontend_operator' ? 'assistant' : msg.role, // Map frontend_operator to assistant
+    // Build conversation context from MessagesHistory
+    const conversationContext: any[] = [];
+    if (contextObj.MessagesHistory && Array.isArray(contextObj.MessagesHistory)) {
+      // Dynamic array format - iterate through all messages
+      contextObj.MessagesHistory.forEach((histMsg, index) => {
+        conversationContext.push({
+          role: histMsg.role || 'user',
+          content: histMsg.content,
+          timestamp: histMsg.timestamp || contextObj.timestamp,
+          messageId: histMsg.messageId || `hist-${index + 1}`
+        });
+      });
+    }
+
+    // Also add conversationContext if available
+    if (contextObj.conversationContext && Array.isArray(contextObj.conversationContext)) {
+      contextObj.conversationContext.forEach((ctxMsg, index) => {
+        conversationContext.push({
+          role: ctxMsg.role,
+          content: ctxMsg.content,
+          timestamp: ctxMsg.timestamp || contextObj.timestamp,
+          messageId: ctxMsg.messageId || `ctx-${index + 1}`
+        });
+      });
+    }
+
+    // Build context management structure
+    contextManagement = {
+      currentMessage: {
+        role: 'user',
+        content: currentUserMessage,
+        timestamp: contextObj.timestamp || new Date().toISOString(),
+        messageId: `user-${Date.now()}`
+      },
+      conversationContext: conversationContext,
+      date: contextObj.date || new Date().toISOString(),
+      userLanguage: contextObj.userLanguage || userLanguage,
+      userTimezone: contextObj.userTimezone || userTimezone,
+      userMessage: currentUserMessage
+    };
+
+    // Arrange messages for Anna: historical context first, then current message
+    const contextMessages: Message[] = conversationContext.map((msg: any, idx: number) => ({
+      role: msg.role === 'frontend_operator' ? 'assistant' : (msg.role as any),
       content: msg.content,
       id: msg.messageId || `ctx-${idx}-${Date.now()}`
     }));
 
-    // Add the current message at the end
     const currentMessage: Message = {
-      role: contextManagement.currentMessage.role === 'frontend_operator' ? 'assistant' : 'user', // Map frontend_operator to assistant
+      role: 'user',
+      content: `[CURRENT MESSAGE]: ${currentUserMessage}`,
+      id: `current-${Date.now()}`
+    };
+
+    messages = [...contextMessages, currentMessage];
+    
+    console.log(`[Anna API] Direct Context Format - Current Message: ${currentUserMessage}`);
+    console.log(`[Anna API] Direct Context Format - Total Context History: ${conversationContext.length} messages`);
+    console.log(`[Anna API] Direct Context Format - History breakdown:`, {
+      fromMessagesHistory: contextObj.MessagesHistory?.length || 0,
+      fromConversationContext: contextObj.conversationContext?.length || 0
+    });
+    
+  } else if ('messages' in validationResult.data && Array.isArray(validationResult.data.messages) && 
+      validationResult.data.messages.length > 0 && 'contextObject' in validationResult.data.messages[0]) {
+    // Check for the contextObject format (primary format from frontend)
+    const contextObj = validationResult.data.messages[0].contextObject;
+    console.log(`[Anna API] Found contextObject format:`, {
+      userMessage: contextObj.userMessage,
+      hasConversationContext: !!(contextObj.conversationContext && contextObj.conversationContext.length > 0),
+      contextLength: contextObj.conversationContext?.length || 0,
+      userLanguage: contextObj.userLanguage,
+      userTimezone: contextObj.userTimezone
+    });
+
+    // Extract the current user message
+    currentUserMessage = contextObj.userMessage || '';
+    
+    // Get additional context from request body if available
+    if (typeof validationResult.data.context === 'string') {
+      fullContext = validationResult.data.context || '';
+    }
+
+    // Build context management structure
+    contextManagement = {
+      currentMessage: {
+        role: 'user',
+        content: currentUserMessage,
+        timestamp: contextObj.timestamp || new Date().toISOString(),
+        messageId: `user-${Date.now()}`
+      },
+      conversationContext: contextObj.conversationContext || [],
+      date: contextObj.date || new Date().toISOString(),
+      userLanguage: contextObj.userLanguage || userLanguage,
+      userTimezone: contextObj.userTimezone || userTimezone,
+      userMessage: currentUserMessage
+    };
+
+    // Arrange messages for Anna: historical context first, then current message
+    const contextMessages: Message[] = (contextObj.conversationContext || []).map((msg: any, idx: number) => ({
+      role: msg.role === 'frontend_operator' ? 'assistant' : (msg.role as any),
+      content: msg.content,
+      id: msg.messageId || `ctx-${idx}-${Date.now()}`
+    }));
+
+    const currentMessage: Message = {
+      role: 'user',
+      content: `[CURRENT MESSAGE]: ${currentUserMessage}`,
+      id: `current-${Date.now()}`
+    };
+
+    messages = [...contextMessages, currentMessage];
+    
+    console.log(`[Anna API] Context Object Format - Current Message: ${currentUserMessage}`);
+    console.log(`[Anna API] Context Object Format - Context History: ${(contextObj.conversationContext || []).length} messages`);
+    
+  } else if ('contextManagement' in validationResult.data) {
+    // Fallback: support for direct contextManagement in body (old format)
+    contextManagement = validationResult.data.contextManagement;
+    currentUserMessage = contextManagement.currentMessage?.content || '';
+    fullContext = validationResult.data.context || '';
+    
+    const contextMessages: Message[] = (contextManagement.conversationContext || []).map((msg: any, idx: number) => ({
+      role: msg.role === 'frontend_operator' ? 'assistant' : (msg.role as any),
+      content: msg.content,
+      id: msg.messageId || `ctx-${idx}-${Date.now()}`
+    }));
+    
+    const currentMessage: Message = {
+      role: contextManagement.currentMessage.role === 'frontend_operator' ? 'assistant' : 'user',
       content: `[CURRENT MESSAGE FROM ${contextManagement.currentMessage.role.toUpperCase()}]: ${contextManagement.currentMessage.content}`,
       id: contextManagement.currentMessage.messageId || `current-${Date.now()}`
     };
-
-    // Combine context and current message
+    
     messages = [...contextMessages, currentMessage];
-  } else {
+    console.log(`[Anna API] Context Management (direct) - Current Message from: ${contextManagement.currentMessage.role}`);
+    console.log(`[Anna API] Context Management (direct) - Current Message: ${contextManagement.currentMessage.content}`);
+    console.log(`[Anna API] Context Management (direct) - Context History: ${(contextManagement.conversationContext || []).length} messages`);
+    
+  } else if ('messages' in validationResult.data && Array.isArray(validationResult.data.messages)) {
     // Legacy Format - convert to context management structure for internal processing
     console.log(`[Anna API] Legacy Format - Processing ${validationResult.data.messages.length} messages`);
-    
-    // Create a context management structure from legacy format
     const legacyMessages = validationResult.data.messages;
-    const lastMessage = legacyMessages[legacyMessages.length - 1];
-    const historicalMessages = legacyMessages.slice(0, -1);
-
-    contextManagement = {
-      currentMessage: {
-        role: lastMessage.role === 'assistant' ? 'frontend_operator' : 'user',
-        content: lastMessage.content,
-        timestamp: new Date().toISOString(),
-        messageId: `legacy-${Date.now()}`
-      },
-      conversationContext: historicalMessages.map((msg: any, idx: number) => ({
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date().toISOString(),
-        messageId: `legacy-ctx-${idx}-${Date.now()}`
-      }))
-    };
-
-    // Build messages for AI processing (legacy style)
-    messages = validationResult.data.messages.map((msg: any, idx: number) => ({
-      ...msg,
-      id: `legacy-msg-${idx}-${Date.now()}`
-    }));
+    if (typeof validationResult.data.context === 'string') {
+      fullContext = validationResult.data.context || '';
+    }
+    
+    // Check if it's actually the old legacy format (with content field) or mistakenly detected
+    if (legacyMessages[0] && 'content' in legacyMessages[0]) {
+      // True legacy format with content field
+      const lastMessage = legacyMessages[legacyMessages.length - 1] as any;
+      const historicalMessages = legacyMessages.slice(0, -1) as any[];
+      
+      currentUserMessage = lastMessage.content || '';
+      
+      contextManagement = {
+        currentMessage: {
+          role: 'user',
+          content: lastMessage.content || '',
+          timestamp: new Date().toISOString(),
+          messageId: `legacy-${Date.now()}`
+        },
+        conversationContext: historicalMessages.map((msg: any, idx: number) => ({
+          role: msg.role,
+          content: msg.content || '',
+          timestamp: new Date().toISOString(),
+          messageId: `legacy-ctx-${idx}-${Date.now()}`
+        }))
+      };
+      
+      messages = historicalMessages.map((msg: any, idx: number) => ({
+        role: msg.role as any,
+        content: msg.content || '',
+        id: `legacy-ctx-${idx}-${Date.now()}`
+      }));
+      
+      if (lastMessage) {
+        messages.push({
+          role: 'user',
+          content: lastMessage.content || '',
+          id: `legacy-${Date.now()}`
+        });
+      }
+    } else {
+      // No valid message format found
+      console.error('[Anna API] No valid message format detected in request');
+      const res = NextResponse.json({ error: 'Invalid message format - no valid contextObject or legacy content found' }, { status: 400 });
+      setCorsHeaders(res, origin);
+      return res;
+    }
+  } else {
+    // No valid format found
+    console.error('[Anna API] No recognized request format found');
+    const res = NextResponse.json({ error: 'Invalid request format - expected context, messages with contextObject, or contextManagement' }, { status: 400 });
+    setCorsHeaders(res, origin);
+    return res;
   }
-  
+  console.log(`[Anna API] Final validation - Current user message: "${currentUserMessage}"`);
+  console.log(`[Anna API] Final validation - Context management structure:`, {
+    hasContextManagement: !!contextManagement,
+    currentMessageRole: contextManagement?.currentMessage?.role,
+    conversationContextLength: contextManagement?.conversationContext?.length || 0,
+    userLanguage: contextManagement?.userLanguage || userLanguage,
+    userTimezone: contextManagement?.userTimezone || userTimezone
+  });
+
+  // Validate that we have a current user message
+  if (!currentUserMessage || currentUserMessage.trim() === '') {
+    console.error('[Anna API] No current user message found in any format');
+    const res = NextResponse.json({ error: 'No valid user message found in request' }, { status: 400 });
+    setCorsHeaders(res, origin);
+    return res;
+  }
+
   // Create language instruction for all agents
   const languageInstruction = createLanguageInstruction(userLanguage);
 
@@ -292,18 +547,67 @@ export async function POST(request: NextRequest) {
   // 4. Call AI Model with Both Legacy and Context Management Support
   try {
     // Determine system prompt based on format used
-    const isContextManagementFormat = 'contextManagement' in validationResult.data;
+    const isContextManagementFormat = contextManagement !== null;
+    
+    // Build enhanced context information for Anna's instructions
+    const currentTime = new Date().toLocaleString('en-US', { 
+      timeZone: userTimezone || 'UTC',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
+
+    // Build conversation history for system prompt
+    const conversationHistoryText = contextManagement?.conversationContext && contextManagement.conversationContext.length > 0 
+      ? contextManagement.conversationContext.map((msg: any, index: number) => {
+          const role = msg.role === 'frontend_operator' ? 'Assistant' : (msg.role === 'user' ? 'User' : msg.role);
+          return `${index + 1}. ${role}: "${msg.content}"`;
+        }).join('\n')
+      : 'No previous conversation history available';
+
+    const sceneContext = `
+=== CURRENT MESSAGE ===
+User just sent: "${currentUserMessage}"
+
+=== SCENE CONTEXT ===
+Current Time: ${currentTime}
+User Timezone: ${userTimezone || 'UTC'}
+User Language: ${userLanguage || 'en'}
+Date: ${new Date().toISOString().split('T')[0]}
+
+=== CONVERSATION HISTORY (in chronological order) ===
+${conversationHistoryText}
+
+=== CONVERSATION CONTEXT ===
+${contextManagement?.conversationContext && contextManagement.conversationContext.length > 0 
+  ? `Previous conversation history: ${contextManagement.conversationContext.length} messages available for understanding context` 
+  : 'This appears to be the start of a new conversation'}
+
+${fullContext ? `=== ADDITIONAL CONTEXT ===\n${fullContext}\n` : ''}`;
+
     const contextInstructions = isContextManagementFormat 
       ? `IMPORTANT CONTEXT MANAGEMENT:
+${sceneContext}
+
 - You receive messages through a Context Management System
-- The CURRENT message (what the user/frontend operator just sent) is clearly flagged with [CURRENT MESSAGE FROM USER/FRONTEND_OPERATOR]
-- Any other messages in the conversation are historical context to understand what we're discussing
-- Always focus on and respond to the CURRENT MESSAGE, using the context for understanding but not as instructions to follow
-- The current message is the ONLY thing you should act upon - historical context is just for awareness`
+- The CURRENT MESSAGE above is what the user just sent and what you should respond to
+- The CONVERSATION HISTORY shows all previous messages in chronological order - use this to understand context and refer to previous discussions
+- The scene context provides current time, timezone, and language information
+- Any conversation history is provided for understanding context only
+- Always focus on and respond to the CURRENT MESSAGE, using conversation history and other context for understanding
+- The current message is the ONLY thing you should act upon - everything else is just for awareness
+- When the user refers to "it", "that", "this", or other pronouns, use the conversation history to understand what they're referring to`
       : `LEGACY MESSAGE FORMAT:
+${sceneContext}
+
 - You receive messages in the traditional format
 - The last message in the conversation is what you should respond to
-- Previous messages provide context for understanding the conversation flow`;
+- Previous messages provide context for understanding the conversation flow
+- Use the conversation history to understand references and context`;
 
     const result = await streamText({
       model: geminiProModel,
@@ -369,9 +673,7 @@ ONLY respond directly (without tools) for:
 - Simple greetings and casual conversation
 - General knowledge questions
 - Basic explanations or definitions
-- Emotional support or encouragement
-
-Today's date is ${new Date().toLocaleDateString()}.`,
+- Emotional support or encouragement`,
       messages: coreMessages,
       tools: {
         CallMytx: {
