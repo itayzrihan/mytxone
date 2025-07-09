@@ -308,7 +308,11 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
             searchQuery: z.string().optional().describe("Search query to filter tasks by name or description."),
           }),
           execute: async ({ filter, limit, offset, searchQuery }) => {
-            return await listTasksAction({ filter, limit, offset, searchQuery, userId: input.uid });
+            // Call the action to get the list configuration
+            const result = await listTasksAction({ filter, limit, offset, searchQuery, userId: input.uid });
+            
+            // Return a completion message - the frontend will execute the local action based on the tool name
+            return `✅ Listed ${filter || 'active'} tasks.`;
           },
         },
         updateTask: {
@@ -351,7 +355,11 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
             limit: z.number().optional().describe("Number of results to return - defaults to 20."),
           }),
           execute: async ({ query, limit }) => {
-            return await searchTasksAction({ query, limit, userId: input.uid });
+            // Call the action to get the search configuration
+            const result = await searchTasksAction({ query, limit, userId: input.uid });
+            
+            // Return a completion message - the frontend will execute the local action based on the tool name
+            return `✅ Found tasks matching "${query}".`;
           },
         },
         enhancedSearchTasks: {
@@ -370,7 +378,8 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
             tagFilter: z.union([z.string(), z.array(z.string())]).optional().describe("Filter by tag ID(s)")
           }),
           execute: async ({ query, limit, dateFilter, priorityFilter, statusFilter, tagFilter }) => {
-            return await enhancedSearchTasksAction({ 
+            // Call the action to get the search configuration
+            const result = await enhancedSearchTasksAction({ 
               query, 
               limit, 
               dateFilter, 
@@ -379,6 +388,9 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
               tagFilter, 
               userId: input.uid 
             });
+            
+            // Return a completion message - the frontend will execute the local action based on the tool name
+            return `✅ Found tasks matching "${query}" using enhanced search.`;
           },
         },
         saveMemory: {
@@ -571,12 +583,42 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
         },
     });
 
-    // 6. Return the stream result
+    // 6. Return the stream result with proper closure handling
     const streamResponse = result.toDataStreamResponse();
+    
+    // Create a new ReadableStream that properly handles closure
+    const wrappedStream = new ReadableStream({
+      start(controller) {
+        if (!streamResponse.body) {
+          controller.close();
+          return;
+        }
+        
+        const reader = streamResponse.body.getReader();
+        
+        function pump(): Promise<void> {
+          return reader.read().then(({ done, value }) => {
+            if (done) {
+              console.log('[CallSingleToolService] Stream completed, closing controller');
+              controller.close();
+              return;
+            }
+            
+            controller.enqueue(value);
+            return pump();
+          }).catch(error => {
+            console.error('[CallSingleToolService] Stream error:', error);
+            controller.error(error);
+          });
+        }
+        
+        return pump();
+      }
+    });
     
     return {
       success: true,
-      stream: streamResponse.body || new ReadableStream()
+      stream: wrappedStream
     };
 
   } catch (error: any) {      console.error("[Call Single Tool Service] Error:", error);

@@ -656,13 +656,24 @@ Instructions: This request came from Anna (simple assistant) and needs to be han
                 const reader = singleStepResult.stream.getReader();
                 while (true) {
                   const { done, value } = await reader.read();
-                  if (done) break;
+                  if (done) {
+                    console.log('[Anna->SingleStep] Stream completed successfully');
+                    break;
+                  }
                   if (value) {
                     controller.enqueue(value);
                   }
                 }
+                reader.releaseLock();
               } catch (err) {
                 console.error('[Anna->SingleStep] Error streaming SingleStep agent response:', err);
+                // Send error message to frontend
+                const errorMsg = userLanguage === 'he' 
+                  ? 'נתקלתי בבעיה בעת עיבוד הבקשה. אנא נסה שוב.'
+                  : userLanguage === 'ar'
+                  ? 'واجهت مشكلة أثناء معالجة الطلب. يرجى المحاولة مرة أخرى.'
+                  : 'Encountered an issue while processing the request. Please try again.';
+                controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
               }
             } else {
               // If no stream, send a fallback error message
@@ -672,6 +683,8 @@ Instructions: This request came from Anna (simple assistant) and needs to be han
                  'No response from SingleStep agent.');
               controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
             }
+            
+            // Always end the SingleStep Agent properly
             controller.enqueue(new TextEncoder().encode(
               `agent_end:${JSON.stringify({ agentName: 'SingleStep Agent' })}\n`
             ));
