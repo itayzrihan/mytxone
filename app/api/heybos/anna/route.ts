@@ -390,8 +390,9 @@ export async function POST(request: NextRequest) {
 
     const sceneContext = `
 === CURRENT MESSAGE ===
-User just sent: "${currentUserMessage}"
-
+The user current message it inside the <<< >>>
+You should only answer to the User that just sent: <<<"${currentUserMessage}">>>
+The user message is the ONLY thing you should act upon - everything else is just for awareness and context.
 === SCENE CONTEXT ===
 Current Time: ${currentTime}
 User Timezone: ${userTimezone || 'UTC'}
@@ -487,7 +488,8 @@ For CallStepsDesigning (Multi-step operations):
 - "תמחק משימה שנקראת לרוץ 2 קילומטר" → CallStepsDesigning (multi-step: search → identify → confirm → delete)
 - "תערוך משימה ותשנה אותה לאכול פירות" → CallStepsDesigning (multi-step: find → select → update → verify)
 - "תוסיף זיכרון ותמחק זיכרון" → CallStepsDesigning (multiple operations)
-
+IF THE DETAILS EXISTS IN THE CONTEXT MANAGEMENT STRUCTURE, DONT CALL TOOLS UNNECESSARILY, JUST USE THE CONTEXT. FOR EXAMPLE IF THE USER ASKS TO REMOVE A TASK BY NAME THAT THE TASK ALREADY EXISTS IN THE CONTEXT WITH ITS ID THAT NECESSARY, JUST REMOVE IT USING THE SINGLE STEP OPERATION, BUT IN CASE THE ID AND THE TASK NAME NOT EXISTS EXPLICITLY IN THE CONTEXT, THEN CALL THE STEPS DESIGNING AGENT TO HANDLE THE MULTI-STEP OPERATION.
+OR FOR EXAMPLE IF THE USER ASKS IF YOU REMEMBER SOMTHING THAT YOU ALREADY HAVE IN THE CONTEXT, JUST ANSWER WITHOUT CALLING ANY TOOLS OR AGENT UNLESS THE USER REQUESTS A SPECIFIC ACTION LIKE "DELETE" OR "EDIT". 
 ONLY respond directly (without tools) for:
 - Simple greetings and casual conversation
 - General knowledge questions
