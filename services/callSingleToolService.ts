@@ -358,8 +358,22 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
             // Call the action to get the search configuration
             const result = await searchTasksAction({ query, limit, userId: input.uid });
             
-            // Return a completion message - the frontend will execute the local action based on the tool name
-            return `✅ Found tasks matching "${query}".`;
+            // Debug logging to confirm we're returning the searchAnalysis
+            console.log('[CallSingleToolService] searchTasks result:', {
+              action: result.action,
+              hasSearchAnalysis: !!(result as any).searchAnalysis,
+              searchAnalysisKeys: (result as any).searchAnalysis ? Object.keys((result as any).searchAnalysis) : [],
+              keywordCounts: (result as any).searchAnalysis ? {
+                primaryKeywords: (result as any).searchAnalysis.primaryKeywords?.length || 0,
+                relatedKeywords: (result as any).searchAnalysis.relatedKeywords?.length || 0,
+                contextKeywords: (result as any).searchAnalysis.contextKeywords?.length || 0,
+                hebrewTerms: (result as any).searchAnalysis.hebrewTerms?.length || 0,
+                tagKeywords: (result as any).searchAnalysis.tagKeywords?.length || 0
+              } : null
+            });
+            
+            // Return the full result object so the frontend gets the searchAnalysis with keywords
+            return result;
           },
         },
         enhancedSearchTasks: {
@@ -389,8 +403,22 @@ export async function callSingleToolService(input: CallSingleToolInput): Promise
               userId: input.uid 
             });
             
-            // Return a completion message - the frontend will execute the local action based on the tool name
-            return `✅ Found tasks matching "${query}" using enhanced search.`;
+            // Debug logging to confirm we're returning the searchAnalysis
+            console.log('[CallSingleToolService] enhancedSearchTasks result:', {
+              action: result.action,
+              hasSearchAnalysis: !!(result as any).searchAnalysis,
+              searchAnalysisKeys: (result as any).searchAnalysis ? Object.keys((result as any).searchAnalysis) : [],
+              keywordCounts: (result as any).searchAnalysis ? {
+                primaryKeywords: (result as any).searchAnalysis.primaryKeywords?.length || 0,
+                relatedKeywords: (result as any).searchAnalysis.relatedKeywords?.length || 0,
+                contextKeywords: (result as any).searchAnalysis.contextKeywords?.length || 0,
+                hebrewTerms: (result as any).searchAnalysis.hebrewTerms?.length || 0,
+                tagKeywords: (result as any).searchAnalysis.tagKeywords?.length || 0
+              } : null
+            });
+            
+            // Return the full result object so the frontend gets the searchAnalysis with keywords
+            return result;
           },
         },
         saveMemory: {
