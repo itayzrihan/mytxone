@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { geminiProModel } from "@/ai"; // Import your configured AI model
-import { callMytxAction } from "@/ai/heybos-actions/anna-actions";
+import { callSingleStepAgentAction } from "@/ai/heybos-actions/anna-actions";
 import { callSingleToolService } from "@/services/callSingleToolService";
 import { stepsDesigningService } from "@/services/stepsDesigningService";
 import { OperatorService } from "@/services/OperatorService";
@@ -448,7 +448,7 @@ Your mission is to answer the user relevantly and intelligently decide which too
 
 COMPLEXITY ANALYSIS: First analyze if the request requires single or multiple steps:
 
-**SINGLE STEP OPERATIONS (Use CallMytx):**
+**SINGLE STEP OPERATIONS (Use CallSingleStepAgent):**
 - Add one task (simple creation)
 - Find/search for existing tasks, memories, or information  
 - List or display tasks
@@ -470,9 +470,9 @@ IMPORTANT: When you use ANY tool, do NOT provide additional text response. The u
 
 **Tool Usage Rules:**
 
-For CallMytx (Single step operations):
+For CallSingleStepAgent (Single step operations):
 1. userAnswer: "Sure, I'll help you with that" or similar friendly response
-2. mytxRequest: Clear description of the single action needed
+2. singleStepRequest: Clear description of the single action needed
 3. originalMessage: Exact user message
 
 For CallStepsDesigning (Multi-step operations):
@@ -481,10 +481,10 @@ For CallStepsDesigning (Multi-step operations):
 3. originalMessage: Exact user message
 
 **Examples:**
-- "תוסיף לי משימה לקנות חלב" → CallMytx (single add action)
-- "תראי לי משימות עם המילה ארגון" → CallMytx (single search action)
-- "תציגי אותן" → CallMytx (single display action)
-- "חפש לי משימה עם המילה ריצה" → CallMytx (single search action)
+- "תוסיף לי משימה לקנות חלב" → CallSingleStepAgent (single add action)
+- "תראי לי משימות עם המילה ארגון" → CallSingleStepAgent (single search action)
+- "תציגי אותן" → CallSingleStepAgent (single display action)
+- "חפש לי משימה עם המילה ריצה" → CallSingleStepAgent (single search action)
 - "תמחק משימה שנקראת לרוץ 2 קילומטר" → CallStepsDesigning (multi-step: search → identify → confirm → delete)
 - "תערוך משימה ותשנה אותה לאכול פירות" → CallStepsDesigning (multi-step: find → select → update → verify)
 - "תוסיף זיכרון ותמחק זיכרון" → CallStepsDesigning (multiple operations)
@@ -497,46 +497,46 @@ ONLY respond directly (without tools) for:
 - Emotional support or encouragement`,
       messages: coreMessages,
       tools: {
-        CallMytx: {
-          description: "Call the Mytx agent to handle SINGLE STEP operations that require immediate action. Use this for simple task additions, searches, memory storage, or other single-action requests. Focus on the most recent user message.",
+        CallSingleStepAgent: {
+          description: "Call the SingleStepAgent to handle SINGLE STEP operations that require immediate action. Use this for simple task additions, searches, memory storage, or other single-action requests. Focus on the most recent user message.",
           parameters: z.object({
             userAnswer: z.string().describe("A natural, conversational response to show the user while the request is being processed. Use phrases like 'Sure, I'll help you with that', 'Let me take care of this for you', 'I'll do my best to assist you with that'. Be genuine and friendly, not overly enthusiastic."),
-            mytxRequest: z.string().describe("A clear, detailed request for the Mytx agent based on the most recent user message. Include all relevant context and specify exactly what action needs to be taken."),
+            singleStepRequest: z.string().describe("A clear, detailed request for the SingleStepAgent based on the most recent user message. Include all relevant context and specify exactly what action needs to be taken."),
             originalMessage: z.string().describe("The exact content of the most recent user message that needs to be processed."),
           }),
-          execute: async ({ userAnswer, mytxRequest, originalMessage }) => {
+          execute: async ({ userAnswer, singleStepRequest, originalMessage }) => {
             try {
-              console.log(`[Anna CallMytx] Processing request for user ${uid}`);
-              console.log(`[Anna CallMytx] User Answer: ${userAnswer}`);
-              console.log(`[Anna CallMytx] Mytx Request: ${mytxRequest}`);
+              console.log(`[Anna CallSingleStepAgent] Processing request for user ${uid}`);
+              console.log(`[Anna CallSingleStepAgent] User Answer: ${userAnswer}`);
+              console.log(`[Anna CallSingleStepAgent] SingleStepAgent Request: ${singleStepRequest}`);
               
-              // Use the callMytxAction function from anna-actions.ts
-              const result = await callMytxAction({
+              // Use the callSingleStepAgentAction function from anna-actions.ts
+              const result = await callSingleStepAgentAction({
                 userAnswer,
-                mytxRequest,
+                singleStepRequest,
                 originalMessage,
-                languageInstruction, // Pass language instruction to ensure Mytx responds in user's language
+                languageInstruction, // Pass language instruction to ensure SingleStepAgent responds in user's language
                 userTimezone // Pass user's timezone for date/time calculations
               });
               
-              console.log(`[Anna CallMytx] Action result:`, result);
+              console.log(`[Anna CallSingleStepAgent] Action result:`, result);
 
-              // Return Anna's message and Mytx request info - the streaming handler will process this
+              // Return Anna's message and SingleStepAgent request info - the streaming handler will process this
               return {
-                type: 'anna_then_mytx',
+                type: 'anna_then_singlestep',
                 userAnswer: userAnswer,
-                mytxRequest: mytxRequest,
+                singleStepRequest: singleStepRequest,
                 originalMessage: originalMessage,
                 contextManagement: contextManagement, // Pass context to streaming handler
                 annaProcessed: true
               };
 
             } catch (error) {
-              console.error('[Anna CallMytx] Error calling Mytx:', error);
+              console.error('[Anna CallSingleStepAgent] Error calling SingleStepAgent:', error);
               return {
                 type: 'error',
                 userAnswer: userAnswer,
-                mytxResponse: "I encountered an error while processing your request. Please try again.",
+                singleStepResponse: "I encountered an error while processing your request. Please try again.",
                 showCapabilityMissing: false
               };
             }
@@ -593,8 +593,8 @@ ONLY respond directly (without tools) for:
     // Custom streaming for anna_then_mytx: stream Anna, then Mytx
     const toolResults = await result.toolResults;
     const toolResult = toolResults?.[0]?.result;
-    // Custom streaming for single-step (CallMytx) and multi-step (CallStepsDesigning) results
-    if (toolResult && (toolResult.type === 'anna_then_mytx' || toolResult.type === 'anna_then_steps')) {
+    // Custom streaming for single-step (CallSingleStepAgent) and multi-step (CallStepsDesigning) results
+    if (toolResult && (toolResult.type === 'anna_then_singlestep' || toolResult.type === 'anna_then_steps')) {
       const readable = new ReadableStream({
         async start(controller) {
           // 1. Anna agent start marker
@@ -618,42 +618,42 @@ ONLY respond directly (without tools) for:
             `agent_end:${JSON.stringify({ agentName: 'Anna' })}\n`
           ));
 
-          if (toolResult.type === 'anna_then_mytx') {
+          if (toolResult.type === 'anna_then_singlestep') {
             // Add a short delay to ensure frontend processes agent_end before next agent_start
             await new Promise((resolve) => setTimeout(resolve, 10));
-            // 4. Mytx agent start marker
+            // 4. SingleStepAgent start marker
             controller.enqueue(new TextEncoder().encode(
               `agent_start:${JSON.stringify({
-                agentName: 'Mytx Agent',
-                messageId: `mytx-${Date.now()}`,
+                agentName: 'SingleStep Agent',
+                messageId: `singlestep-${Date.now()}`,
                 timestamp: new Date().toISOString()
               })}\n`
             ));
-            // 5. Call Mytx and stream its response
-            const mytxRequest = (toolResult as any).mytxRequest;
+            // 5. Call SingleStepAgent and stream its response
+            const singleStepRequest = (toolResult as any).singleStepRequest;
             const originalMessage = (toolResult as any).originalMessage;
             const contextManagement = (toolResult as any).contextManagement;
             
             // Build a more comprehensive request that includes context management structure
-            const fullMytxRequest = `CONTEXT MANAGEMENT STRUCTURE:
+            const fullSingleStepRequest = `CONTEXT MANAGEMENT STRUCTURE:
 Current Message: "${originalMessage}" (from ${contextManagement?.currentMessage?.role || 'user'})
 
 Historical Context: ${contextManagement?.conversationContext?.length || 0} previous messages for understanding
 
-Task for Mytx Agent: ${mytxRequest}
+Task for SingleStep Agent: ${singleStepRequest}
 
-Instructions: This request came from Anna (simple assistant) and needs to be handled by the full Mytx system with all available tools and capabilities. Focus on the CURRENT MESSAGE above, using the historical context only for understanding the conversation flow.`;
+Instructions: This request came from Anna (simple assistant) and needs to be handled by the full SingleStep system with all available tools and capabilities. Focus on the CURRENT MESSAGE above, using the historical context only for understanding the conversation flow.`;
             
-            const mytxResult = await callSingleToolService({
-              messages: [{ role: 'user' as const, content: fullMytxRequest }],
+            const singleStepResult = await callSingleToolService({
+              messages: [{ role: 'user' as const, content: fullSingleStepRequest }],
               uid: uid || '00000000-0000-0000-0000-000000000000',
-              languageInstruction: (toolResult as any).languageInstruction, // Pass language instruction to Mytx Agent
+              languageInstruction: (toolResult as any).languageInstruction, // Pass language instruction to SingleStep Agent
               userTimezone: userTimezone // Pass user's timezone for date/time calculations
             });
 
-            if (mytxResult && mytxResult.success && mytxResult.stream) {
+            if (singleStepResult && singleStepResult.success && singleStepResult.stream) {
               try {
-                const reader = mytxResult.stream.getReader();
+                const reader = singleStepResult.stream.getReader();
                 while (true) {
                   const { done, value } = await reader.read();
                   if (done) break;
@@ -662,18 +662,18 @@ Instructions: This request came from Anna (simple assistant) and needs to be han
                   }
                 }
               } catch (err) {
-                console.error('[Anna->Mytx] Error streaming Mytx agent response:', err);
+                console.error('[Anna->SingleStep] Error streaming SingleStep agent response:', err);
               }
             } else {
               // If no stream, send a fallback error message
-              const errorMsg = mytxResult && mytxResult.error ? mytxResult.error : 
-                (userLanguage === 'he' ? 'לא התקבלה תגובה מה-Mytx agent.' :
-                 userLanguage === 'ar' ? 'لم يتم الحصول على استجابة من Mytx agent.' :
-                 'No response from Mytx agent.');
+              const errorMsg = singleStepResult && singleStepResult.error ? singleStepResult.error : 
+                (userLanguage === 'he' ? 'לא התקבלה תגובה מה-SingleStep agent.' :
+                 userLanguage === 'ar' ? 'لم يتم الحصول على استجابة من SingleStep agent.' :
+                 'No response from SingleStep agent.');
               controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
             }
             controller.enqueue(new TextEncoder().encode(
-              `agent_end:${JSON.stringify({ agentName: 'Mytx Agent' })}\n`
+              `agent_end:${JSON.stringify({ agentName: 'SingleStep Agent' })}\n`
             ));
             controller.close();
           } else if (toolResult.type === 'anna_then_steps') {
@@ -853,21 +853,20 @@ I've got the detailed step-by-step plan from StepsDesigning Agent. Ready to proc
               controller.enqueue(new TextEncoder().encode(
                 `agent_end:${JSON.stringify({ agentName: 'Operator Agent' })}\n`
               ));
-              
-            } catch (err) {
-              console.error('[Anna->StepsDesigning->Operator] Error in multi-agent flow:', err);
-              const errorMsg = userLanguage === 'he' 
-                ? 'נתקלתי בשגיאה בעת יצירת התוכנית המפורטת. אנא נסה שוב.'
-                : userLanguage === 'ar'
-                ? 'واجهت خطأ أثناء إنشاء الخطة المفصلة. يرجى المحاولة مرة أخرى.'
-                : 'I encountered an error while creating the step-by-step plan. Please try again.';
-              controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
-            }
+              } catch (err) {
+                console.error('[Anna->StepsDesigning->Operator] Error in multi-agent flow:', err);
+                const errorMsg = userLanguage === 'he' 
+                  ? 'נתקלתי בשגיאה בעת יצירת התוכנית המפורטת. אנא נסה שוב.'
+                  : userLanguage === 'ar'
+                  ? 'واجهت خطأ أثناء إنشاء الخطة المفصلة. يرجى المحاولة مرة أخرى.'
+                  : 'I encountered an error while creating the step-by-step plan. Please try again.';
+                controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(errorMsg)}\n`));
+              }
 
-            controller.enqueue(new TextEncoder().encode(
-              `agent_end:${JSON.stringify({ agentName: 'StepsDesigning' })}\n`
-            ));
-            controller.close();
+              controller.enqueue(new TextEncoder().encode(
+                `agent_end:${JSON.stringify({ agentName: 'StepsDesigning' })}\n`
+              ));
+              controller.close();
           }
         }
       });
