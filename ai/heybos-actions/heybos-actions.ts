@@ -514,6 +514,21 @@ export async function enhancedSearchTasksAction({
     - Status keywords (finished, pending, running, etc.)
     - Tag-related keywords that might match tag names (e.g., "work", "personal", "urgent", "project names", etc.)
     
+    CRITICAL FOR HEBREW MORPHOLOGICAL VARIATIONS:
+    For Hebrew queries, include ALL morphological forms and related words:
+    - Root forms and derived forms (e.g., לרוץ → ריצה, לקרוא → קריאה, לכתוב → כתיבה)
+    - Infinitive and gerund forms (e.g., לעבוד → עבודה, לטבח → טבח, ללמוד → למידה)
+    - Action and object forms (e.g., לבשל → בישול, לנקות → ניקיון, לארגן → ארגון)
+    - Verb and noun forms (e.g., לשתות → שתיה, לרקוד → ריקוד, לשיר → שירה)
+    - Present tense forms (e.g., רץ, רצה, רצים, רצות)
+    - Past tense forms (e.g., רץ, רצה, רצו)
+    - Related concepts and synonyms in Hebrew
+
+    Examples of Hebrew morphological expansion:
+    - Query "לרוץ" should include: ["לרוץ", "ריצה", "רץ", "רצה", "רצים", "רצות", "מרוץ", "רוץ"]
+    - Query "לבשל" should include: ["לבשל", "בישול", "בשל", "בישלה", "מבשל", "בשלן", "טבח"]
+    - Query "לקנות" should include: ["לקנות", "קנייה", "קנה", "קנתה", "קונה", "רכישה", "שופינג"]
+    
     IMPORTANT FOR TAG SEARCH:
     - The frontend will use these keywords to find tags by name/description
     - Tasks are then filtered to include only those with matching tag IDs (AND logic)

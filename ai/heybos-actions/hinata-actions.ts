@@ -303,6 +303,21 @@ export async function searchTasksAction({
     - Alternative spellings or phrasings
     - Both English and Hebrew terms if applicable
     
+    CRITICAL FOR HEBREW MORPHOLOGICAL VARIATIONS:
+    For Hebrew queries, include ALL morphological forms and related words:
+    - Root forms and derived forms (e.g., לרוץ → ריצה, לקרוא → קריאה, לכתוב → כתיבה)
+    - Infinitive and gerund forms (e.g., לעבוד → עבודה, לטבח → טבח, ללמוד → למידה)
+    - Action and object forms (e.g., לבשל → בישול, לנקות → ניקיון, לארגן → ארגון)
+    - Verb and noun forms (e.g., לשתות → שתיה, לרקוד → ריקוד, לשיר → שירה)
+    - Present tense forms (e.g., רץ, רצה, רצים, רצות)
+    - Past tense forms (e.g., רץ, רצה, רצו)
+    - Related concepts and synonyms in Hebrew
+
+    Examples of Hebrew morphological expansion:
+    - Query "לרוץ" should include: ["לרוץ", "ריצה", "רץ", "רצה", "רצים", "רצות", "מרוץ", "רוץ"]
+    - Query "לבשל" should include: ["לבשל", "בישול", "בשל", "בישלה", "מבשל", "בשלן", "טבח"]
+    - Query "לקנות" should include: ["לקנות", "קנייה", "קנה", "קנתה", "קונה", "רכישה", "שופינג"]
+    
     Return a comprehensive list of keywords that would help match relevant tasks.`,
     schema: z.object({
       primaryKeywords: z.array(z.string()).describe("Main keywords from the query"),

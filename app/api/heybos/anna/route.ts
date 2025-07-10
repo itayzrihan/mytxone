@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { geminiProModel } from "@/ai"; // Import your configured AI model
 import { callSingleStepAgentAction } from "@/ai/heybos-actions/anna-actions";
 import { callSingleToolService } from "@/services/callSingleToolService";
+
 import { stepsDesigningService } from "@/services/stepsDesigningService";
 import { OperatorService } from "@/services/OperatorService";
 import { createLanguageInstruction } from "@/utils/languageDetection";
@@ -151,6 +152,17 @@ const chatRequestSchema = z.union([
         timestamp: z.string().optional(),
         messageId: z.string().optional(),
       })).optional(),
+      currenttasks: z.array(z.object({
+        taskid: z.string(),
+        timestamp: z.string(),
+        name: z.string(),
+        description: z.string().nullable().optional(),
+        dueDate: z.string().nullable(),
+        tags: z.array(z.string()),
+        priority: z.enum(['low', 'medium', 'high']),
+        taskType: z.enum(['onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']),
+        status: z.enum(['pending', 'running', 'paused', 'finished', 'skipped']),
+      })).optional(),
     }),
     interactionId: z.string().optional(),
     savedAt: z.string().optional(),
@@ -171,6 +183,17 @@ const chatRequestSchema = z.union([
         timestamp: z.string().optional(),
         messageId: z.string().optional(),
       })).optional().default([]),
+      currenttasks: z.array(z.object({
+        taskid: z.string(),
+        timestamp: z.string(),
+        name: z.string(),
+        description: z.string().nullable().optional(),
+        dueDate: z.string().nullable(),
+        tags: z.array(z.string()),
+        priority: z.enum(['low', 'medium', 'high']),
+        taskType: z.enum(['onetime', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']),
+        status: z.enum(['pending', 'running', 'paused', 'finished', 'skipped']),
+      })).optional(),
     }),
     userLanguage: z.string().optional().default('en'),
     userTimezone: z.string().optional(),
@@ -269,7 +292,8 @@ export async function POST(request: NextRequest) {
       date: contextObj.date || new Date().toISOString(),
       userLanguage: contextObj.userLanguage || userLanguage,
       userTimezone: contextObj.userTimezone || userTimezone,
-      userMessage: currentUserMessage
+      userMessage: currentUserMessage,
+      currenttasks: contextObj.currenttasks || [] // Include current tasks
     };
     userLanguage = contextObj.userLanguage || userLanguage;
     userTimezone = contextObj.userTimezone || userTimezone;
@@ -291,9 +315,11 @@ export async function POST(request: NextRequest) {
     
     console.log(`[Anna API] Direct Context Format - Current Message: ${currentUserMessage}`);
     console.log(`[Anna API] Direct Context Format - Total Context History: ${conversationContext.length} messages`);
+    console.log(`[Anna API] Direct Context Format - Current Tasks: ${contextObj.currenttasks?.length || 0} tasks`);
     console.log(`[Anna API] Direct Context Format - History breakdown:`, {
       fromMessagesHistory: contextObj.MessagesHistory?.length || 0,
-      fromConversationContext: contextObj.conversationContext?.length || 0
+      fromConversationContext: contextObj.conversationContext?.length || 0,
+      tasksIncluded: contextObj.currenttasks?.length || 0
     });
     
   } else if ('contextManagement' in validationResult.data) {
@@ -321,6 +347,7 @@ export async function POST(request: NextRequest) {
     
     console.log(`[Anna API] Context Management Format - Current Message: ${currentUserMessage}`);
     console.log(`[Anna API] Context Management Format - Context History: ${(contextManagement.conversationContext || []).length} messages`);
+    console.log(`[Anna API] Context Management Format - Current Tasks: ${(contextManagement.currenttasks || []).length} tasks`);
     
   } else {
     // Should never happen due to schema, but just in case
@@ -387,6 +414,16 @@ export async function POST(request: NextRequest) {
           return `${index + 1}. ${role}: "${msg.content}"`;
         }).join('\n')
       : 'No previous conversation history available';
+
+    // Build current tasks context
+    const currentTasksText = contextManagement?.currenttasks && contextManagement.currenttasks.length > 0
+      ? contextManagement.currenttasks.map((task: any, index: number) => {
+          const tagsText = task.tags && task.tags.length > 0 ? ` [Tags: ${task.tags.join(', ')}]` : '';
+          const dueDateText = task.dueDate ? ` [Due: ${task.dueDate}]` : '';
+          const priorityText = task.priority ? ` [Priority: ${task.priority}]` : '';
+          return `${index + 1}. "${task.name}" (${task.taskType}, ${task.status})${priorityText}${dueDateText}${tagsText}${task.description ? ` - ${task.description}` : ''}`;
+        }).join('\n')
+      : 'No current tasks available';
 
     const sceneContext = `
 === CURRENT MESSAGE ===
@@ -654,6 +691,8 @@ Instructions: This request came from Anna (simple assistant) and needs to be han
             if (singleStepResult && singleStepResult.success && singleStepResult.stream) {
               try {
                 const reader = singleStepResult.stream.getReader();
+                let streamContent = '';
+                
                 while (true) {
                   const { done, value } = await reader.read();
                   if (done) {
@@ -661,10 +700,45 @@ Instructions: This request came from Anna (simple assistant) and needs to be han
                     break;
                   }
                   if (value) {
+                    // Collect stream content to extract search results if needed
+                    const chunk = new TextDecoder().decode(value);
+                    streamContent += chunk;
                     controller.enqueue(value);
                   }
                 }
                 reader.releaseLock();
+                
+                // After streaming is complete, check if this was a search operation
+                const isSearchOperation = singleStepRequest.toLowerCase().includes('search') || 
+                                        singleStepRequest.toLowerCase().includes('find') ||
+                                        originalMessage.toLowerCase().includes('תמצא') ||
+                                        originalMessage.toLowerCase().includes('חפש') ||
+                                        originalMessage.toLowerCase().includes('search') ||
+                                        originalMessage.toLowerCase().includes('find');
+                
+                if (isSearchOperation) {
+                  console.log('[Anna->SingleStep] Detected search operation, sending context filter instruction');
+                  
+                  // Send a special instruction to the frontend to filter the context
+                  // This tells the frontend to update the session context to only show search results
+                  const contextFilterInstruction = {
+                    type: 'context_filter',
+                    action: 'filter_tasks_by_search',
+                    searchQuery: originalMessage,
+                    filterInstructions: {
+                      updateCurrentTasks: true,
+                      clearNonMatching: true,
+                      preserveSearchResults: true
+                    }
+                  };
+                  
+                  // Send the instruction as a special stream event
+                  controller.enqueue(new TextEncoder().encode(
+                    `context_filter:${JSON.stringify(contextFilterInstruction)}\n`
+                  ));
+                  
+                  console.log('[Anna->SingleStep] Sent context filter instruction to update currenttasks array');
+                }
               } catch (err) {
                 console.error('[Anna->SingleStep] Error streaming SingleStep agent response:', err);
                 // Send error message to frontend
