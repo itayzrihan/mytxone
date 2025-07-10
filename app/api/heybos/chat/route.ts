@@ -15,7 +15,7 @@ import {
   updateTaskAction,
   finishTaskAction,
   deleteTaskAction,
-  searchTasksAction,
+  enhancedSearchTasksAction,
   batchTaskOperationsAction,
   smartTaskFinderAction,
   saveMemoryAction,
@@ -395,9 +395,7 @@ export async function POST(request: NextRequest) {
             query: z.string().describe("Search query to find tasks."),
             limit: z.number().optional().describe("Number of results to return - defaults to 20."),
           }),
-          execute: async ({ query, limit }) => {
-            return await searchTasksAction({ query, limit, userId: uid });
-          },
+
         },
         saveMemory: {
           description:
@@ -510,7 +508,7 @@ export async function POST(request: NextRequest) {
             limit: z.number().optional().describe("Number of results to return - defaults to 20."),
           }),
           execute: async ({ query, limit }) => {
-            return await searchTasksAction({ query, limit, userId: uid });
+            return await enhancedSearchTasksAction({ query, limit, userId: uid });
           },
         },
 

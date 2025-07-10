@@ -292,15 +292,65 @@ export async function searchTasksAction({
   query: string;
   limit?: number;
 }) {
-  console.log(`Action: Basic searching HeyBos tasks for user ${userId}, query: ${query}`);
+  console.log(`Action: Enhanced searching HeyBos tasks instruction for user ${userId}, query: ${query}`);
   
-  // Return instruction for TheBaze to handle locally using basic search
+  // Generate relevant keywords using AI with fallback for errors
+  let searchAnalysis;
+  try {
+    const { object } = await generateObject({
+      model: geminiFlashModel,
+      prompt: `Analyze the search query "${query}" and generate relevant keywords and synonyms that might help find related tasks. Consider:
+      - Different ways to express the same action/concept
+      - Related activities or contexts
+      - Alternative spellings or phrasings
+      - Both English and Hebrew terms if applicable
+      
+      CRITICAL FOR HEBREW MORPHOLOGICAL VARIATIONS:
+      For Hebrew queries, include ALL morphological forms and related words:
+      - Root forms and derived forms (e.g., לרוץ → ריצה, לקרוא → קריאה, לכתוב → כתיבה)
+      - Infinitive and gerund forms (e.g., לעבוד → עבודה, לטבח → טבח, ללמוד → למידה)
+      - Action and object forms (e.g., לבשל → בישול, לנקות → ניקיון, לארגן → ארגון)
+      - Verb and noun forms (e.g., לשתות → שתיה, לרקוד → ריקוד, לשיר → שירה)
+      - Present tense forms (e.g., רץ, רצה, רצים, רצות)
+      - Past tense forms (e.g., רץ, רצה, רצו)
+      - Related concepts and synonyms in Hebrew
+
+      Examples of Hebrew morphological expansion:
+      - Query "לרוץ" should include: ["לרוץ", "ריצה", "רץ", "רצה", "רצים", "רצות", "מרוץ", "רוץ"]
+      - Query "לבשל" should include: ["לבשל", "בישול", "בשל", "בישלה", "מבשל", "בשלן", "טבח"]
+      - Query "לקנות" should include: ["לקנות", "קנייה", "קנה", "קנתה", "קונה", "רכישה", "שופינג"]
+      
+      Return a comprehensive list of keywords that would help match relevant tasks.`,
+      schema: z.object({
+        primaryKeywords: z.array(z.string()).describe("Main keywords from the query"),
+        relatedKeywords: z.array(z.string()).describe("Related terms and synonyms"),
+        contextKeywords: z.array(z.string()).describe("Contextual terms that might be relevant"),
+        hebrewTerms: z.array(z.string()).describe("Hebrew equivalents if applicable"),
+      }),
+    });
+    searchAnalysis = object;
+    console.log('[searchTasksAction] AI-generated searchAnalysis:', searchAnalysis);
+  } catch (error) {
+    console.warn('[searchTasksAction] AI generation failed, using fallback keywords:', (error as Error).message || error);
+    // Fallback: create basic searchAnalysis from query
+    const queryKeywords = query.trim().split(/\s+/).filter(k => k.length > 1);
+    searchAnalysis = {
+      primaryKeywords: queryKeywords,
+      relatedKeywords: [],
+      contextKeywords: [],
+      hebrewTerms: queryKeywords.filter(k => /[\u0590-\u05FF]/.test(k)), // Hebrew characters
+    };
+    console.log('[searchTasksAction] Fallback searchAnalysis:', searchAnalysis);
+  }
+
+  // Return instruction for TheBaze to handle locally using enhanced search
   return { 
     action: "searchTasks",
     query,
+    searchAnalysis,
     limit,
     status: "searching" as const,
-    message: `Searching for tasks matching "${query}"...`
+    message: `Searching for tasks related to "${query}" using smart keyword matching...`
   };
 }
 
@@ -501,53 +551,68 @@ export async function enhancedSearchTasksAction({
     }
   }
   
-  // Generate relevant keywords using AI with explicit tag search instructions
-  const { object: searchAnalysis } = await generateObject({
-    model: geminiFlashModel,
-    prompt: `Analyze the search query "${query}" and generate relevant keywords and synonyms that might help find related tasks. Consider:
-    - Different ways to express the same action/concept
-    - Related activities or contexts
-    - Alternative spellings or phrasings
-    - Both English and Hebrew terms if applicable
-    - Temporal keywords like dates if the query mentions time (today, tomorrow, next week, etc.)
-    - Priority indicators (urgent, important, low priority, etc.)
-    - Status keywords (finished, pending, running, etc.)
-    - Tag-related keywords that might match tag names (e.g., "work", "personal", "urgent", "project names", etc.)
-    
-    CRITICAL FOR HEBREW MORPHOLOGICAL VARIATIONS:
-    For Hebrew queries, include ALL morphological forms and related words:
-    - Root forms and derived forms (e.g., לרוץ → ריצה, לקרוא → קריאה, לכתוב → כתיבה)
-    - Infinitive and gerund forms (e.g., לעבוד → עבודה, לטבח → טבח, ללמוד → למידה)
-    - Action and object forms (e.g., לבשל → בישול, לנקות → ניקיון, לארגן → ארגון)
-    - Verb and noun forms (e.g., לשתות → שתיה, לרקוד → ריקוד, לשיר → שירה)
-    - Present tense forms (e.g., רץ, רצה, רצים, רצות)
-    - Past tense forms (e.g., רץ, רצה, רצו)
-    - Related concepts and synonyms in Hebrew
+  // Generate relevant keywords using AI with explicit tag search instructions and fallback
+  let searchAnalysis;
+  try {
+    const { object } = await generateObject({
+      model: geminiFlashModel,
+      prompt: `Analyze the search query "${query}" and generate relevant keywords and synonyms that might help find related tasks. Consider:
+      - Different ways to express the same action/concept
+      - Related activities or contexts
+      - Alternative spellings or phrasings
+      - Both English and Hebrew terms if applicable
+      - Temporal keywords like dates if the query mentions time (today, tomorrow, next week, etc.)
+      - Priority indicators (urgent, important, low priority, etc.)
+      - Status keywords (finished, pending, running, etc.)
+      - Tag-related keywords that might match tag names (e.g., "work", "personal", "urgent", "project names", etc.)
+      
+      CRITICAL FOR HEBREW MORPHOLOGICAL VARIATIONS:
+      For Hebrew queries, include ALL morphological forms and related words:
+      - Root forms and derived forms (e.g., לרוץ → ריצה, לקרוא → קריאה, לכתוב → כתיבה)
+      - Infinitive and gerund forms (e.g., לעבוד → עבודה, לטבח → טבח, ללמוד → למידה)
+      - Action and object forms (e.g., לבשל → בישול, לנקות → ניקיון, לארגן → ארגון)
+      - Verb and noun forms (e.g., לשתות → שתיה, לרקוד → ריקוד, לשיר → שירה)
+      - Present tense forms (e.g., רץ, רצה, רצים, רצות)
+      - Past tense forms (e.g., רץ, רצה, רצו)
+      - Related concepts and synonyms in Hebrew
 
-    Examples of Hebrew morphological expansion:
-    - Query "לרוץ" should include: ["לרוץ", "ריצה", "רץ", "רצה", "רצים", "רצות", "מרוץ", "רוץ"]
-    - Query "לבשל" should include: ["לבשל", "בישול", "בשל", "בישלה", "מבשל", "בשלן", "טבח"]
-    - Query "לקנות" should include: ["לקנות", "קנייה", "קנה", "קנתה", "קונה", "רכישה", "שופינג"]
-    
-    IMPORTANT FOR TAG SEARCH:
-    - The frontend will use these keywords to find tags by name/description
-    - Tasks are then filtered to include only those with matching tag IDs (AND logic)
-    - This means tasks must have tags that match the keyword search
-    - Include both broad category terms and specific descriptive words
-    - Consider synonyms and related terms for tag matching
-    
-    Example: If query is "work", include keywords like ["work", "job", "office", "business", "professional"] 
-    so the frontend can find tags named "Work", "Business", "Office", etc.
-    
-    Return a comprehensive list of keywords that would help match relevant tasks and their associated tags.`,
-    schema: z.object({
-      primaryKeywords: z.array(z.string()).describe("Main keywords from the query"),
-      relatedKeywords: z.array(z.string()).describe("Related terms and synonyms"),
-      contextKeywords: z.array(z.string()).describe("Contextual terms that might be relevant"),
-      hebrewTerms: z.array(z.string()).describe("Hebrew equivalents if applicable"),
-      tagKeywords: z.array(z.string()).describe("Keywords that might be tag names or relate to tags/categories - these are used for tag ID matching with AND logic"),
-    }),
-  });
+      Examples of Hebrew morphological expansion:
+      - Query "לרוץ" should include: ["לרוץ", "ריצה", "רץ", "רצה", "רצים", "רצות", "מרוץ", "רוץ"]
+      - Query "לבשל" should include: ["לבשל", "בישול", "בשל", "בישלה", "מבשל", "בשלן", "טבח"]
+      - Query "לקנות" should include: ["לקנות", "קנייה", "קנה", "קנתה", "קונה", "רכישה", "שופינג"]
+      
+      IMPORTANT FOR TAG SEARCH:
+      - The frontend will use these keywords to find tags by name/description
+      - Tasks are then filtered to include only those with matching tag IDs (AND logic)
+      - This means tasks must have tags that match the keyword search
+      - Include both broad category terms and specific descriptive words
+      - Consider synonyms and related terms for tag matching
+      
+      Example: If query is "work", include keywords like ["work", "job", "office", "business", "professional"] 
+      so the frontend can find tags named "Work", "Business", "Office", etc.
+      
+      Return a comprehensive list of keywords that would help match relevant tasks and their associated tags.`,
+      schema: z.object({
+        primaryKeywords: z.array(z.string()).describe("Main keywords from the query"),
+        relatedKeywords: z.array(z.string()).describe("Related terms and synonyms"),
+        contextKeywords: z.array(z.string()).describe("Contextual terms that might be relevant"),
+        hebrewTerms: z.array(z.string()).describe("Hebrew equivalents if applicable"),
+      }),
+    });
+    searchAnalysis = object;
+    console.log('[enhancedSearchTasksAction] AI-generated searchAnalysis:', searchAnalysis);
+  } catch (error) {
+    console.warn('[enhancedSearchTasksAction] AI generation failed, using fallback keywords:', (error as Error).message || error);
+    // Fallback: create basic searchAnalysis from query
+    const queryKeywords = query.trim().split(/\s+/).filter(k => k.length > 1);
+    searchAnalysis = {
+      primaryKeywords: queryKeywords,
+      relatedKeywords: [],
+      contextKeywords: [],
+      hebrewTerms: queryKeywords.filter(k => /[\u0590-\u05FF]/.test(k)), // Hebrew characters
+    };
+    console.log('[enhancedSearchTasksAction] Fallback searchAnalysis:', searchAnalysis);
+  }
 
   // Process date filter to ensure proper frontend format (for manually provided range filters)
   let processedDateFilter = autoDetectedDateFilter;
