@@ -36,18 +36,37 @@ import {
 } from "@/db/queries";
 import { generateUUID } from "@/lib/utils";
 
-// Initialize Upstash Redis client and Ratelimit
+// Initialize Upstash Redis client and Ratelimit conditionally
 // Use existing Vercel KV environment variables instead of UPSTASH_REDIS_REST_* variables
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL || process.env.KV_URL || '',
-  token: process.env.KV_REST_API_TOKEN || ''
-});
-const ratelimit = new Ratelimit({
-  redis: redis,
-  limiter: Ratelimit.slidingWindow(200, "1 d"), // 200 requests per 1 day
-  analytics: true,
-  prefix: "@upstash/ratelimit",
-});
+const REDIS_URL = process.env.KV_REST_API_URL || process.env.KV_URL;
+const REDIS_TOKEN = process.env.KV_REST_API_TOKEN;
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+
+let redis: Redis | null = null;
+let ratelimit: Ratelimit | null = null;
+
+// Only initialize Redis if we have proper credentials
+if (REDIS_URL && REDIS_TOKEN) {
+  try {
+    redis = new Redis({
+      url: REDIS_URL,
+      token: REDIS_TOKEN
+    });
+    ratelimit = new Ratelimit({
+      redis: redis,
+      limiter: Ratelimit.slidingWindow(200, "1 d"), // 200 requests per 1 day
+      analytics: true,
+      prefix: "@upstash/ratelimit",
+    });
+    console.log('[Chat API] Redis rate limiting initialized');
+  } catch (error) {
+    console.warn('[Chat API] Failed to initialize Redis, rate limiting disabled:', error);
+    redis = null;
+    ratelimit = null;
+  }
+} else {
+  console.log('[Chat API] Redis credentials not found, rate limiting disabled for development');
+}
 
 const MAX_INPUT_LENGTH = 10000; // Define max input length
 
@@ -64,20 +83,31 @@ export async function POST(request: Request) {
   const userId = session.user.id;
 
   // --- Rate Limiting Logic ---
-  const { success, limit, remaining, reset } = await ratelimit.limit(userId);
+  let rateLimitHeaders = {};
+  
+  if (ratelimit) {
+    try {
+      const { success, limit, remaining, reset } = await ratelimit.limit(userId);
 
-  // Prepare headers for both success and failure cases
-  const rateLimitHeaders = {
-    "X-RateLimit-Limit": limit.toString(),
-    "X-RateLimit-Remaining": remaining.toString(),
-    "X-RateLimit-Reset": reset.toString(),
-  };
+      // Prepare headers for both success and failure cases
+      rateLimitHeaders = {
+        "X-RateLimit-Limit": limit.toString(),
+        "X-RateLimit-Remaining": remaining.toString(),
+        "X-RateLimit-Reset": reset.toString(),
+      };
 
-  if (!success) {
-    return new Response("Rate limit exceeded. Please try again later.", {
-      status: 429,
-      headers: rateLimitHeaders, // Include headers in error response
-    });
+      if (!success) {
+        return new Response("Rate limit exceeded. Please try again later.", {
+          status: 429,
+          headers: rateLimitHeaders, // Include headers in error response
+        });
+      }
+    } catch (error) {
+      console.warn('[Chat API] Rate limiting check failed, proceeding without rate limit:', error);
+      // Continue without rate limiting if Redis fails
+    }
+  } else {
+    console.log('[Chat API] Rate limiting disabled - no Redis configuration');
   }
   // --- End Rate Limiting Logic ---
 
