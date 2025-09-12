@@ -54,7 +54,7 @@ export const History = ({ user }: { user: User | undefined }) => {
     data: history,
     isLoading,
     mutate,
-  } = useSWR<Array<Chat>>(user ? "/api/history" : null, fetcher, {
+  } = useSWR<Array<Chat>>(user ? "/aichat/api/history" : null, fetcher, {
     fallbackData: [],
   });
 
@@ -62,11 +62,23 @@ export const History = ({ user }: { user: User | undefined }) => {
     mutate();
   }, [pathname, mutate]);
 
+  // Listen for chat save events to refresh history
+  useEffect(() => {
+    const handleChatSaved = () => {
+      mutate();
+    };
+
+    window.addEventListener('chatSaved', handleChatSaved);
+    return () => {
+      window.removeEventListener('chatSaved', handleChatSaved);
+    };
+  }, [mutate]);
+
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDelete = async () => {
-    const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
+    const deletePromise = fetch(`/aichat/api/chat?id=${deleteId}`, {
       method: "DELETE",
     });
 
@@ -140,7 +152,7 @@ export const History = ({ user }: { user: User | undefined }) => {
                   className="font-normal text-sm flex flex-row justify-between text-white"
                   asChild
                 >
-                  <Link href="/">
+                  <Link href="/aichat">
                     <div>Start a new chat</div>
                     <PencilEditIcon size={14} />
                   </Link>
@@ -192,7 +204,7 @@ export const History = ({ user }: { user: User | undefined }) => {
                       asChild
                     >
                       <Link
-                        href={`/chat/${chat.id}`}
+                        href={`/aichat/chat/${chat.id}`}
                         className="text-ellipsis overflow-hidden text-left py-2 pl-2 rounded-lg outline-zinc-900"
                       >
                         {getTitleFromChat(chat)}

@@ -42,6 +42,7 @@ export function Chat({ id, initialMessages, className }: ChatProps) {
     append,
     handleSubmit,
   } = useChat({
+    api: '/aichat/api/chat', // Use the new API endpoint
     initialMessages,
     id: chatId,
     body: {
@@ -66,9 +67,15 @@ export function Chat({ id, initialMessages, className }: ChatProps) {
       }
     },
     onFinish() {
-      if (!path.includes("chat")) {
-        window.history.pushState({}, "", `/chat/${chatId}`);
+      // Update URL immediately when chat finishes (first message or any message)
+      // Check if we're on the general /aichat page (not already on a specific chat page)
+      if (path === "/aichat" || !path.includes("/aichat/chat/")) {
+        window.history.pushState({}, "", `/aichat/chat/${chatId}`);
       }
+      
+      // Trigger a refresh of the history sidebar to show the new chat
+      // This dispatches a custom event that the history component can listen to
+      window.dispatchEvent(new CustomEvent('chatSaved', { detail: { chatId } }));
     },
     onError(error) {
       if (error.message.includes('400')) {
