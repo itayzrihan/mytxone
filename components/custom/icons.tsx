@@ -702,3 +702,22 @@ export const CheckCircle = ({ size = 16 }: { size?: number }) => {
     </svg>
   );
 };
+
+export const InfographicIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width={size}
+      style={{ color: "currentcolor" }}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2 2H14V14H2V2ZM1 1V15H15V1H1ZM4 5V12H6V5H4ZM8 8V12H10V8H8ZM12 6V12H14V6H12Z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  );
+};

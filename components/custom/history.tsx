@@ -14,6 +14,7 @@ import { fetcher, getTitleFromChat } from "@/lib/utils";
 
 import {
   InfoIcon,
+  InfographicIcon,
   MenuIcon,
   MoreHorizontalIcon,
   PencilEditIcon,
@@ -125,15 +126,26 @@ export const History = ({ user }: { user: User | undefined }) => {
 
           <div className="mt-10 flex flex-col">
             {user && (
-              <Button
-                className="font-normal text-sm flex flex-row justify-between text-white"
-                asChild
-              >
-                <Link href="/">
-                  <div>Start a new chat</div>
-                  <PencilEditIcon size={14} />
-                </Link>
-              </Button>
+              <>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2"
+                  asChild
+                >
+                  <Link href="/infographic">
+                    <div>Generate new infographic</div>
+                    <InfographicIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white"
+                  asChild
+                >
+                  <Link href="/">
+                    <div>Start a new chat</div>
+                    <PencilEditIcon size={14} />
+                  </Link>
+                </Button>
+              </>
             )}
 
             <div className="flex flex-col overflow-y-scroll p-1 h-[calc(100dvh-124px)]">
