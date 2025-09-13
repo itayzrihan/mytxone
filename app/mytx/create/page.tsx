@@ -1,105 +1,169 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "@/components/custom/icons";
+import { useState } from "react";
+
+// Sample thumbnails for the carousel
+const carouselThumbnails = [
+  {
+    id: 1,
+    title: "Weekly Team Sync",
+    label: "Premium Community",
+    image: "/images/meeting-thumb-1.jpg",
+    bgColor: "from-blue-500 to-purple-600"
+  },
+  {
+    id: 2,
+    title: "MYTX Community Hub",
+    label: "Free Access",
+    image: "/images/meeting-thumb-2.jpg", 
+    bgColor: "from-orange-500 to-red-600"
+  },
+  {
+    id: 3,
+    title: "Growth Academy",
+    label: "Business Network",
+    image: "/images/meeting-thumb-3.jpg",
+    bgColor: "from-green-500 to-teal-600"
+  },
+  {
+    id: 4,
+    title: "Future Builders",
+    label: "Startup Community",
+    image: "/images/meeting-thumb-4.jpg",
+    bgColor: "from-purple-500 to-pink-600"
+  },
+  {
+    id: 5,
+    title: "Innovation Hub",
+    label: "Tech Meetup",
+    image: "/images/meeting-thumb-5.jpg",
+    bgColor: "from-cyan-500 to-blue-600"
+  }
+];
 
 export default function CreateMeetingPage() {
+  const [selectedThumbnail, setSelectedThumbnail] = useState(1);
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20">
-      <div className="max-w-2xl mx-auto text-center space-y-8">
-        {/* Main Card with Glassmorphism */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl shadow-black/20"></div>
-          <div className="relative p-12 space-y-8">
-            {/* Icon */}
-            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-cyan-500 to-blue-600 rounded-3xl flex items-center justify-center">
-              <CalendarIcon size={40} />
-            </div>
-
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold text-white">
-                Create New Meeting
-              </h1>
-              <p className="text-xl text-zinc-300">
-                Start building your community landing page
-              </p>
-            </div>
-
-            {/* Feature Preview */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-xl border border-white/10"></div>
-              <div className="relative p-6 text-left">
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  Coming Soon Features:
-                </h3>
-                <ul className="space-y-3 text-zinc-300">
-                  <li className="flex items-start space-x-3">
-                    <span className="text-cyan-400">✨</span>
-                    <span>Custom meeting page URLs</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <span className="text-cyan-400">✨</span>
-                    <span>Glassmorphism landing page templates</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <span className="text-cyan-400">✨</span>
-                    <span>Member management dashboard</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <span className="text-cyan-400">✨</span>
-                    <span>Video integration and previews</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <span className="text-cyan-400">✨</span>
-                    <span>Real-time member statistics</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <Button 
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 px-8 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-lg"
-                disabled
-              >
-                Get Early Access (Coming Soon)
-              </Button>
-              
-              <Link href="/">
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white transition-all duration-300"
-                >
-                  ← Back to Meetings
-                </Button>
-              </Link>
-            </div>
-          </div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-16 pb-20">
+      <div className="max-w-4xl mx-auto text-center space-y-6">
+        
+        {/* MYTX Logo - Smaller and with more space above */}
+        <div className="text-4xl font-bold mt-8">
+          <span className="text-cyan-400">MYT</span>
+          <span className="text-white">X</span>
         </div>
 
-        {/* Preview Example */}
+        {/* Inspirational Statement */}
+        <div className="max-w-3xl mx-auto">
+          <p className="text-2xl text-white leading-relaxed">
+            Build, connect, and grow with{" "}
+            <span className="text-cyan-400">tomorrow's community leaders.</span>
+          </p>
+        </div>
+
+        {/* Glassmorphism Card with Carousel */}
         <div className="relative">
-          <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-xl border border-white/10"></div>
-          <div className="relative p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Preview: Your meeting page will look like
-            </h3>
-            <div className="space-y-3">
-              <Link href="/mytx/example">
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-cyan-400 transition-all duration-300"
-                >
-                  View Example: Tech Innovators Hub →
-                </Button>
-              </Link>
-              <Link href="/mytx/mandarin-blueprint-lite">
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-purple-400 transition-all duration-300"
-                >
-                  View Example: Mandarin Blueprint Lite →
-                </Button>
-              </Link>
+          <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl shadow-black/20"></div>
+          <div className="relative p-6 space-y-1 overflow-hidden">
+            
+            {/* Carousel Container - with overflow hidden */}
+            <div className="relative h-72 flex items-center justify-center overflow-hidden">
+              
+              {/* Show only previous, current, and next thumbnails */}
+              {carouselThumbnails.map((thumb, index) => {
+                const isSelected = thumb.id === selectedThumbnail;
+                const selectedIndex = carouselThumbnails.findIndex(t => t.id === selectedThumbnail);
+                
+                // Only show current, previous, and next
+                const isPrevious = index === selectedIndex - 1;
+                const isNext = index === selectedIndex + 1;
+                
+                // Don't render if not in visible range
+                if (!isSelected && !isPrevious && !isNext) {
+                  return null;
+                }
+                
+                let transform = '';
+                let zIndex = 10;
+                let opacity = 0.3;
+                let scale = 0.7;
+                let blur = 'blur(2px)';
+                
+                if (isSelected) {
+                  transform = 'translateX(0px)';
+                  zIndex = 30;
+                  opacity = 1;
+                  scale = 1;
+                  blur = 'blur(0px)';
+                } else if (isPrevious) {
+                  transform = 'translateX(-70px)';
+                  zIndex = 20;
+                  opacity = 0.3;
+                  scale = 0.7;
+                  blur = 'blur(1px)';
+                } else if (isNext) {
+                  transform = 'translateX(70px)';
+                  zIndex = 20;
+                  opacity = 0.3;
+                  scale = 0.7;
+                  blur = 'blur(1px)';
+                }
+
+                return (
+                  <div
+                    key={thumb.id}
+                    className="absolute transition-all duration-500 ease-out cursor-pointer"
+                    style={{
+                      transform: `${transform} scale(${scale})`,
+                      zIndex,
+                      opacity,
+                      filter: blur
+                    }}
+                    onClick={() => setSelectedThumbnail(thumb.id)}
+                  >
+                    <div className="relative w-56 h-36 rounded-2xl overflow-hidden">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${thumb.bgColor}`}></div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <h3 className="text-white font-bold text-lg text-center px-4">
+                          {thumb.title}
+                        </h3>
+                      </div>
+                      <div className="absolute top-3 right-3">
+                        <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                          {thumb.label}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Carousel Navigation Dots - Much closer to carousel */}
+            <div className="flex justify-center space-x-2 -mt-6">
+              {carouselThumbnails.map((thumb) => (
+                <button
+                  key={thumb.id}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    thumb.id === selectedThumbnail
+                      ? 'bg-cyan-400'
+                      : 'bg-white/30 hover:bg-white/50'
+                  }`}
+                  onClick={() => setSelectedThumbnail(thumb.id)}
+                />
+              ))}
+            </div>
+
+            {/* Create New Meeting Button */}
+            <div className="pt-1">
+              <Button 
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 px-12 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-lg"
+              >
+                CREATE A MEETING
+              </Button>
             </div>
           </div>
         </div>

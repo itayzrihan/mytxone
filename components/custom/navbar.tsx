@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 import { History } from "./history";
 import { SlashIcon } from "./icons";
@@ -19,6 +20,10 @@ export const Navbar = ({ session }: NavbarProps) => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const { openAuthModal } = useAuth();
+  const pathname = usePathname();
+
+  // Hide navbar on specific routes
+  const shouldHideNavbar = pathname === "/mytx/create";
 
   // Prevent hydration mismatch by only rendering session-dependent UI on client
   useEffect(() => {
@@ -32,6 +37,11 @@ export const Navbar = ({ session }: NavbarProps) => {
   const handleAuthClick = () => {
     openAuthModal("login");
   };
+
+  // Don't render navbar on certain pages
+  if (shouldHideNavbar) {
+    return null;
+  }
 
   return (
     <>
