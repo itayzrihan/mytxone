@@ -45,13 +45,46 @@ const carouselThumbnails = [
 
 export default function CreateMeetingPage() {
   const [selectedThumbnail, setSelectedThumbnail] = useState(1);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  // Handle touch start
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  // Handle touch move
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  // Handle touch end - determine swipe direction
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      // Swipe left - go to next
+      const nextId = selectedThumbnail < carouselThumbnails.length ? selectedThumbnail + 1 : 1;
+      setSelectedThumbnail(nextId);
+    }
+
+    if (isRightSwipe) {
+      // Swipe right - go to previous
+      const prevId = selectedThumbnail > 1 ? selectedThumbnail - 1 : carouselThumbnails.length;
+      setSelectedThumbnail(prevId);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-16 pb-20">
-      <div className="max-w-4xl mx-auto text-center space-y-6">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
+      <div className="max-w-4xl mx-auto text-center space-y-3">
         
         {/* MYTX Logo - Smaller and with more space above */}
-        <div className="text-4xl font-bold mt-8">
+        <div className="text-4xl font-bold">
           <span className="text-cyan-400">MYT</span>
           <span className="text-white">X</span>
         </div>
@@ -70,7 +103,13 @@ export default function CreateMeetingPage() {
           <div className="relative p-6 space-y-1 overflow-hidden">
             
             {/* Carousel Container - with overflow hidden */}
-            <div className="relative h-72 flex items-center justify-center overflow-hidden">
+            <div 
+              className="relative h-36 flex items-center justify-center overflow-hidden" 
+              style={{ perspective: '1000px' }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               
               {/* Show only previous, current, and next thumbnails */}
               {carouselThumbnails.map((thumb, index) => {
@@ -88,39 +127,40 @@ export default function CreateMeetingPage() {
                 
                 let transform = '';
                 let zIndex = 10;
-                let opacity = 0.3;
-                let scale = 0.7;
-                let blur = 'blur(2px)';
+                let opacity = 0.6;
+                let scale = 0.8;
+                let blur = 'blur(0px)';
                 
                 if (isSelected) {
-                  transform = 'translateX(0px)';
+                  transform = 'translateX(0px) translateZ(0px) rotateY(0deg)';
                   zIndex = 30;
                   opacity = 1;
                   scale = 1;
                   blur = 'blur(0px)';
                 } else if (isPrevious) {
-                  transform = 'translateX(-70px)';
+                  transform = 'translateX(-80px) translateZ(-100px) rotateY(-25deg)';
                   zIndex = 20;
-                  opacity = 0.3;
-                  scale = 0.7;
-                  blur = 'blur(1px)';
+                  opacity = 0.7;
+                  scale = 0.85;
+                  blur = 'blur(0px)';
                 } else if (isNext) {
-                  transform = 'translateX(70px)';
+                  transform = 'translateX(80px) translateZ(-100px) rotateY(25deg)';
                   zIndex = 20;
-                  opacity = 0.3;
-                  scale = 0.7;
-                  blur = 'blur(1px)';
+                  opacity = 0.7;
+                  scale = 0.85;
+                  blur = 'blur(0px)';
                 }
 
                 return (
                   <div
                     key={thumb.id}
-                    className="absolute transition-all duration-500 ease-out cursor-pointer"
+                    className="absolute transition-all duration-700 ease-out cursor-pointer"
                     style={{
                       transform: `${transform} scale(${scale})`,
                       zIndex,
                       opacity,
-                      filter: blur
+                      filter: blur,
+                      transformStyle: 'preserve-3d'
                     }}
                     onClick={() => setSelectedThumbnail(thumb.id)}
                   >
@@ -158,7 +198,7 @@ export default function CreateMeetingPage() {
             </div>
 
             {/* Create New Meeting Button */}
-            <div className="pt-1">
+            <div className="pt-6">
               <Button 
                 className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 px-12 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-lg"
               >
