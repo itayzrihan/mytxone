@@ -95,8 +95,8 @@ export function CategoryCapsules() {
     scrollIntervalRef.current = setInterval(() => {
       if (!scrollContainerRef.current) return;
       
-      const scrollAmount = direction === 'left' ? -5 : 5;
-      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      const scrollAmount = direction === 'left' ? -3 : 3;
+      scrollContainerRef.current.scrollLeft += scrollAmount;
     }, 16); // ~60fps
   };
 
