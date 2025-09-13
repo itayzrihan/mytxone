@@ -443,12 +443,11 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
 
             {/* 4. Gallery */}
             {meetingData.gallery && meetingData.gallery.length > 0 && (
-              <div className="px-2">
-                <HorizontalScrollGallery 
-                  className="mb-4"
-                  itemsClassName="items-center"
-                >
-                  {meetingData.gallery.map((item) => (
+              <HorizontalScrollGallery 
+                className="mb-6"
+                itemsClassName="items-center px-4"
+              >
+                {meetingData.gallery.map((item) => (
                     <button
                       key={item.id}
                       onClick={() => handleGalleryItemClick(item)}
@@ -486,8 +485,7 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                       </div>
                     </button>
                   ))}
-                </HorizontalScrollGallery>
-              </div>
+              </HorizontalScrollGallery>
             )}
 
             {/* 5. Tags (Free and by Instructor) */}
