@@ -11,40 +11,44 @@ export function AuthForm({
   defaultEmail?: string;
 }) {
   return (
-    <form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
-      <div className="flex flex-col gap-2">
-        <Label
-          htmlFor="email"
-          className="text-zinc-600 font-normal dark:text-zinc-400"
-        >
-          Email Address
-        </Label>
+    <form action={action} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label
+            htmlFor="email"
+            className="text-cyan-300 font-medium"
+          >
+            Email Address
+          </Label>
 
-        <Input
-          id="email"
-          name="email"
-          className="bg-muted text-md md:text-sm border-none"
-          type="email"
-          placeholder="user@acme.com"
-          autoComplete="email"
-          required
-          defaultValue={defaultEmail}
-        />
+          <Input
+            id="email"
+            name="email"
+            className="bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-zinc-400 focus:border-cyan-400 focus:ring-cyan-400/50"
+            type="email"
+            placeholder="user@acme.com"
+            autoComplete="email"
+            required
+            defaultValue={defaultEmail}
+          />
+        </div>
 
-        <Label
-          htmlFor="password"
-          className="text-zinc-600 font-normal dark:text-zinc-400"
-        >
-          Password
-        </Label>
+        <div className="flex flex-col gap-2">
+          <Label
+            htmlFor="password"
+            className="text-cyan-300 font-medium"
+          >
+            Password
+          </Label>
 
-        <Input
-          id="password"
-          name="password"
-          className="bg-muted text-md md:text-sm border-none"
-          type="password"
-          required
-        />
+          <Input
+            id="password"
+            name="password"
+            className="bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-zinc-400 focus:border-cyan-400 focus:ring-cyan-400/50"
+            type="password"
+            required
+          />
+        </div>
       </div>
 
       {children}

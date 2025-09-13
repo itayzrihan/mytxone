@@ -13,7 +13,7 @@ export function SubmitButton({ children }: { children: React.ReactNode }) {
     <Button
       type={pending ? "button" : "submit"}
       aria-disabled={pending}
-      className="relative text-white"
+      className="relative text-white bg-gradient-to-r from-cyan-500 to-cyan-600 border-cyan-400/50 hover:from-cyan-400 hover:to-cyan-500 hover:border-cyan-300/50 shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-400/30 backdrop-blur-sm"
     >
       {children}
       {pending && (

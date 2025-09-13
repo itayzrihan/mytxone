@@ -11,6 +11,7 @@ import useSWR from "swr";
 
 import { Chat } from "@/db/schema";
 import { fetcher, getTitleFromChat } from "@/lib/utils";
+import { useAuth } from "./auth-context";
 
 import {
   InfoIcon,
@@ -48,6 +49,7 @@ import {
 export const History = ({ user }: { user: User | undefined }) => {
   const { id } = useParams();
   const pathname = usePathname();
+  const { openAuthModal } = useAuth();
 
   const [isHistoryVisible, setIsHistoryVisible] = useState(false);
   const {
@@ -102,7 +104,7 @@ export const History = ({ user }: { user: User | undefined }) => {
     <>
       <Button
         variant="outline"
-        className="p-1.5 h-fit"
+        className="p-1.5 h-fit bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300 text-white"
         onClick={() => {
           setIsHistoryVisible(true);
         }}
@@ -116,7 +118,7 @@ export const History = ({ user }: { user: User | undefined }) => {
           setIsHistoryVisible(state);
         }}
       >
-        <SheetContent side="left" className="p-3 w-80 bg-muted">
+        <SheetContent side="left" className="p-3 w-80 bg-black/80 backdrop-blur-xl border-r border-white/20 shadow-2xl shadow-black/50">
           <SheetHeader>
             <VisuallyHidden.Root>
               <SheetTitle className="text-left">History</SheetTitle>
@@ -128,9 +130,9 @@ export const History = ({ user }: { user: User | undefined }) => {
 
           <div className="text-sm flex flex-row items-center justify-between">
             <div className="flex flex-row gap-2">
-              <div className="dark:text-zinc-300">History</div>
+              <div className="text-cyan-300 font-medium">History</div>
 
-              <div className="dark:text-zinc-400 text-zinc-500">
+              <div className="text-zinc-400">
                 {history === undefined ? "loading" : history.length} chats
               </div>
             </div>
@@ -140,7 +142,7 @@ export const History = ({ user }: { user: User | undefined }) => {
             {user && (
               <>
                 <Button
-                  className="font-normal text-sm flex flex-row justify-between text-white mb-2"
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
                   asChild
                 >
                   <Link href="/infographic">
@@ -149,7 +151,7 @@ export const History = ({ user }: { user: User | undefined }) => {
                   </Link>
                 </Button>
                 <Button
-                  className="font-normal text-sm flex flex-row justify-between text-white"
+                  className="font-normal text-sm flex flex-row justify-between text-white bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300"
                   asChild
                 >
                   <Link href="/aichat">
@@ -162,14 +164,30 @@ export const History = ({ user }: { user: User | undefined }) => {
 
             <div className="flex flex-col overflow-y-scroll p-1 h-[calc(100dvh-124px)]">
               {!user ? (
-                <div className="text-zinc-500 h-dvh w-full flex flex-row justify-center items-center text-sm gap-2">
-                  <InfoIcon />
-                  <div>Login to save and revisit previous chats!</div>
+                <div className="text-zinc-400 h-dvh w-full flex flex-col justify-center items-center text-sm gap-4">
+                  <div className="flex flex-row gap-2 items-center">
+                    <InfoIcon />
+                    <div>Login to save and revisit previous chats!</div>
+                  </div>
+                  <div className="flex flex-col gap-2 w-full max-w-xs">
+                    <Button
+                      className="font-normal text-sm text-white bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300"
+                      onClick={() => openAuthModal("login")}
+                    >
+                      Sign In
+                    </Button>
+                    <Button
+                      className="font-normal text-sm text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                      onClick={() => openAuthModal("register")}
+                    >
+                      Sign Up
+                    </Button>
+                  </div>
                 </div>
               ) : null}
 
               {!isLoading && history?.length === 0 && user ? (
-                <div className="text-zinc-500 h-dvh w-full flex flex-row justify-center items-center text-sm gap-2">
+                <div className="text-zinc-400 h-dvh w-full flex flex-row justify-center items-center text-sm gap-2">
                   <InfoIcon />
                   <div>No chats found</div>
                 </div>
@@ -180,7 +198,7 @@ export const History = ({ user }: { user: User | undefined }) => {
                   {[44, 32, 28, 52].map((item) => (
                     <div key={item} className="p-2 my-[2px]">
                       <div
-                        className={`w-${item} h-[20px] rounded-md bg-zinc-200 dark:bg-zinc-600 animate-pulse`}
+                        className={`w-${item} h-[20px] rounded-md bg-white/10 animate-pulse`}
                       />
                     </div>
                   ))}
@@ -192,20 +210,20 @@ export const History = ({ user }: { user: User | undefined }) => {
                   <div
                     key={chat.id}
                     className={cx(
-                      "flex flex-row items-center gap-6 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-md pr-2",
-                      { "bg-zinc-200 dark:bg-zinc-700": chat.id === id },
+                      "flex flex-row items-center gap-6 hover:bg-white/10 backdrop-blur-sm rounded-lg pr-2 border border-transparent transition-all duration-200",
+                      { "bg-white/10 backdrop-blur-md border-white/20 shadow-lg": chat.id === id },
                     )}
                   >
                     <Button
                       variant="ghost"
                       className={cx(
-                        "hover:bg-zinc-200 dark:hover:bg-zinc-700 justify-between p-0 text-sm font-normal flex flex-row items-center gap-2 pr-2 w-full transition-none",
+                        "hover:bg-transparent justify-between p-0 text-sm font-normal flex flex-row items-center gap-2 pr-2 w-full transition-none text-white",
                       )}
                       asChild
                     >
                       <Link
                         href={`/aichat/chat/${chat.id}`}
-                        className="text-ellipsis overflow-hidden text-left py-2 pl-2 rounded-lg outline-zinc-900"
+                        className="text-ellipsis overflow-hidden text-left py-2 pl-2 rounded-lg outline-cyan-400"
                       >
                         {getTitleFromChat(chat)}
                       </Link>
@@ -214,16 +232,16 @@ export const History = ({ user }: { user: User | undefined }) => {
                     <DropdownMenu modal={true}>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          className="p-0 h-fit font-normal text-zinc-500 transition-none hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                          className="p-0 h-fit font-normal text-zinc-400 transition-none hover:bg-white/10 hover:text-white rounded-lg"
                           variant="ghost"
                         >
                           <MoreHorizontalIcon />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent side="left" className="z-[60]">
+                      <DropdownMenuContent side="left" className="z-[60] bg-black/90 backdrop-blur-md border-white/20">
                         <DropdownMenuItem asChild>
                           <Button
-                            className="flex flex-row gap-2 items-center justify-start w-full h-fit font-normal p-1.5 rounded-sm"
+                            className="flex flex-row gap-2 items-center justify-start w-full h-fit font-normal p-1.5 rounded-sm text-white hover:bg-white/10"
                             variant="ghost"
                             onClick={() => {
                               setDeleteId(chat.id);

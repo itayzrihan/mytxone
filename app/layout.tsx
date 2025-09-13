@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import BackgroundGlow from "@/components/custom/BackgroundGlow";
 import { Navbar } from "@/components/custom/navbar-wrapper";
 import { ThemeProvider } from "@/components/custom/theme-provider";
+import { AuthWrapper } from "@/components/custom/auth-wrapper";
 
 import "./globals.css";
 
@@ -27,11 +28,13 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <BackgroundGlow />
-          <Toaster position="top-center" />
-          <Navbar />
-          
-          {children}
+          <AuthWrapper>
+            <BackgroundGlow />
+            <Toaster position="top-center" />
+            <Navbar />
+            
+            {children}
+          </AuthWrapper>
         </ThemeProvider>
       </body>
     </html>

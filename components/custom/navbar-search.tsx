@@ -5,11 +5,11 @@ import { SearchBar } from "./search-bar";
 
 interface NavbarSearchProps {
   onMobileSearchToggle?: (isOpen: boolean) => void;
+  isMobileSearchOpen?: boolean;
 }
 
-export function NavbarSearch({ onMobileSearchToggle }: NavbarSearchProps) {
+export function NavbarSearch({ onMobileSearchToggle, isMobileSearchOpen = false }: NavbarSearchProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,7 +30,6 @@ export function NavbarSearch({ onMobileSearchToggle }: NavbarSearchProps) {
     e.preventDefault();
     e.stopPropagation();
     const newState = !isMobileSearchOpen;
-    setIsMobileSearchOpen(newState);
     onMobileSearchToggle?.(newState);
   };
 
