@@ -148,7 +148,7 @@ export function MeditationDisplay({
         },
         body: JSON.stringify({
           content,
-          meditationId: `meditation_${Date.now()}`,
+          meditationId: `meditation_${Math.random().toString(36).substr(2, 9)}_${performance.now()}`,
           voiceName: selectedVoice
         }),
       });      clearInterval(progressInterval);

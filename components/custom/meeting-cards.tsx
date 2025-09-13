@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MeetingCard {
   id: string;
@@ -16,6 +16,7 @@ interface MeetingCardsProps {}
 
 export function MeetingCards() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [allMeetings, setAllMeetings] = useState<MeetingCard[]>([]);
 
   // Generate 37 sample meeting cards (30 for page 1, 7 for page 2)
   const generateMeetings = (): MeetingCard[] => {
@@ -41,23 +42,33 @@ export function MeetingCards() {
       "Master new skills with comprehensive courses and real-world application projects."
     ];
 
+    // Use seeded random generation for consistency
+    const seededRandom = (seed: number) => {
+      const x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    };
+
     return Array.from({ length: 37 }, (_, i) => ({
       id: (i + 1).toString(),
       thumbnail: "/images/placeholder-thumbnail.jpg",
       userImage: "/images/placeholder-user.jpg",
       title: meetingTitles[i % meetingTitles.length],
       description: descriptions[i % descriptions.length],
-      attendees: Math.floor(Math.random() * 5000) + 100,
-      price: Math.random() > 0.3 ? `$${Math.floor(Math.random() * 50) + 5}/month` : "Free"
+      attendees: Math.floor(seededRandom(i * 123) * 5000) + 100,
+      price: seededRandom(i * 456) > 0.3 ? `$${Math.floor(seededRandom(i * 789) * 50) + 5}/month` : "Free"
     }));
   };
 
-  const allMeetings = generateMeetings();
+  // Generate meetings on client side to avoid hydration mismatch
+  useEffect(() => {
+    setAllMeetings(generateMeetings());
+  }, []);
   
   // Pagination logic - Fixed calculations
-  const totalPages = Math.ceil((allMeetings.length - 30) / 7) + 1; // Always 2 pages for 30 cards (30 + 7 = 37 total)
+  const totalPages = allMeetings.length > 0 ? Math.ceil((allMeetings.length - 30) / 7) + 1 : 1; // Always 2 pages for 30 cards (30 + 7 = 37 total)
   
   const getCurrentPageMeetings = () => {
+    if (allMeetings.length === 0) return [];
     if (currentPage === 1) {
       return allMeetings.slice(0, 30);
     } else {
@@ -67,6 +78,19 @@ export function MeetingCards() {
   };
 
   const currentMeetings = getCurrentPageMeetings();
+
+  // Show loading state during hydration
+  if (allMeetings.length === 0) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 p-6">
+        {Array.from({ length: 10 }, (_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="bg-gray-200 dark:bg-gray-700 h-48 rounded-lg"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const formatAttendees = (count: number): string => {
     if (count >= 1000) {

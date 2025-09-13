@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { History } from "./history";
 import { SlashIcon } from "./icons";
@@ -17,7 +17,13 @@ interface NavbarProps {
 
 export const Navbar = ({ session }: NavbarProps) => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const { openAuthModal } = useAuth();
+
+  // Prevent hydration mismatch by only rendering session-dependent UI on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleMobileSearchToggle = (isOpen: boolean) => {
     setIsMobileSearchOpen(isOpen);
@@ -59,26 +65,32 @@ export const Navbar = ({ session }: NavbarProps) => {
               />
             </div>
             
-            {session ? (
-              <UserMenu session={session} />
+            
+            {isClient ? (
+              session ? (
+                <UserMenu session={session} />
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleAuthClick}
+                  className="
+                    bg-gradient-to-r from-cyan-500 to-cyan-600 
+                    text-white border-cyan-400/50
+                    hover:from-cyan-400 hover:to-cyan-500 
+                    hover:border-cyan-300/50
+                    shadow-lg shadow-cyan-500/20
+                    transition-all duration-300
+                    hover:shadow-xl hover:shadow-cyan-400/30
+                    backdrop-blur-sm
+                  "
+                >
+                  Login
+                </Button>
+              )
             ) : (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleAuthClick}
-                className="
-                  bg-gradient-to-r from-cyan-500 to-cyan-600 
-                  text-white border-cyan-400/50
-                  hover:from-cyan-400 hover:to-cyan-500 
-                  hover:border-cyan-300/50
-                  shadow-lg shadow-cyan-500/20
-                  transition-all duration-300
-                  hover:shadow-xl hover:shadow-cyan-400/30
-                  backdrop-blur-sm
-                "
-              >
-                Login
-              </Button>
+              // Placeholder during hydration to prevent layout shift
+              <div className="w-16 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
             )}
           </div>
         </div>
