@@ -49,6 +49,14 @@ export default function CreateMeetingPage() {
   const [touchEnd, setTouchEnd] = useState(0);
   const [showPricing, setShowPricing] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('basic'); // 'basic' or 'pro'
+  const [showModal, setShowModal] = useState(false);
+  const [modalPlan, setModalPlan] = useState('basic'); // Plan selected in modal
+  const [formData, setFormData] = useState({
+    communityName: '',
+    cardNumber: '',
+    expiryDate: '',
+    csv: ''
+  });
 
   // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -79,6 +87,33 @@ export default function CreateMeetingPage() {
       const prevId = selectedThumbnail > 1 ? selectedThumbnail - 1 : carouselThumbnails.length;
       setSelectedThumbnail(prevId);
     }
+  };
+
+  // Handle expiry date formatting
+  const handleExpiryDateChange = (value: string) => {
+    // Remove all non-digit characters
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    // Format as MM/YY
+    let formatted = digitsOnly;
+    if (digitsOnly.length >= 2) {
+      formatted = digitsOnly.slice(0, 2) + '/' + digitsOnly.slice(2, 4);
+    }
+    
+    // Update state
+    setFormData(prev => ({ ...prev, expiryDate: formatted }));
+  };
+
+  // Handle card number formatting with visual spaces
+  const handleCardNumberChange = (value: string) => {
+    // Remove all non-digit characters
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    // Format with spaces every 4 digits
+    const formatted = digitsOnly.replace(/(\d{4})(?=\d)/g, '$1 ');
+    
+    // Update state
+    setFormData(prev => ({ ...prev, cardNumber: formatted }));
   };
 
   return (
@@ -314,7 +349,12 @@ export default function CreateMeetingPage() {
                       </div>
                     </div>
 
-                    <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+                    <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl"
+                      onClick={() => {
+                        setModalPlan('basic');
+                        setShowModal(true);
+                      }}
+                    >
                       TRY FOR FREE
                     </Button>
                   </div>
@@ -384,7 +424,12 @@ export default function CreateMeetingPage() {
                       </div>
                     </div>
 
-                    <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+                    <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl"
+                      onClick={() => {
+                        setModalPlan('pro');
+                        setShowModal(true);
+                      }}
+                    >
                       TRY FOR FREE
                     </Button>
                   </div>
@@ -394,6 +439,138 @@ export default function CreateMeetingPage() {
           </div>
         )}
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-lg flex items-center justify-center p-3 z-50">
+          <div className="relative w-full max-w-md mx-auto">
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl shadow-black/30"></div>
+            <div className="relative p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+              
+              {/* MYTX Logo */}
+              <div className="text-center">
+                <div className="text-3xl font-bold mb-4">
+                  <span className="text-cyan-400">MYT</span>
+                  <span className="text-white">X</span>
+                </div>
+              </div>
+
+              {/* Title and Trial Info */}
+              <div className="text-center space-y-2">
+                <h2 className="text-xl font-semibold text-white">Create a Meeting</h2>
+                <div className="text-cyan-400 font-medium">7 day free trial</div>
+              </div>
+
+              {/* Plan Selection Tabs */}
+              <div className="space-y-4">
+                <div className="flex bg-white/10 backdrop-blur-md rounded-xl p-1 border border-white/20">
+                  <button
+                    onClick={() => setModalPlan('basic')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-300 ${
+                      modalPlan === 'basic'
+                        ? 'bg-white text-black shadow-lg'
+                        : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    Basic - $5/month
+                  </button>
+                  <button
+                    onClick={() => setModalPlan('pro')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-300 ${
+                      modalPlan === 'pro'
+                        ? 'bg-white text-black shadow-lg'
+                        : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    Pro - $20/month
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Inputs */}
+              <div className="space-y-4">
+                {/* Community Name */}
+                <div>
+                  <label className="block text-white/80 text-sm font-medium mb-2">
+                    Community Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.communityName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, communityName: e.target.value }))}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm"
+                    placeholder="Enter your community name"
+                  />
+                </div>
+
+                {/* Unified Card Input - Card Number, Expiry Date, CSV */}
+                <div>
+                  <label className="block text-white/80 text-sm font-medium mb-2">
+                    Card Details
+                  </label>
+                  <div className="flex bg-white/10 border border-white/20 rounded-xl backdrop-blur-sm overflow-hidden">
+                    {/* Card Number Section */}
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={formData.cardNumber}
+                        onChange={(e) => handleCardNumberChange(e.target.value)}
+                        className="w-full px-3 py-3 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-0 border-0"
+                        placeholder="1234 5678 9012 3456"
+                        maxLength={19}
+                      />
+                    </div>
+                    
+                    {/* Separator */}
+                    <div className="w-px bg-white/20"></div>
+                    
+                    {/* Expiry Date Section */}
+                    <div className="w-16">
+                      <input
+                        type="text"
+                        value={formData.expiryDate}
+                        onChange={(e) => handleExpiryDateChange(e.target.value)}
+                        className="w-full px-1 py-3 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-0 border-0 text-center"
+                        placeholder="MM/YY"
+                        maxLength={5}
+                      />
+                    </div>
+                    
+                    {/* Separator */}
+                    <div className="w-px bg-white/20"></div>
+                    
+                    {/* CSV Section */}
+                    <div className="w-12">
+                      <input
+                        type="text"
+                        value={formData.csv}
+                        onChange={(e) => setFormData(prev => ({ ...prev, csv: e.target.value }))}
+                        className="w-full px-1 py-3 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-0 border-0 text-center"
+                        placeholder="CVC"
+                        maxLength={4}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Start Free Trial Button */}
+              <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl text-lg">
+                START FREE TRIAL
+              </Button>
+
+              {/* Disclaimer */}
+              <div className="text-center">
+                <p className="text-white/60 text-xs leading-relaxed">
+                  We would not charge you unless you continue with the plan after September 21, 2025 and we will notify you before. 
+                  Also you can cancel anytime. <a href="#" className="text-cyan-400 hover:text-cyan-300 transition-colors">Terms & Conditions</a>
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
