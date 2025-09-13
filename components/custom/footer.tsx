@@ -1,8 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Footer() {
+  const pathname = usePathname();
+
+  // Hide footer on specific routes
+  const shouldHideFooter = pathname === "/mytx/create";
+
+  // Don't render footer on certain pages
+  if (shouldHideFooter) {
+    return null;
+  }
   const footerLinks = [
     { 
       name: "Make Money", 
