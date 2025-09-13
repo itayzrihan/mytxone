@@ -298,20 +298,27 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                 <div className="relative">
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl shadow-black/30"></div>
                   <div className="relative p-8 text-center space-y-6">
-                    {/* Logo/Avatar */}
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10"></div>
-                      <div className="relative w-20 h-20 mx-auto bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                        <span className="text-2xl font-bold text-white">
-                          {meetingData.title.charAt(0)}
-                        </span>
-                      </div>
+                    {/* Full-width Thumbnail */}
+                    <div className="relative aspect-video bg-gradient-to-br from-cyan-400/20 to-blue-600/20 rounded-t-xl overflow-hidden -mx-8 -mt-8 mb-6">
+                      <img 
+                        src={meetingData.thumbnailImage || "/images/tech-hub-thumbnail.jpg"} 
+                        alt={meetingData.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                     </div>
 
-                    {/* Title */}
-                    <h2 className="text-2xl font-bold text-white">
-                      {meetingData.title}
-                    </h2>
+                    {/* Title with Profile Picture */}
+                    <div className="flex items-center justify-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-bold text-white">
+                          {meetingData.instructor.charAt(0)}
+                        </span>
+                      </div>
+                      <h2 className="text-2xl font-bold text-white">
+                        {meetingData.title}
+                      </h2>
+                    </div>
                     <p className="text-sm text-zinc-400">
                       {meetingData.subtitle}
                     </p>
@@ -340,7 +347,10 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                     {/* Powered by */}
                     <div className="flex items-center justify-center space-x-2 text-sm text-zinc-500">
                       <span>Powered by</span>
-                      <span className="font-semibold text-zinc-400">{meetingData.poweredBy}</span>
+                      <span className="font-semibold">
+                        <span className="text-cyan-400">MYT</span>
+                        <span className="text-white">X</span>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -580,20 +590,27 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
               <div className="relative">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl shadow-black/30"></div>
                 <div className="relative p-8 text-center space-y-6">
-                  {/* Logo/Avatar */}
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10"></div>
-                    <div className="relative w-20 h-20 mx-auto bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">
-                        {meetingData.title.charAt(0)}
-                      </span>
-                    </div>
+                  {/* Full-width Thumbnail */}
+                  <div className="relative aspect-video bg-gradient-to-br from-cyan-400/20 to-blue-600/20 rounded-t-xl overflow-hidden -mx-8 -mt-8 mb-6">
+                    <img 
+                      src={meetingData.thumbnailImage || "/images/tech-hub-thumbnail.jpg"} 
+                      alt={meetingData.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                   </div>
 
-                  {/* Title */}
-                  <h2 className="text-2xl font-bold text-white">
-                    {meetingData.title}
-                  </h2>
+                  {/* Title with Profile Picture */}
+                  <div className="flex items-center justify-center space-x-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-white">
+                        {meetingData.instructor.charAt(0)}
+                      </span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">
+                      {meetingData.title}
+                    </h2>
+                  </div>
                   <p className="text-sm text-zinc-400">
                     {meetingData.subtitle}
                   </p>
@@ -622,7 +639,10 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                   {/* Powered by */}
                   <div className="flex items-center justify-center space-x-2 text-sm text-zinc-500">
                     <span>Powered by</span>
-                    <span className="font-semibold text-zinc-400">{meetingData.poweredBy}</span>
+                    <span className="font-semibold">
+                      <span className="text-cyan-400">MYT</span>
+                      <span className="text-white">X</span>
+                    </span>
                   </div>
                 </div>
               </div>
