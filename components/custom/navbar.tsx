@@ -1,20 +1,30 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-
-import { auth } from "@/app/(auth)/auth";
+import { useState } from "react";
 
 import { History } from "./history";
 import { SlashIcon } from "./icons";
 import { UserMenu } from "./user-menu";
 import { Button } from "../ui/button";
+import { NavbarSearch, MobileSearchOverlay } from "./navbar-search";
 
-export const Navbar = async () => {
-  let session = await auth();
+interface NavbarProps {
+  session?: any;
+}
+
+export const Navbar = ({ session }: NavbarProps) => {
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+
+  const handleMobileSearchToggle = (isOpen: boolean) => {
+    setIsMobileSearchOpen(isOpen);
+  };
 
   return (
     <>
       <div className="bg-black fixed top-0 left-0 w-full py-2 z-30 border-b border-white/10 shadow-sm shadow-cyan-400/20">
-        <div className="max-w-6xl mx-auto px-4 justify-between flex flex-row items-center">
+        <div className="max-w-6xl mx-auto px-4 relative flex flex-row items-center">
           <div className="flex flex-row gap-3 items-center">
             <History user={session?.user} />
             <div className="flex flex-row gap-2 items-center">
@@ -34,17 +44,35 @@ export const Navbar = async () => {
             </div>
           </div>
 
-          {session ? (
-            <UserMenu session={session} />
-          ) : (
-            <Link href="/login" 
-              className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 bg-cyan-400 text-black shadow-lg shadow-cyan-400/30 hover:bg-cyan-300"
-            >
-              Login
-            </Link>
-          )}
+          {/* Desktop search - Absolutely centered */}
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block">
+            <NavbarSearch onMobileSearchToggle={handleMobileSearchToggle} />
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            {/* Mobile Search Icon */}
+            <div className="md:hidden">
+              <NavbarSearch onMobileSearchToggle={handleMobileSearchToggle} />
+            </div>
+            
+            {session ? (
+              <UserMenu session={session} />
+            ) : (
+              <Link href="/login" 
+                className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 bg-cyan-400 text-black shadow-lg shadow-cyan-400/30 hover:bg-cyan-300"
+              >
+                Login
+              </Link>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Mobile Search Overlay */}
+      <MobileSearchOverlay 
+        isOpen={isMobileSearchOpen}
+        onClose={() => setIsMobileSearchOpen(false)}
+      />
     </>
   );
 };

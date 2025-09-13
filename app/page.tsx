@@ -2,6 +2,7 @@ import { auth } from "@/app/(auth)/auth";
 import { generateUUID } from "@/lib/utils";
 import { CategoryCapsules } from "@/components/custom/category-capsules";
 import { MeetingCards } from "@/components/custom/meeting-cards";
+import { SearchBar } from "@/components/custom/search-bar";
 
 export default async function Page() {
   const session = await auth();
@@ -19,29 +20,7 @@ export default async function Page() {
         
         {/* Search Bar with Glass Morphism */}
         <div className="mb-8">
-          <div className="relative max-w-md mx-auto">
-            <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl shadow-black/20"></div>
-            <div className="relative flex items-center">
-              <svg
-                className="absolute left-4 h-5 w-5 text-zinc-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search for people or meetings..."
-                className="w-full bg-transparent text-white placeholder-zinc-400 pl-12 pr-4 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all duration-300"
-              />
-            </div>
-          </div>
+          <SearchBar variant="full" />
         </div>
         
         <CategoryCapsules />

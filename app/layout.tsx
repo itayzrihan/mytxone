@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { Toaster } from "sonner";
 
 import BackgroundGlow from "@/components/custom/BackgroundGlow";
-import { Navbar } from "@/components/custom/navbar";
+import { Navbar } from "@/components/custom/navbar-wrapper";
 import { ThemeProvider } from "@/components/custom/theme-provider";
 
 import "./globals.css";
