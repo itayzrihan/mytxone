@@ -70,9 +70,9 @@ export function CategoryCapsules() {
   return (
     <div className="mb-8">
       {/* Category Capsules */}
-      <div className="w-screen relative -mx-4">
+      <div className="w-screen relative -mx-4 md:w-full md:mx-0">
         {/* Horizontally scrollable container */}
-        <div className="overflow-x-auto scrollbar-hide px-4">
+        <div className="overflow-x-auto scrollbar-hide px-4 md:px-0">
           <div className="flex flex-col gap-3 min-w-fit pb-2">
             {/* First Row */}
             <div className="flex gap-3 min-w-fit">
@@ -140,7 +140,7 @@ export function CategoryCapsules() {
 
       {/* Language Dropdown - Below capsules container */}
       {showLanguages && (
-        <div className="absolute mt-2 mx-4 z-50">
+        <div className="absolute mt-2 mx-4 md:mx-0 z-50">
           <div 
             className="bg-black/80 backdrop-blur-md rounded-xl border border-white/10 shadow-2xl max-h-80 overflow-hidden w-fit min-w-[120px] max-w-[200px]"
             onClick={(e) => e.stopPropagation()}

@@ -26,8 +26,9 @@ export const Navbar = async () => {
             <div className="text-zinc-500">
               <SlashIcon size={16} />
             </div>
-            <div className="text-sm dark:text-zinc-300 truncate w-28 md:w-fit">
-              Next.js Gemini Chatbot
+            <div className="text-lg font-bold">
+              <span className="text-cyan-400">MYT</span>
+              <span className="text-white">X</span>
             </div>
           </div>
         </div>
@@ -35,9 +36,11 @@ export const Navbar = async () => {
         {session ? (
           <UserMenu session={session} />
         ) : (
-          <Button className="py-1.5 px-2 h-fit font-normal text-white" asChild>
-            <Link href="/login">Login</Link>
-          </Button>
+          <Link href="/login" 
+            className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 bg-cyan-400 text-black shadow-lg shadow-cyan-400/30 hover:bg-cyan-300"
+          >
+            Login
+          </Link>
         )}
       </div>
     </>
