@@ -721,3 +721,41 @@ export const InfographicIcon = ({ size = 16 }: { size?: number }) => {
     </svg>
   );
 };
+
+export const CalendarIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width={size}
+      style={{ color: "currentcolor" }}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M4.5 1V2.5H3.5C2.67157 2.5 2 3.17157 2 4V13C2 13.8284 2.67157 14.5 3.5 14.5H12.5C13.3284 14.5 14 13.8284 14 13V4C14 3.17157 13.3284 2.5 12.5 2.5H11.5V1H10V2.5H6V1H4.5ZM3.5 4H12.5V6H3.5V4ZM3.5 7.5H12.5V13H3.5V7.5Z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  );
+};
+
+export const UsersIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width={size}
+      style={{ color: "currentcolor" }}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5.5 4.5C5.5 5.60457 4.60457 6.5 3.5 6.5C2.39543 6.5 1.5 5.60457 1.5 4.5C1.5 3.39543 2.39543 2.5 3.5 2.5C4.60457 2.5 5.5 3.39543 5.5 4.5ZM0 11.5C0 9.84315 1.34315 8.5 3 8.5H4C5.65685 8.5 7 9.84315 7 11.5V12.5H0V11.5ZM12.5 6.5C11.3954 6.5 10.5 5.60457 10.5 4.5C10.5 3.39543 11.3954 2.5 12.5 2.5C13.6046 2.5 14.5 3.39543 14.5 4.5C14.5 5.60457 13.6046 6.5 12.5 6.5ZM9 11.5C9 9.84315 10.3431 8.5 12 8.5H13C14.6569 8.5 16 9.84315 16 11.5V12.5H9V11.5Z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  );
+};

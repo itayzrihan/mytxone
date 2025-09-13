@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { HorizontalScrollGallery } from "./horizontal-scroll-gallery";
 
 interface CategoryCapsuleProps {}
 
@@ -9,11 +10,6 @@ export function CategoryCapsules() {
   const [showLanguages, setShowLanguages] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [languageSearch, setLanguageSearch] = useState('');
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const categories = [
     { name: 'Business', emoji: '💼' },
@@ -72,167 +68,74 @@ export function CategoryCapsules() {
     setLanguageSearch('');
   };
 
-  // Check scroll position and update scroll indicators
-  const checkScrollPosition = () => {
-    if (!scrollContainerRef.current) return;
-    
-    const container = scrollContainerRef.current;
-    const { scrollLeft, scrollWidth, clientWidth } = container;
-    
-    setCanScrollLeft(scrollLeft > 0);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-  };
-
-  // Auto scroll function - only for desktop (non-touch devices)
-  const startAutoScroll = (direction: 'left' | 'right') => {
-    // Check if device supports touch (mobile)
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-      return; // Don't auto-scroll on touch devices
-    }
-    
-    if (!scrollContainerRef.current) return;
-    
-    scrollIntervalRef.current = setInterval(() => {
-      if (!scrollContainerRef.current) return;
-      
-      const scrollAmount = direction === 'left' ? -3 : 3;
-      scrollContainerRef.current.scrollLeft += scrollAmount;
-    }, 16); // ~60fps
-  };
-
-  const stopAutoScroll = () => {
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-      scrollIntervalRef.current = null;
-    }
-  };
-
-  // Check scroll position on mount and scroll
-  useEffect(() => {
-    checkScrollPosition();
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', checkScrollPosition);
-      return () => container.removeEventListener('scroll', checkScrollPosition);
-    }
-  }, []);
-
-  // Cleanup scroll interval on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div className="mb-8">
       {/* Category Capsules */}
-      <div className="w-screen relative -mx-4 md:w-full md:mx-0">
-        {/* Left Scroll Overlay */}
-        <div 
-          className={`absolute left-0 md:left-0 top-0 h-full w-6 md:w-8 z-10 pointer-events-none md:pointer-events-auto rounded-l-xl bg-white/5 backdrop-blur-md border-l border-t border-b border-white/10 transition-opacity duration-300 ${
-            canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          onMouseEnter={() => startAutoScroll('left')}
-          onMouseLeave={stopAutoScroll}
-          onTouchStart={(e) => e.preventDefault()}
-          onTouchEnd={(e) => e.preventDefault()}
-        >
-          <div className="flex items-center justify-center h-full">
-            <svg className="w-3 md:w-4 h-3 md:h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </div>
+      <HorizontalScrollGallery 
+        className="mb-8"
+        itemsClassName="flex-col gap-3"
+      >
+        {/* First Row */}
+        <div className="flex gap-3 min-w-fit">
+          {/* All Category */}
+          <button
+            onClick={() => handleCategoryClick('all')}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 ${
+              selectedCategories.includes('all')
+                ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/30'
+                : 'bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10'
+            }`}
+          >
+            🌟 All
+          </button>
+
+          {/* First Row Categories */}
+          {firstRowCategories.map((category) => (
+            <button
+              key={category.name}
+              onClick={() => handleCategoryClick(category.name)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 ${
+                selectedCategories.includes(category.name)
+                  ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/30'
+                  : 'bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10'
+              }`}
+            >
+              <span>{category.emoji}</span>
+              <span>{category.name}</span>
+            </button>
+          ))}
         </div>
 
-        {/* Right Scroll Overlay */}
-        <div 
-          className={`absolute right-0 md:right-0 top-0 h-full w-6 md:w-8 z-10 pointer-events-none md:pointer-events-auto rounded-r-xl bg-white/5 backdrop-blur-md border-r border-t border-b border-white/10 transition-opacity duration-300 ${
-            canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          onMouseEnter={() => startAutoScroll('right')}
-          onMouseLeave={stopAutoScroll}
-          onTouchStart={(e) => e.preventDefault()}
-          onTouchEnd={(e) => e.preventDefault()}
-        >
-          <div className="flex items-center justify-center h-full">
-            <svg className="w-3 md:w-4 h-3 md:h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+        {/* Second Row */}
+        <div className="flex gap-3 min-w-fit">
+          {/* Language Selector */}
+          <div className="relative">
+            <button
+              onClick={handleLanguageToggle}
+              className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10 flex items-center gap-1 whitespace-nowrap"
+              id="language-selector-button"
+            >
+              🌍{selectedLanguage && ` ${selectedLanguage}`}
+            </button>
           </div>
+
+          {/* Second Row Categories */}
+          {secondRowCategories.map((category) => (
+            <button
+              key={category.name}
+              onClick={() => handleCategoryClick(category.name)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 ${
+                selectedCategories.includes(category.name)
+                  ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/30'
+                  : 'bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10'
+              }`}
+            >
+              <span>{category.emoji}</span>
+              <span>{category.name}</span>
+            </button>
+          ))}
         </div>
-
-        {/* Horizontally scrollable container */}
-        <div 
-          ref={scrollContainerRef}
-          className="overflow-x-auto scrollbar-hide px-4 md:px-0 rounded-xl"
-        >
-          <div className="flex flex-col gap-3 min-w-fit pb-2">
-            {/* First Row */}
-            <div className="flex gap-3 min-w-fit">
-              {/* All Category */}
-              <button
-                onClick={() => handleCategoryClick('all')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 ${
-                  selectedCategories.includes('all')
-                    ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/30'
-                    : 'bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10'
-                }`}
-              >
-                🌟 All
-              </button>
-
-              {/* First Row Categories */}
-              {firstRowCategories.map((category) => (
-                <button
-                  key={category.name}
-                  onClick={() => handleCategoryClick(category.name)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 ${
-                    selectedCategories.includes(category.name)
-                      ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/30'
-                      : 'bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10'
-                  }`}
-                >
-                  <span>{category.emoji}</span>
-                  <span>{category.name}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Second Row */}
-            <div className="flex gap-3 min-w-fit">
-              {/* Language Selector */}
-              <div className="relative">
-                <button
-                  onClick={handleLanguageToggle}
-                  className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10 flex items-center gap-1 whitespace-nowrap"
-                  id="language-selector-button"
-                >
-                  🌍{selectedLanguage && ` ${selectedLanguage}`}
-                </button>
-              </div>
-
-              {/* Second Row Categories */}
-              {secondRowCategories.map((category) => (
-                <button
-                  key={category.name}
-                  onClick={() => handleCategoryClick(category.name)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 ${
-                    selectedCategories.includes(category.name)
-                      ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/30'
-                      : 'bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10'
-                  }`}
-                >
-                  <span>{category.emoji}</span>
-                  <span>{category.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      </HorizontalScrollGallery>
 
       {/* Language Dropdown - Below capsules container */}
       {showLanguages && (

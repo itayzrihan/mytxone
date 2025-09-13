@@ -14,6 +14,7 @@ import { fetcher, getTitleFromChat } from "@/lib/utils";
 import { useAuth } from "./auth-context";
 
 import {
+  CalendarIcon,
   InfoIcon,
   InfographicIcon,
   MenuIcon,
@@ -50,6 +51,9 @@ export const History = ({ user }: { user: User | undefined }) => {
   const { id } = useParams();
   const pathname = usePathname();
   const { openAuthModal } = useAuth();
+
+  // Check if the current path is in the aichat section
+  const isInAiChatSection = pathname === '/aichat' || pathname.startsWith('/aichat/');
 
   const [isHistoryVisible, setIsHistoryVisible] = useState(false);
   const {
@@ -130,11 +134,15 @@ export const History = ({ user }: { user: User | undefined }) => {
 
           <div className="text-sm flex flex-row items-center justify-between">
             <div className="flex flex-row gap-2">
-              <div className="text-cyan-300 font-medium">History</div>
-
-              <div className="text-zinc-400">
-                {history === undefined ? "loading" : history.length} chats
-              </div>
+              <div className="text-cyan-300 font-medium">Navigation</div>
+              {isInAiChatSection && (
+                <>
+                  <div className="text-cyan-300 font-medium">• History</div>
+                  <div className="text-zinc-400">
+                    {history === undefined ? "loading" : history.length} chats
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -151,6 +159,15 @@ export const History = ({ user }: { user: User | undefined }) => {
                   </Link>
                 </Button>
                 <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/mytx/create">
+                    <div>Create new meeting</div>
+                    <CalendarIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
                   className="font-normal text-sm flex flex-row justify-between text-white bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300"
                   asChild
                 >
@@ -162,51 +179,52 @@ export const History = ({ user }: { user: User | undefined }) => {
               </>
             )}
 
-            <div className="flex flex-col overflow-y-scroll p-1 h-[calc(100dvh-124px)]">
-              {!user ? (
-                <div className="text-zinc-400 h-dvh w-full flex flex-col justify-center items-center text-sm gap-4">
-                  <div className="flex flex-row gap-2 items-center">
-                    <InfoIcon />
-                    <div>Login to save and revisit previous chats!</div>
-                  </div>
-                  <div className="flex flex-col gap-2 w-full max-w-xs">
-                    <Button
-                      className="font-normal text-sm text-white bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300"
-                      onClick={() => openAuthModal("login")}
-                    >
-                      Sign In
-                    </Button>
-                    <Button
-                      className="font-normal text-sm text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-                      onClick={() => openAuthModal("register")}
-                    >
-                      Sign Up
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-
-              {!isLoading && history?.length === 0 && user ? (
-                <div className="text-zinc-400 h-dvh w-full flex flex-row justify-center items-center text-sm gap-2">
-                  <InfoIcon />
-                  <div>No chats found</div>
-                </div>
-              ) : null}
-
-              {isLoading && user ? (
-                <div className="flex flex-col">
-                  {[44, 32, 28, 52].map((item) => (
-                    <div key={item} className="p-2 my-[2px]">
-                      <div
-                        className={`w-${item} h-[20px] rounded-md bg-white/10 animate-pulse`}
-                      />
+            {isInAiChatSection && (
+              <div className="flex flex-col overflow-y-scroll p-1 h-[calc(100dvh-124px)]">
+                {!user ? (
+                  <div className="text-zinc-400 h-dvh w-full flex flex-col justify-center items-center text-sm gap-4">
+                    <div className="flex flex-row gap-2 items-center">
+                      <InfoIcon />
+                      <div>Login to save and revisit previous chats!</div>
                     </div>
-                  ))}
-                </div>
-              ) : null}
+                    <div className="flex flex-col gap-2 w-full max-w-xs">
+                      <Button
+                        className="font-normal text-sm text-white bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300"
+                        onClick={() => openAuthModal("login")}
+                      >
+                        Sign In
+                      </Button>
+                      <Button
+                        className="font-normal text-sm text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                        onClick={() => openAuthModal("register")}
+                      >
+                        Sign Up
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
 
-              {history &&
-                history.map((chat) => (
+                {!isLoading && history?.length === 0 && user ? (
+                  <div className="text-zinc-400 h-dvh w-full flex flex-row justify-center items-center text-sm gap-2">
+                    <InfoIcon />
+                    <div>No chats found</div>
+                  </div>
+                ) : null}
+
+                {isLoading && user ? (
+                  <div className="flex flex-col">
+                    {[44, 32, 28, 52].map((item) => (
+                      <div key={item} className="p-2 my-[2px]">
+                        <div
+                          className={`w-${item} h-[20px] rounded-md bg-white/10 animate-pulse`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {history &&
+                  history.map((chat) => (
                   <div
                     key={chat.id}
                     className={cx(
@@ -256,7 +274,8 @@ export const History = ({ user }: { user: User | undefined }) => {
                     </DropdownMenu>
                   </div>
                 ))}
-            </div>
+              </div>
+            )}
           </div>
         </SheetContent>
       </Sheet>

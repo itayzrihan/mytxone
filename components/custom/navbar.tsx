@@ -40,11 +40,10 @@ export const Navbar = ({ session }: NavbarProps) => {
           <div className="flex flex-row gap-3 items-center">
             <History user={session?.user} />
             <div className="flex flex-row gap-2 items-center">
-
-              <div className="text-lg font-bold">
+              <Link href="/" className="text-lg font-bold hover:opacity-80 transition-opacity duration-200">
                 <span className="text-cyan-400">MYT</span>
                 <span className="text-white">X</span>
-              </div>
+              </Link>
             </div>
           </div>
 
