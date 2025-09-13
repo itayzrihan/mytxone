@@ -101,6 +101,10 @@
     @apply border-border;
   }
 
+  html {
+    background-color: #000000; /* Immediate black background fallback */
+  }
+
   body {
     @apply bg-transparent text-foreground;
   }

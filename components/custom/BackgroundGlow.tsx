@@ -5,22 +5,16 @@ import React from "react";
 const BackgroundGlow = () => {
   return (
     <>
-      <div className="background-glow">
+      <div 
+        className="fixed inset-0 pointer-events-none overflow-hidden"
+        style={{
+          backgroundColor: '#000000',
+          zIndex: -1
+        }}
+      >
         <div className="gradient" />
       </div>
       <style jsx>{`
-        .background-glow {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          width: 100vw;
-          height: 100vh;
-          transform: translate(-50%, -50%);
-          z-index: -1; /* Behind your content */
-          pointer-events: none;
-          overflow: hidden;
-          background-color: black; /* Adding black background */
-        }
         .gradient {
           position: absolute;
           top: 50%;
@@ -28,14 +22,13 @@ const BackgroundGlow = () => {
           width: 300px;
           height: 300px;
           filter: blur(50px);
-          background-image: linear-gradient(45deg,rgb(0, 98, 246, 0.8),rgb(15, 93, 105, 0.8),rgb(33, 35, 148, 0.9));
+          background-image: linear-gradient(45deg,rgba(0, 98, 246, 0.8),rgba(15, 93, 105, 0.8),rgba(33, 35, 148, 0.9));
           border-radius: 30% 70% 70% 30%/30% 30% 70% 70%;
-          /* Center the gradient */
           transform: translate(-50%, -50%);
           animation: 
             rotate 10s cubic-bezier(0.8, 0.2, 0.2, 0.8) alternate infinite,
-            breathe 200s ease-in-out infinite; /* Add breathing animation */
-          mix-blend-mode: lighten; /* This helps the glow blend with the dark background */
+            breathe 200s ease-in-out infinite;
+          mix-blend-mode: lighten;
         }
         @keyframes rotate {
           0% {
@@ -45,7 +38,6 @@ const BackgroundGlow = () => {
             transform: translate(-50%, -50%) rotate(360deg) scale(1);
           }
         }
-        /* New breathing animation */
         @keyframes breathe {
           0%, 100% {
             transform: translate(-50%, -50%) scale(1);
