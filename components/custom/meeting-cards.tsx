@@ -107,7 +107,7 @@ export function MeetingCards() {
                   <div className="text-white/70 text-xl">👤</div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-semibold text-base leading-tight group-hover:text-cyan-400 transition-colors duration-300">
+                  <h3 className="text-white font-semibold text-lg leading-tight group-hover:text-cyan-400 transition-colors duration-300">
                     {meeting.title}
                   </h3>
                 </div>
@@ -115,7 +115,7 @@ export function MeetingCards() {
 
               {/* Description */}
               <div className="mb-4 h-20 overflow-hidden">
-                <p className="text-zinc-400 text-sm leading-relaxed">
+                <p className="text-zinc-300 text-base leading-relaxed">
                   {meeting.description.length > 120 
                     ? `${meeting.description.substring(0, 120)}...` 
                     : meeting.description}
