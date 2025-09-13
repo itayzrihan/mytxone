@@ -1,6 +1,7 @@
 import { auth } from "@/app/(auth)/auth";
 import { generateUUID } from "@/lib/utils";
 import { CategoryCapsules } from "@/components/custom/category-capsules";
+import { MeetingCards } from "@/components/custom/meeting-cards";
 
 export default async function Page() {
   const session = await auth();
@@ -44,7 +45,14 @@ export default async function Page() {
         </div>
         
         <CategoryCapsules />
-        
+      </div>
+      
+      {/* Meeting Cards - Full width on desktop */}
+      <div className="w-full max-w-6xl mx-auto px-4">
+        <MeetingCards />
+      </div>
+      
+      <div className="max-w-2xl mx-auto text-center">
         <p className="text-lg text-zinc-300 mb-8">
           Your intelligent assistant for chat, tasks, flights, and more
         </p>
