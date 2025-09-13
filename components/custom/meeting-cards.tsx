@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface MeetingCard {
   id: string;
   thumbnail: string;
@@ -13,63 +15,58 @@ interface MeetingCard {
 interface MeetingCardsProps {}
 
 export function MeetingCards() {
-  // Sample meeting data
-  const meetings: MeetingCard[] = [
-    {
-      id: "1",
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Generate 37 sample meeting cards (30 for page 1, 7 for page 2)
+  const generateMeetings = (): MeetingCard[] => {
+    const meetingTitles = [
+      "Mandarin Blueprint Lite", "Mellovator Fam University", "Tech Innovation Hub", 
+      "Creative Writing Circle", "Startup Founders Network", "Digital Marketing Masters",
+      "Photography Enthusiasts", "Fitness Community", "Cooking Masterclass", "Book Club Society",
+      "Music Production Lab", "Web Development Bootcamp", "Data Science Forum", "AI & ML Collective",
+      "Graphic Design Studio", "Travel Adventures Group", "Investment Strategies", "Mindfulness Circle",
+      "Gaming Community", "Language Exchange", "Art & Creativity Hub", "Business Networking",
+      "Cryptocurrency Traders", "Sustainable Living", "Mental Health Support", "Career Development",
+      "Real Estate Investors", "Content Creators", "Freelancer Network", "Remote Work Community",
+      "Film Making Society", "Public Speaking Club", "Yoga & Wellness", "Pet Lovers United",
+      "Food & Nutrition", "Home Gardening", "Personal Finance"
+    ];
+
+    const descriptions = [
+      "Join our amazing community and connect with like-minded individuals who share your passion.",
+      "A supportive environment for learning, growing, and achieving your goals together.",
+      "Exclusive access to expert knowledge, resources, and networking opportunities.",
+      "Transform your skills with hands-on workshops and mentorship from industry leaders.",
+      "Connect with professionals and enthusiasts in a vibrant, engaging community.",
+      "Master new skills with comprehensive courses and real-world application projects."
+    ];
+
+    return Array.from({ length: 37 }, (_, i) => ({
+      id: (i + 1).toString(),
       thumbnail: "/images/placeholder-thumbnail.jpg",
       userImage: "/images/placeholder-user.jpg",
-      title: "Mandarin Blueprint Lite",
-      description: "A community for anyone with a dream of speaking fluent Mandarin. Join now for free courses, downloads, live events, and more resources to accelerate your language learning journey.",
-      attendees: 22200,
-      price: "Free"
-    },
-    {
-      id: "2",
-      thumbnail: "/images/placeholder-thumbnail.jpg",
-      userImage: "/images/placeholder-user.jpg",
-      title: "Mellovator Fam University",
-      description: "Upgrade your circle with Mellovator Fam University! Real support. Real encouragement. Real transformation. The community that helps you level up every aspect of your life.",
-      attendees: 204,
-      price: "$9/month"
-    },
-    {
-      id: "3",
-      thumbnail: "/images/placeholder-thumbnail.jpg",
-      userImage: "/images/placeholder-user.jpg",
-      title: "Tech Innovation Hub",
-      description: "Join fellow tech enthusiasts and innovators in our weekly meetups. Share ideas, collaborate on projects, and build the future together with like-minded professionals.",
-      attendees: 1500,
-      price: "$15/month"
-    },
-    {
-      id: "4",
-      thumbnail: "/images/placeholder-thumbnail.jpg",
-      userImage: "/images/placeholder-user.jpg",
-      title: "Creative Writing Circle",
-      description: "A supportive community for aspiring and established writers. Share your work, get feedback, participate in writing challenges, and improve your craft together.",
-      attendees: 856,
-      price: "$12/month"
-    },
-    {
-      id: "5",
-      thumbnail: "/images/placeholder-thumbnail.jpg",
-      userImage: "/images/placeholder-user.jpg",
-      title: "Startup Founders Network",
-      description: "Connect with fellow entrepreneurs, share experiences, and get advice from successful founders. Monthly networking events and mentorship opportunities included.",
-      attendees: 2400,
-      price: "$25/month"
-    },
-    {
-      id: "6",
-      thumbnail: "/images/placeholder-thumbnail.jpg",
-      userImage: "/images/placeholder-user.jpg",
-      title: "Digital Marketing Masters",
-      description: "Master the art of digital marketing with expert-led workshops, case studies, and hands-on projects. From SEO to social media, we cover it all.",
-      attendees: 3200,
-      price: "$20/month"
+      title: meetingTitles[i % meetingTitles.length],
+      description: descriptions[i % descriptions.length],
+      attendees: Math.floor(Math.random() * 5000) + 100,
+      price: Math.random() > 0.3 ? `$${Math.floor(Math.random() * 50) + 5}/month` : "Free"
+    }));
+  };
+
+  const allMeetings = generateMeetings();
+  
+  // Pagination logic - Fixed calculations
+  const totalPages = Math.ceil((allMeetings.length - 30) / 7) + 1; // Always 2 pages for 30 cards (30 + 7 = 37 total)
+  
+  const getCurrentPageMeetings = () => {
+    if (currentPage === 1) {
+      return allMeetings.slice(0, 30);
+    } else {
+      const startIndex = 30 + (currentPage - 2) * 7;
+      return allMeetings.slice(startIndex, startIndex + 7);
     }
-  ];
+  };
+
+  const currentMeetings = getCurrentPageMeetings();
 
   const formatAttendees = (count: number): string => {
     if (count >= 1000) {
@@ -78,11 +75,23 @@ export function MeetingCards() {
     return count.toString();
   };
 
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   return (
     <div className="mt-8 mb-8">
       {/* Meeting Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {meetings.map((meeting) => (
+        {currentMeetings.map((meeting: MeetingCard) => (
           <div
             key={meeting.id}
             className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer group shadow-lg shadow-black/20"
@@ -124,7 +133,7 @@ export function MeetingCards() {
 
               {/* Footer: Attendees and Price */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-zinc-500 text-sm">
+                <div className="flex items-center gap-1.5 text-zinc-300 text-sm">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
@@ -137,6 +146,37 @@ export function MeetingCards() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center gap-4 mt-8">
+        <button
+          onClick={handlePreviousPage}
+          disabled={currentPage === 1}
+          className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg px-6 py-2 
+                     text-white font-medium transition-all duration-300 
+                     hover:bg-white/10 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed
+                     hover:shadow-lg hover:shadow-white/5"
+        >
+          Previous
+        </button>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-white/60 text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+        </div>
+
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages}
+          className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg px-6 py-2 
+                     text-white font-medium transition-all duration-300 
+                     hover:bg-white/10 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed
+                     hover:shadow-lg hover:shadow-white/5"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
