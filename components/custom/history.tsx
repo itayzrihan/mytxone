@@ -147,36 +147,37 @@ export const History = ({ user }: { user: User | undefined }) => {
           </div>
 
           <div className="mt-10 flex flex-col">
+            {/* Always visible buttons */}
+            <Button
+              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+              asChild
+            >
+              <Link href="/infographic">
+                <div>Generate new infographic</div>
+                <InfographicIcon size={14} />
+              </Link>
+            </Button>
+            <Button
+              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+              asChild
+            >
+              <Link href="/mytx/create">
+                <div>Create new meeting</div>
+                <CalendarIcon size={14} />
+              </Link>
+            </Button>
+            
+            {/* User-only buttons */}
             {user && (
-              <>
-                <Button
-                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-                  asChild
-                >
-                  <Link href="/infographic">
-                    <div>Generate new infographic</div>
-                    <InfographicIcon size={14} />
-                  </Link>
-                </Button>
-                <Button
-                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-                  asChild
-                >
-                  <Link href="/mytx/create">
-                    <div>Create new meeting</div>
-                    <CalendarIcon size={14} />
-                  </Link>
-                </Button>
-                <Button
-                  className="font-normal text-sm flex flex-row justify-between text-white bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300"
-                  asChild
-                >
-                  <Link href="/aichat">
-                    <div>Start a new chat</div>
-                    <PencilEditIcon size={14} />
-                  </Link>
-                </Button>
-              </>
+              <Button
+                className="font-normal text-sm flex flex-row justify-between text-white bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300"
+                asChild
+              >
+                <Link href="/aichat">
+                  <div>Start a new chat</div>
+                  <PencilEditIcon size={14} />
+                </Link>
+              </Button>
             )}
 
             {isInAiChatSection && (
