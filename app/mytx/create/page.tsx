@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/components/custom/auth-context";
 
 // Sample thumbnails for the carousel
 const carouselThumbnails = [
@@ -51,12 +52,87 @@ export default function CreateMeetingPage() {
   const [selectedPlan, setSelectedPlan] = useState('basic'); // 'basic' or 'pro'
   const [showModal, setShowModal] = useState(false);
   const [modalPlan, setModalPlan] = useState('basic'); // Plan selected in modal
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { openAuthModal, isAuthModalOpen } = useAuth();
   const [formData, setFormData] = useState({
     communityName: '',
     cardNumber: '',
     expiryDate: '',
     csv: ''
   });
+
+  // Check user authentication status - only once on mount
+  useEffect(() => {
+    let isMounted = true;
+    
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/session', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        if (response.ok && isMounted) {
+          const sessionData = await response.json();
+          setUser(sessionData?.user || null);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkAuth();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Handle create meeting button click - simplified
+  const handleCreateMeeting = () => {
+    if (!user) {
+      openAuthModal('login');
+    } else {
+      setShowPricing(true);
+    }
+  };
+
+  // Simple check after auth modal closes - no polling
+  useEffect(() => {
+    if (!isAuthModalOpen && !user) {
+      const recheckAuth = async () => {
+        try {
+          const response = await fetch('/api/auth/session', {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          });
+          if (response.ok) {
+            const sessionData = await response.json();
+            if (sessionData?.user) {
+              setUser(sessionData.user);
+              // Don't automatically show pricing, let user click again
+            }
+          }
+        } catch (error) {
+          // Silent fail
+        }
+      };
+      
+      const timeoutId = setTimeout(recheckAuth, 2000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isAuthModalOpen]);
 
   // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -116,9 +192,95 @@ export default function CreateMeetingPage() {
     setFormData(prev => ({ ...prev, cardNumber: formatted }));
   };
 
+  // PayPal Integration Effect
+  useEffect(() => {
+    if (showModal && typeof window !== 'undefined') {
+      // Load PayPal SDK dynamically
+      const script = document.createElement('script');
+      script.src = modalPlan === 'basic' 
+        ? "https://www.paypal.com/sdk/js?client-id=ARMvBbzMghnZIpuJv0MUfhxI2cAMK8-Bhk-DIganTEWt1qJRbFCPuQx6VKZcKahdjOooF9NOz7KTL5vy&vault=true&intent=subscription"
+        : "https://www.paypal.com/sdk/js?client-id=AfpHnFO-NEeZ8gF4IaICl8rjlpEw7WNeUKkPcpMvbQ1V3cgjzJjAsO-V2JA4XLRiUiJE5Ch0eLClAPhv&vault=true&intent=subscription";
+      
+      script.onload = () => {
+        // Initialize PayPal button
+        const containerId = modalPlan === 'basic' 
+          ? 'paypal-button-container-P-5LP69495C05013828NDDAIUY'
+          : 'paypal-button-container-P-59286886LU147733XNDDAKDQ';
+        
+        const planId = modalPlan === 'basic' 
+          ? 'P-5LP69495C05013828NDDAIUY'
+          : 'P-59286886LU147733XNDDAKDQ';
+
+        // Clear existing button
+        const container = document.getElementById(containerId);
+        if (container) {
+          container.innerHTML = '';
+          
+          // Check if required fields are filled
+          const isFormValid = user?.email && formData.communityName;
+          
+          if (!isFormValid) {
+            container.innerHTML = '<div class="text-center py-4 text-gray-500 text-sm">Please fill in all required fields above</div>';
+            return;
+          }
+          
+          // Render PayPal button
+          (window as any).paypal.Buttons({
+            style: {
+              shape: 'pill',
+              color: 'blue',
+              layout: 'vertical',
+              label: 'subscribe'
+            },
+            createSubscription: function(data: any, actions: any) {
+              return actions.subscription.create({
+                plan_id: planId,
+                custom_id: user?.email, // Store email as custom ID for tracking
+                subscriber: {
+                  email_address: user?.email,
+                  name: {
+                    given_name: formData.communityName || 'Community Admin'
+                  }
+                },
+                application_context: {
+                  brand_name: 'MYTX',
+                  user_action: 'SUBSCRIBE_NOW'
+                }
+              });
+            },
+            onApprove: function(data: any, actions: any) {
+              alert(`Subscription created: ${data.subscriptionID}`);
+              // You can add success handling here
+              setShowModal(false);
+            }
+          }).render(`#${containerId}`);
+        }
+      };
+
+      document.head.appendChild(script);
+
+      // Cleanup function
+      return () => {
+        if (document.head.contains(script)) {
+          document.head.removeChild(script);
+        }
+      };
+    }
+  }, [showModal, modalPlan, user?.email, formData.communityName]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
-      <div className="max-w-4xl mx-auto text-center space-y-3">
+      {isLoading ? (
+        <div className="text-center">
+          <div className="text-4xl font-bold mb-4">
+            <span className="text-cyan-400">MYT</span>
+            <span className="text-white">X</span>
+          </div>
+          <div className="text-white/60">Loading...</div>
+        </div>
+      ) : (
+        <>
+          <div className="max-w-4xl mx-auto text-center space-y-3">
         
         {/* MYTX Logo - Smaller and with more space above */}
         <div className="text-4xl font-bold">
@@ -247,7 +409,7 @@ export default function CreateMeetingPage() {
               {/* Create New Meeting Button */}
               <div className="pt-6">
                 <Button 
-                  onClick={() => setShowPricing(true)}
+                  onClick={handleCreateMeeting}
                   className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 px-12 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-lg"
                 >
                   CREATE A MEETING
@@ -447,6 +609,16 @@ export default function CreateMeetingPage() {
             <div className="absolute inset-0 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl shadow-black/30"></div>
             <div className="relative p-6 space-y-6 max-h-[90vh] overflow-y-auto">
               
+              {/* Close Button */}
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all duration-200 z-10"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
               {/* MYTX Logo */}
               <div className="text-center">
                 <div className="text-3xl font-bold mb-4">
@@ -459,6 +631,11 @@ export default function CreateMeetingPage() {
               <div className="text-center space-y-2">
                 <h2 className="text-xl font-semibold text-white">Create a Meeting</h2>
                 <div className="text-cyan-400 font-medium">7 day free trial</div>
+                {user?.email && (
+                  <div className="text-white/60 text-sm">
+                    Creating for: {user.email}
+                  </div>
+                )}
               </div>
 
               {/* Plan Selection Tabs */}
@@ -503,13 +680,13 @@ export default function CreateMeetingPage() {
                   />
                 </div>
 
-                {/* Unified Card Input - Card Number, Expiry Date, CSV */}
+                {/* IDEAL UI - Credit Card Fields (Commented Out) */}
+                {/* 
                 <div>
                   <label className="block text-white/80 text-sm font-medium mb-2">
                     Card Details
                   </label>
                   <div className="flex bg-white/10 border border-white/20 rounded-xl backdrop-blur-sm overflow-hidden">
-                    {/* Card Number Section */}
                     <div className="flex-1">
                       <input
                         type="text"
@@ -520,11 +697,7 @@ export default function CreateMeetingPage() {
                         maxLength={19}
                       />
                     </div>
-                    
-                    {/* Separator */}
                     <div className="w-px bg-white/20"></div>
-                    
-                    {/* Expiry Date Section */}
                     <div className="w-16">
                       <input
                         type="text"
@@ -535,11 +708,7 @@ export default function CreateMeetingPage() {
                         maxLength={5}
                       />
                     </div>
-                    
-                    {/* Separator */}
                     <div className="w-px bg-white/20"></div>
-                    
-                    {/* CSV Section */}
                     <div className="w-12">
                       <input
                         type="text"
@@ -552,12 +721,21 @@ export default function CreateMeetingPage() {
                     </div>
                   </div>
                 </div>
+                */}
+
+                {/* PayPal Subscription Integration */}
+                <div>
+                  <label className="block text-white/80 text-sm font-medium mb-2">
+                    Payment Method
+                  </label>
+                  <div 
+                    id={modalPlan === 'basic' ? 'paypal-button-container-P-5LP69495C05013828NDDAIUY' : 'paypal-button-container-P-59286886LU147733XNDDAKDQ'}
+                    className="bg-white border border-white/20 rounded-2xl p-6 backdrop-blur-sm"
+                  ></div>
+                </div>
               </div>
 
-              {/* Start Free Trial Button */}
-              <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl text-lg">
-                START FREE TRIAL
-              </Button>
+              {/* PayPal integration handles subscription creation dynamically */}
 
               {/* Disclaimer */}
               <div className="text-center">
@@ -570,6 +748,8 @@ export default function CreateMeetingPage() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );
