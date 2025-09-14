@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const hasRefreshedRef = useRef(false);
 
   const [loginState, loginAction] = useActionState<LoginActionState, FormData>(
     login,
@@ -32,6 +33,11 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
 
   const currentState = mode === "login" ? loginState : registerState;
 
+  // Reset the refresh flag when modal opens/closes or mode changes
+  useEffect(() => {
+    hasRefreshedRef.current = false;
+  }, [isOpen, mode]);
+
   useEffect(() => {
     if (currentState.status === "failed") {
       toast.error(mode === "login" ? "Invalid credentials!" : "Failed to create account");
@@ -39,10 +45,14 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
       toast.error("Failed validating your submission!");
     } else if (currentState.status === "user_exists") {
       toast.error("Account already exists");
-    } else if (currentState.status === "success") {
+    } else if (currentState.status === "success" && !hasRefreshedRef.current) {
+      // Only refresh once per successful login/register
+      hasRefreshedRef.current = true;
+      
       if (mode === "register") {
         toast.success("Account created successfully");
       }
+      
       router.refresh();
       onClose();
     }
