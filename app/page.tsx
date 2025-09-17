@@ -3,7 +3,6 @@ import { generateUUID } from "@/lib/utils";
 import { CategoryCapsules } from "@/components/custom/category-capsules";
 import { MeetingCards } from "@/components/custom/meeting-cards";
 import { SearchBar } from "@/components/custom/search-bar";
-import { MusicPlayer, NavigationDock, GlassSearch, SmallGlassSearch, AppDock } from "@/components/glassmorphism";
 
 export default async function Page() {
   const session = await auth();
@@ -28,32 +27,8 @@ export default async function Page() {
       </div>
       
       {/* Meeting Cards - Full width on desktop */}
-      <div className="w-full max-w-6xl mx-auto px-4 mb-8">
+      <div className="w-full max-w-6xl mx-auto px-4">
         <MeetingCards />
-      </div>
-
-      {/* Glassmorphism UI Elements - positioned after meeting cards and pagination */}
-      <div className="p-4 space-y-4">
-        {/* Mobile Container with Music Player and Navigation */}
-        <div className="container--mobile mx-auto">
-          <div className="flex flex-col gap-4">
-            <MusicPlayer />
-            <div className="container--inline">
-              <NavigationDock />
-              <GlassSearch />
-            </div>
-          </div>
-        </div>
-        
-        {/* Small Search - positioned separately */}
-        <div className="container--small mx-auto">
-          <SmallGlassSearch />
-        </div>
-        
-        {/* App Dock */}
-        <div className="container mx-auto max-w-md">
-          <AppDock />
-        </div>
       </div>
     </div>
   );

@@ -73,7 +73,7 @@
 .glass-filter--cards {
   z-index: 0;
   backdrop-filter: blur(4px);
-  filter: url(#lensFilter) saturate(140%) brightness(1.2) contrast(1.1);
+  filter: saturate(140%) brightness(1.2) contrast(1.1);
 }
 
 .glass-overlay--cards {
