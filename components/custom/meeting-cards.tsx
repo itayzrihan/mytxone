@@ -118,22 +118,29 @@ export function MeetingCards() {
         {currentMeetings.map((meeting: MeetingCard) => (
           <div
             key={meeting.id}
-            className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer group shadow-lg shadow-black/20"
+            className="relative rounded-xl overflow-hidden cursor-pointer group shadow-lg shadow-black/20"
           >
-            {/* Thumbnail */}
-            <div className="relative aspect-video bg-gradient-to-br from-cyan-400/20 to-blue-600/20 flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
-              <div className="relative z-10 text-white/50 text-5xl group-hover:text-white/70 transition-colors duration-300">
-                📸
-              </div>
-              {/* Card number badge */}
-              <div className="absolute top-3 left-3 bg-black/30 backdrop-blur-sm rounded-lg px-2 py-1 text-white/70 text-xs font-medium">
-                #{meeting.id.padStart(2, '0')}
-              </div>
-            </div>
-
+            {/* Glassmorphism Effect Layers */}
+            <div className="glass-filter--cards absolute inset-0"></div>
+            <div className="glass-overlay--cards absolute inset-0"></div>
+            <div className="glass-specular--cards absolute inset-0"></div>
+            
             {/* Card Content */}
-            <div className="p-4">
+            <div className="relative z-10 border border-white/10 hover:border-white/20 transition-all duration-300 rounded-xl overflow-hidden hover:bg-white/5">
+              {/* Thumbnail */}
+              <div className="relative aspect-video bg-gradient-to-br from-cyan-400/20 to-blue-600/20 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
+                <div className="relative z-10 text-white/50 text-5xl group-hover:text-white/70 transition-colors duration-300">
+                  📸
+                </div>
+                {/* Card number badge */}
+                <div className="absolute top-3 left-3 bg-black/30 backdrop-blur-sm rounded-lg px-2 py-1 text-white/70 text-xs font-medium">
+                  #{meeting.id.padStart(2, '0')}
+                </div>
+              </div>
+
+              {/* Card Content */}
+              <div className="p-4">
               {/* User Image and Title */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400/30 to-blue-600/30 flex items-center justify-center flex-shrink-0">
@@ -167,6 +174,7 @@ export function MeetingCards() {
                   {meeting.price}
                 </div>
               </div>
+            </div>
             </div>
           </div>
         ))}
