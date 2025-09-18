@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Liquid Glass Effect - Clear Center</title>
+    <style>
+        /* =================================================================
+           1. GENERAL STYLES & BACKGROUND CONTENT (unchanged)
+           ================================================================= */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f0f2f5;
+            --text-color: #1c1e21;
+            --primary-color: #0866ff;
+            --card-bg: #ffffff;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 4rem 2rem;
+            line-height: 1.8;
+            overflow-x: hidden;
+            min-height: 150vh; /* Ensure enough scrollable content */
+        }
+
+        .content-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            display: grid;
+            gap: 2rem;
+        }
+
+        h1, h2 {
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: -1px;
+        }
+        
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            line-height: 1.1;
+            background: linear-gradient(90deg, var(--primary-color), #a331e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        h2 {
+            font-size: 2rem;
+            margin-top: 2rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+        
+        p {
+            font-size: 1.1rem;
+            max-width: 65ch;
+            margin: 1rem auto;
+            text-align: justify;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(8, 102, 255, 0.3);
+        }
+
+        .btn.secondary {
+             background-color: #e4e6eb;
+             color: var(--text-color);
+        }
+        
+        .btn.secondary:hover {
+             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* =================================================================
+           2. ENHANCED LIQUID GLASS STYLES (MODIFIED)
+           ================================================================= */
+        .glass-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            width: 100%;
+            pointer-events: none;
+            flex-wrap: wrap;
+        }
+        
+        .glass-shape {
+            pointer-events: auto;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            position: relative; /* Needed for pseudo-elements or masks */
+            overflow: hidden; /* Important for mask to work correctly */
+
+            /* --- THE MAGIC (MODIFIED) --- */
+            /* This applies the SVG filter to the backdrop.
+               It will only work in Chrome/Edge. */
+            backdrop-filter: url(#liquid-distortion-filter) brightness(1.1);
+            -webkit-backdrop-filter: url(#liquid-distortion-filter) brightness(1.1);
+            
+            /* Apply a radial gradient mask to create the clear center */
+            mask-image: radial-gradient(
+                circle at center,
+                rgba(0,0,0,0) 0%,   /* Fully transparent center */
+                rgba(0,0,0,0) 40%,  /* Continue transparent to 40% */
+                rgba(0,0,0,1) 80%,  /* Start fading to opaque */
+                rgba(0,0,0,1) 100%  /* Fully opaque at edges */
+            );
+            -webkit-mask-image: radial-gradient(
+                circle at center,
+                rgba(0,0,0,0) 0%,
+                rgba(0,0,0,0) 40%,
+                rgba(0,0,0,1) 80%,
+                rgba(0,0,0,1) 100%
+            );
+
+            /* The clear center also implies a more transparent background,
+               so we reduce the base background-color. */
+            background-color: rgba(255, 255, 255, 0.05); /* Very light background */
+        }
+
+        /* --- FALLBACK FOR SAFARI & FIREFOX (MODIFIED) --- */
+        /* Apply the mask to the fallback as well for consistency,
+           but the distortion itself won't be there. */
+        @supports not (backdrop-filter: url(#some-filter)) and (backdrop-filter: blur(1px)) {
+            .glass-shape {
+                backdrop-filter: blur(12px) saturate(120%);
+                -webkit-backdrop-filter: blur(12px) saturate(120%);
+                background-color: rgba(255, 255, 255, 0.05); /* Also more transparent here */
+            }
+        }
+        
+        /* Shape 1: Circle */
+        .circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+        }
+
+        /* Shape 2: Pill */
+        .pill {
+            width: 250px;
+            height: 120px;
+            border-radius: 100px;
+        }
+
+        /* Shape 3: Organic Blob */
+        .blob {
+            width: 220px;
+            height: 200px;
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            animation: morph 8s ease-in-out infinite both alternate;
+        }
+
+        @keyframes morph {
+            0% {
+                border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            }
+            100% {
+                border-radius: 40% 60% / 60% 40%;
+            }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .glass-container {
+                flex-direction: column;
+                gap: 3rem;
+            }
+            body {
+                padding: 2rem 1rem;
+            }
+            .circle { width: 150px; height: 150px; }
+            .pill { width: 200px; height: 100px; }
+            .blob { width: 180px; height: 160px; }
+        }
+    </style>
+</head>
+<body>
+
+    <svg style="position:absolute; width:0; height:0;">
+        <defs>
+            <filter id="liquid-distortion-filter">
+                <feTurbulence 
+                    type="fractalNoise" 
+                    baseFrequency="0.015 0.025" 
+                    numOctaves="2" 
+                    result="turbulence"/>
+                
+                <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="35" xChannelSelector="R" yChannelSelector="G" result="dispR"/>
+                <feColorMatrix in="dispR" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red"/>
+
+                <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="30" xChannelSelector="R" yChannelSelector="G" result="dispG"/>
+                <feColorMatrix in="dispG" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="green"/>
+
+                <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="25" xChannelSelector="R" yChannelSelector="G" result="dispB"/>
+                <feColorMatrix in="dispB" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blue"/>
+
+                <feBlend in="red" in2="green" mode="screen" result="rg" />
+                <feBlend in="rg" in2="blue" mode="screen" result="finalDistortion" />
+
+                <feGaussianBlur in="finalDistortion" stdDeviation="1.5" />
+            </filter>
+        </defs>
+    </svg>
+
+
+    <div class="glass-container">
+        <div class="glass-shape circle"></div>
+        <div class="glass-shape pill"></div>
+        <div class="glass-shape blob"></div>
+    </div>
+
+
+    <main class="content-wrapper">
+        <div class="card">
+            <h1>Enhanced Liquid Glass Effect</h1>
+            <p>Now with a crystal-clear center! The liquid distortion and chromatic aberration are gracefully concentrated towards the edges, giving the glass elements a more realistic lens-like or water droplet appearance. Scroll down to experience the effect.</p>
+        </div>
+        
+        <div class="card">
+             <h2>Interactive Elements</h2>
+             <p>Even interactive elements like buttons are morphed realistically as they pass behind the shapes, with the central clarity preserved.</p>
+             <div class="button-grid">
+                <button class="btn">Primary Action</button>
+                <button class="btn secondary">Secondary</button>
+                <button class="btn">Get Started</button>
+                <button class="btn secondary">Learn More</button>
+             </div>
+        </div>
+
+        <p>In optics, a lens is a transmissive optical device that focuses or disperses a light beam by means of refraction. A simple lens consists of a single piece of transparent material, while a compound lens consists of several simple lenses, called elements, usually arranged along a common axis. Lenses are used in a wide array of imaging devices such as telescopes, binoculars, cameras, and microscopes.</p>
+
+        <img src="https://images.unsplash.com/photo-1620503374956-c94c868c1578?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Abstract colorful background" style="width: 100%; border-radius: 16px;">
+        
+        <h2>Underlying Technology</h2>
+        <p>This enhanced effect combines the power of SVG filters for distortion with CSS <code>mask-image</code> for precise control over the filter's visibility. A <code>radial-gradient</code> is used as the mask, creating a transparent center that gradually becomes opaque towards the edges. This allows the <code>backdrop-filter</code> to only apply its distortion where the mask is opaque, resulting in a beautifully clear middle and warped edges.</p>
+
+        <div class="card">
+             <h2>Cross-Browser Compatibility</h2>
+             <p>The full distortion effect with a clear center is currently only visible in Chromium browsers like Google Chrome and Microsoft Edge. On Safari and Firefox, it gracefully degrades to a frosted glass effect with a clear center, maintaining a clean and modern look across all platforms.</p>
+        </div>
+
+        <p>Additionally, the phenomenon of chromatic aberration, where different colors of light are focused at different points, is a natural occurrence in lenses and contributes to the realistic edge distortion seen in this effect. This is subtly simulated by the `<feDisplacementMap>` using different scales for RGB channels.</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        <p>Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus auctor iaculis. Fusce eu diam at ipsum suscipit eleifend. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam adipiscing aliquet elit eu ornare. Sed pretium lacus sit amet lectus varius vitae tempor lacinia diam.</p>
+    </main>
+
+    <script>
+        // JavaScript for subtle mouse interaction (unchanged)
+        const glassShapes = document.querySelectorAll('.glass-shape');
+
+        // Only add this effect on devices that are not touch-based for better UX
+        if (window.matchMedia('(pointer: fine)').matches) {
+            document.body.addEventListener('mousemove', (e) => {
+                const { clientX, clientY } = e;
+                const x = (clientX / window.innerWidth) * 20 - 10; // range from -10 to 10
+                const y = (clientY / window.innerHeight) * 20 - 10; // range from -10 to 10
+
+                glassShapes.forEach(shape => {
+                    shape.style.transition = 'transform 0.1s linear';
+                    shape.style.transform = `translate(${x}px, ${y}px)`;
+                });
+            });
+
+            document.body.addEventListener('mouseleave', () => {
+                 glassShapes.forEach(shape => {
+                    shape.style.transition = 'transform 0.5s ease-out';
+                    shape.style.transform = `translate(0px, 0px)`;
+                });
+            });
+        }
+    </script>
+</body>
+</html>

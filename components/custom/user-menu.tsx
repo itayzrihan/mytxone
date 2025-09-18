@@ -133,8 +133,8 @@ export function UserMenu({ session }: UserMenuProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="py-1.5 px-2 h-fit font-normal"
-            variant="secondary"
+            className="py-1.5 px-2 h-fit font-normal bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 hover:border-white/30 transition-all duration-300"
+            variant="ghost"
           >
             {session.user?.email}
           </Button>

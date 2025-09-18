@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Liquid Glass Effect</title>
+    <style>
+        :root {
+            --shine-opacity: 0.15; /* Slightly less intense shine */
+            --background-color: #f0f2f5;
+            --text-color: #1c1e21;
+            --accent-color: #007bff; /* Changed accent to a cooler blue */
+            --card-bg: #ffffff;
+            --glass-base-color: rgba(220, 240, 255, 0.1); /* Lighter, cooler base */
+            --glass-border-color: rgba(255, 255, 255, 0.3); /* Slightly more prominent border */
+        }
+
+        /* General Styles */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Page Content Styles */
+        .page-content {
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 4rem 1rem;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #606770;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem 0;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 3rem 1rem;
+            margin-top: 2rem;
+            border-top: 1px solid #ddd;
+            color: #606770;
+        }
+        
+        /* Glass Effect Styles */
+        .glass-container {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            pointer-events: none; /* Allows interaction with content behind */
+        }
+
+        .glass-bubble {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15); /* Slightly softer shadow */
+            transition: transform 0.3s ease;
+        }
+        
+        /* Apply this class to any element for the core glass effect */
+        .glass-effect {
+             background: var(--glass-base-color);
+             backdrop-filter: blur(8px) saturate(1.1); /* Reduced blur, less saturation */
+             -webkit-backdrop-filter: blur(8px) saturate(1.1); /* For Safari */
+             border: 1px solid var(--glass-border-color);
+        }
+
+        /* Layered structure for realistic effect */
+        .bubble-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+        }
+
+        /* Layer 1: Outer edge distortion - more cyan, less brightness */
+        .layer-1 {
+            backdrop-filter: blur(10px) saturate(130%) hue-rotate(180deg) brightness(1.05); /* More cyan, less bright */
+            -webkit-backdrop-filter: blur(10px) saturate(130%) hue-rotate(180deg) brightness(1.05);
+        }
+
+        /* Layer 2: Mid-section, clearer - more cyan, less saturation */
+        .layer-2 {
+            inset: 10px;
+            backdrop-filter: blur(3px) saturate(120%) hue-rotate(180deg); /* More cyan, reduced saturation */
+            -webkit-backdrop-filter: blur(3px) saturate(120%) hue-rotate(180deg);
+            background: rgba(255, 255, 255, 0.03); /* More transparent */
+        }
+
+        /* Layer 3: Center, sharp and vibrant - more cyan, less saturation */
+        .layer-3 {
+            inset: 35px;
+            backdrop-filter: blur(0px) saturate(130%) hue-rotate(180deg); /* More cyan, reduced saturation */
+            -webkit-backdrop-filter: blur(0px) saturate(130%) hue-rotate(180deg);
+        }
+        
+        /* 3D Shine Effect */
+        .shine {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(
+                circle at var(--mouse-x, 25%) var(--mouse-y, 25%),
+                rgba(255, 255, 255, var(--shine-opacity)),
+                transparent 50%
+            );
+            transition: background 0.1s ease-out;
+        }
+
+        /* Shape variations */
+        .shape-circle, .shape-circle .bubble-layer {
+            border-radius: 50%;
+        }
+
+        .shape-square, .shape-square .bubble-layer {
+            border-radius: 30px;
+        }
+        
+        .shape-pill {
+            width: 150px;
+            height: 250px;
+        }
+        
+        .shape-pill, .shape-pill .bubble-layer {
+            border-radius: 100px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .glass-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .glass-bubble {
+                width: 150px;
+                height: 150px;
+            }
+            .shape-pill {
+                width: 110px;
+                height: 180px;
+            }
+            .header h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-content">
+        <header class="header">
+            <h1>Liquid Glass Effect</h1>
+            <p>Scroll down to see content morph behind the fixed glass elements.</p>
+        </header>
+
+        <section>
+            <h2>How It Works</h2>
+            <p>This effect is achieved without using any SVG filters. Instead, it relies on multiple layers of the CSS <code>backdrop-filter</code> property. Each layer has a slightly different blur, saturation, and brightness value, creating a gradient from a clear, saturated center to a distorted, bright edge, mimicking a real glass lens.</p>
+        </section>
+
+        <div class="card-grid">
+            <div class="card">
+                <h3>Layered Filters</h3>
+                <p>The core bubble has three layers. The outer layer has the highest blur, the middle layer is clearer, and the center has zero blur with high saturation.</p>
+            </div>
+            <div class="card">
+                <h3>Dynamic Shine</h3>
+                <p>A touch of JavaScript adds a radial gradient that follows your mouse, creating a realistic lighting effect and enhancing the 3D illusion.</p>
+            </div>
+            <div class="card">
+                <h3>Cross-Browser</h3>
+                <p>Designed to be fully compatible with modern browsers like Chrome and Safari on both desktop and mobile platforms.</p>
+                <button>Learn More</button>
+            </div>
+            <div class="card">
+                <h3>Any Shape</h3>
+                <p>The class-based structure allows this effect to be applied to any element shape by simply adjusting the <code>border-radius</code>.</p>
+            </div>
+        </div>
+        
+        <section>
+             <h2>Demonstration Content</h2>
+             <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+             <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+        </section>
+
+        <footer class="footer">
+            <p>Scroll up and down to see the effect in action.</p>
+        </footer>
+    </div>
+
+    <div class="glass-container">
+    
+        <div class="glass-bubble shape-circle glass-effect">
+            <div class="bubble-layer layer-1"></div>
+            <div class="bubble-layer layer-2"></div>
+            <div class="bubble-layer layer-3"></div>
+            <div class="shine"></div>
+        </div>
+
+        <div class="glass-bubble shape-square glass-effect">
+            <div class="bubble-layer layer-1"></div>
+            <div class="bubble-layer layer-2"></div>
+            <div class="bubble-layer layer-3"></div>
+            <div class="shine"></div>
+        </div>
+
+        <div class="glass-bubble shape-pill glass-effect">
+            <div class="bubble-layer layer-1"></div>
+            <div class="bubble-layer layer-2"></div>
+            <div class="bubble-layer layer-3"></div>
+            <div class="shine"></div>
+        </div>
+        
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const bubbles = document.querySelectorAll('.glass-bubble');
+
+            const updateShine = (e) => {
+                bubbles.forEach(bubble => {
+                    const rect = bubble.getBoundingClientRect();
+                    // Use clientX and clientY for viewport-relative coordinates
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    bubble.style.setProperty('--mouse-x', `${x}px`);
+                    bubble.style.setProperty('--mouse-y', `${y}px`);
+                });
+            };
+
+            document.body.addEventListener('mousemove', updateShine);
+        });
+    </script>
+
+</body>
+</html>

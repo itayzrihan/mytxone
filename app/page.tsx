@@ -1,6 +1,6 @@
 import { auth } from "@/app/(auth)/auth";
 import { generateUUID } from "@/lib/utils";
-import { CategoryCapsules } from "@/components/custom/category-capsules";
+import { GlassCapsules } from "@/components/custom/glass-capsules";
 import { MeetingCards } from "@/components/custom/meeting-cards";
 import { SearchBar } from "@/components/custom/search-bar";
 
@@ -23,11 +23,11 @@ export default async function Page() {
           <SearchBar variant="full" />
         </div>
         
-        <CategoryCapsules />
+        <GlassCapsules />
       </div>
       
       {/* Meeting Cards - Full width on desktop */}
-      <div className="w-full max-w-6xl mx-auto px-4">
+      <div className="w-full max-w-6xl mx-auto px-4 mb-8">
         <MeetingCards />
       </div>
     </div>

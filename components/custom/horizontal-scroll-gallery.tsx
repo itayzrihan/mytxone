@@ -79,16 +79,17 @@ export function HorizontalScrollGallery({
     <div className={`w-screen relative -mx-4 md:w-full md:mx-0 ${className}`}>
       {/* Left Scroll Overlay */}
       <div 
-        className={`absolute left-0 md:left-0 top-0 h-full w-6 md:w-8 z-10 pointer-events-none md:pointer-events-auto rounded-l-xl bg-white/5 backdrop-blur-md border-l border-t border-b border-white/10 transition-opacity duration-300 ${
+        className={`absolute left-0 md:left-0 top-1/2 transform -translate-y-1/2 h-full w-6 md:w-8 z-20 pointer-events-none md:pointer-events-auto rounded-l-xl bg-white/10 backdrop-blur-sm border-l border-t border-b border-white/20 transition-all duration-300 ${
           canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onMouseEnter={() => startAutoScroll('left')}
         onMouseLeave={stopAutoScroll}
         onTouchStart={(e) => e.preventDefault()}
         onTouchEnd={(e) => e.preventDefault()}
+        style={{ cursor: 'pointer' }}
       >
-        <div className="flex items-center justify-center h-full">
-          <svg className="w-3 md:w-4 h-3 md:h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center justify-center h-full pointer-events-none">
+          <svg className="w-3 md:w-4 h-3 md:h-4 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </div>
@@ -96,16 +97,17 @@ export function HorizontalScrollGallery({
 
       {/* Right Scroll Overlay */}
       <div 
-        className={`absolute right-0 md:right-0 top-0 h-full w-6 md:w-8 z-10 pointer-events-none md:pointer-events-auto rounded-r-xl bg-white/5 backdrop-blur-md border-r border-t border-b border-white/10 transition-opacity duration-300 ${
+        className={`absolute right-0 md:right-0 top-1/2 transform -translate-y-1/2 h-full w-6 md:w-8 z-20 pointer-events-none md:pointer-events-auto rounded-r-xl bg-white/10 backdrop-blur-sm border-r border-t border-b border-white/20 transition-all duration-300 ${
           canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onMouseEnter={() => startAutoScroll('right')}
         onMouseLeave={stopAutoScroll}
         onTouchStart={(e) => e.preventDefault()}
         onTouchEnd={(e) => e.preventDefault()}
+        style={{ cursor: 'pointer' }}
       >
-        <div className="flex items-center justify-center h-full">
-          <svg className="w-3 md:w-4 h-3 md:h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center justify-center h-full pointer-events-none">
+          <svg className="w-3 md:w-4 h-3 md:h-4 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>
