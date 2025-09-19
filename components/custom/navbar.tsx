@@ -65,6 +65,14 @@ export const Navbar = ({ session }: NavbarProps) => {
               blueMultiplier={0.8}
               noiseIntensity={0}
               distortionScale={0.5}
+              distortionSmoothness={0.1}
+              prismaIntensity={1.5}
+              glowIntensity={0.2}
+              glowSpread={6}
+              edgeSharpness={0.8}
+              refractionIndex={1.8}
+              surfaceRoughness={1}
+              liquidFlow={1}
             />
             
             {/* Keep original glass-content with exact same styling */}

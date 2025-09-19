@@ -20,6 +20,15 @@ interface GlassBackgroundProps {
   blueMultiplier?: number;
   noiseIntensity?: number;
   distortionScale?: number;
+  // New distortion & visual properties
+  distortionSmoothness?: number;
+  prismaIntensity?: number;
+  glowIntensity?: number;
+  glowSpread?: number;
+  edgeSharpness?: number;
+  refractionIndex?: number;
+  surfaceRoughness?: number;
+  liquidFlow?: number;
 }
 
 export function GlassBackground({ 
@@ -38,7 +47,16 @@ export function GlassBackground({
   greenMultiplier = 2,
   blueMultiplier = 0.5,
   noiseIntensity = 1,
-  distortionScale = 1
+  distortionScale = 1,
+  // New distortion & visual properties with defaults
+  distortionSmoothness = 1,
+  prismaIntensity = 1,
+  glowIntensity = 0.3,
+  glowSpread = 4,
+  edgeSharpness = 1,
+  refractionIndex = 1.5,
+  surfaceRoughness = 0.5,
+  liquidFlow = 1
 }: GlassBackgroundProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const depthRef = useRef(baseDepth);
@@ -81,7 +99,7 @@ export function GlassBackground({
       </defs>
 
       <rect x="0" y="0" height="${height}" width="${width}" fill="#808080" />
-      <g filter="blur(${noiseIntensity}px)">
+      <g filter="blur(${noiseIntensity * distortionSmoothness}px)">
         <rect x="0" y="0" height="${height}" width="${width}" fill="#000080" />
         <rect
             x="0"
@@ -90,6 +108,7 @@ export function GlassBackground({
             width="${width}"
             fill="url(#Y)"
             class="mix"
+            opacity="${prismaIntensity}"
         />
         <rect
             x="0"
@@ -98,16 +117,18 @@ export function GlassBackground({
             width="${width}"
             fill="url(#X)"
             class="mix"
+            opacity="${prismaIntensity}"
         />
         <rect
-            x="${depth * distortionScale}"
-            y="${depth * distortionScale}"
-            height="${height - 2 * depth * distortionScale}"
-            width="${width - 2 * depth * distortionScale}"
+            x="${depth * distortionScale * liquidFlow}"
+            y="${depth * distortionScale * liquidFlow}"
+            height="${height - 2 * depth * distortionScale * liquidFlow}"
+            width="${width - 2 * depth * distortionScale * liquidFlow}"
             fill="#808080"
-            rx="${radius}"
-            ry="${radius}"
-            filter="blur(${depth * distortionScale}px)"
+            rx="${radius / edgeSharpness}"
+            ry="${radius / edgeSharpness}"
+            filter="blur(${depth * distortionScale * surfaceRoughness}px)"
+            opacity="${refractionIndex / 2}"
         />
       </g>
   </svg>`);
@@ -142,7 +163,7 @@ export function GlassBackground({
               <feDisplacementMap
                   in="SourceGraphic"
                   in2="displacementMap"
-                  scale="${strength + chromaticAberration * 4}"
+                  scale="${(strength + chromaticAberration * redMultiplier * prismaIntensity) * distortionScale * refractionIndex}"
                   xChannelSelector="R"
                   yChannelSelector="G"
               />
@@ -159,7 +180,7 @@ export function GlassBackground({
               <feDisplacementMap
                   in="SourceGraphic"
                   in2="displacementMap"
-                  scale="${strength + chromaticAberration * 2}"
+                  scale="${(strength + chromaticAberration * greenMultiplier * prismaIntensity) * distortionScale * refractionIndex}"
                   xChannelSelector="R"
                   yChannelSelector="G"
               />
@@ -176,7 +197,7 @@ export function GlassBackground({
               <feDisplacementMap
                       in="SourceGraphic"
                       in2="displacementMap"
-                      scale="${strength + chromaticAberration * 0.5}"
+                      scale="${(strength + chromaticAberration * blueMultiplier * prismaIntensity) * distortionScale * refractionIndex}"
                       xChannelSelector="R"
                       yChannelSelector="G"
                   />
@@ -188,10 +209,34 @@ export function GlassBackground({
                           0 0 0 1 0"
                   result="displacedB"
                           />
+              
+              <!-- Add glow effect -->
+              <feGaussianBlur in="displacedR" stdDeviation="${glowSpread}" result="glowR"/>
+              <feGaussianBlur in="displacedG" stdDeviation="${glowSpread}" result="glowG"/>
+              <feGaussianBlur in="displacedB" stdDeviation="${glowSpread}" result="glowB"/>
+              
+              <feColorMatrix in="glowR" type="matrix" 
+                values="1 0 0 0 0
+                        0 0 0 0 0
+                        0 0 0 0 0
+                        0 0 0 ${glowIntensity} 0" result="glowRedAdjusted"/>
+              <feColorMatrix in="glowG" type="matrix" 
+                values="0 0 0 0 0
+                        0 1 0 0 0
+                        0 0 0 0 0
+                        0 0 0 ${glowIntensity} 0" result="glowGreenAdjusted"/>
+              <feColorMatrix in="glowB" type="matrix" 
+                values="0 0 0 0 0
+                        0 0 0 0 0
+                        0 0 1 0 0
+                        0 0 0 ${glowIntensity} 0" result="glowBlueAdjusted"/>
                           
-                <!-- Combine channels for prismatic rainbow effect -->
+                <!-- Combine channels for prismatic rainbow effect with glow -->
                 <feBlend in="displacedR" in2="displacedG" mode="screen" result="rg"/>
-                <feBlend in="rg" in2="displacedB" mode="screen"/>
+                <feBlend in="rg" in2="displacedB" mode="screen" result="rgb"/>
+                <feBlend in="rgb" in2="glowRedAdjusted" mode="screen" result="rgbGlowR"/>
+                <feBlend in="rgbGlowR" in2="glowGreenAdjusted" mode="screen" result="rgbGlowRG"/>
+                <feBlend in="rgbGlowRG" in2="glowBlueAdjusted" mode="screen"/>
           </filter>
       </defs>
   </svg>`) +
@@ -233,9 +278,14 @@ export function GlassBackground({
         depth: depthRef.current,
         strength,
         chromaticAberration,
-      })}') blur(${blur}px) brightness(0.7) saturate(1.5);
-      background: rgba(${className?.includes('bright') ? '255, 255, 255' : '0, 0, 0'}, 0.1);
+      })}') blur(${blur * distortionSmoothness}px) brightness(${brightness}) saturate(${saturation}) contrast(${contrast});
+      background: rgba(${className?.includes('bright') ? '255, 255, 255' : '0, 0, 0'}, ${opacity});
       border-radius: ${computedStyle.borderRadius || `${borderRadius}px`};
+      box-shadow: 
+        inset 0 0 ${glowSpread * 2}px rgba(255, 255, 255, ${glowIntensity}),
+        inset 0 0 ${glowSpread * 4}px rgba(0, 255, 255, ${glowIntensity * 0.3}),
+        inset 0 0 ${glowSpread * 6}px rgba(255, 0, 255, ${glowIntensity * 0.2}),
+        0 0 ${glowSpread}px rgba(255, 255, 255, ${glowIntensity * 0.5});
     `;
 
     if (debug) {
@@ -289,7 +339,7 @@ export function GlassBackground({
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     };
-  }, [blur, chromaticAberration, strength, debug]);
+  }, [blur, chromaticAberration, strength, debug, brightness, saturation, contrast, opacity, redMultiplier, greenMultiplier, blueMultiplier, noiseIntensity, distortionScale, distortionSmoothness, prismaIntensity, glowIntensity, glowSpread, edgeSharpness, refractionIndex, surfaceRoughness, liquidFlow]);
 
   const handleMouseDown = () => {
     depthRef.current = baseDepth / 0.7;
