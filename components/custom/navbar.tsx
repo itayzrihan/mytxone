@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { NavbarSearch, MobileSearchOverlay } from "./navbar-search";
 import { SearchBar } from "./search-bar";
 import { useAuth } from "./auth-context";
+import { GlassBackground } from "./glass-background";
 
 interface NavbarProps {
   session?: any;
@@ -49,9 +50,15 @@ export const Navbar = ({ session }: NavbarProps) => {
       <div className="fixed top-0 left-0 w-full py-2 z-30">
         <div className="max-w-6xl mx-auto px-4 py-2 relative">
           <div className="glass-container glass-container--rounded glass-container--large">
-            <div className="glass-filter"></div>
-            <div className="glass-overlay"></div>
-            <div className="glass-specular"></div>
+            {/* Apply new glass background effect that adapts to container shape */}
+            <GlassBackground 
+              chromaticAberration={3}
+              strength={50}
+              depth={8}
+              blur={2}
+            />
+            
+            {/* Keep original glass-content with exact same styling */}
             <div className="glass-content">
               {/* Mobile Search State - Replace entire content */}
               {isMobileSearchOpen ? (
@@ -144,16 +151,6 @@ export const Navbar = ({ session }: NavbarProps) => {
           </div>
         </div>
       </div>
-
-      {/* SVG Filter for Glass Effect */}
-      <svg xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', width: 0, height: 0, visibility: 'hidden' }}>
-        <defs>
-          <filter id="lensFilter" x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
-            <feDisplacementMap in="SourceGraphic" in2="blur" scale="8" xChannelSelector="A" yChannelSelector="A" />
-          </filter>
-        </defs>
-      </svg>
     </>
   );
 };
