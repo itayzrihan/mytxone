@@ -10,6 +10,16 @@ interface GlassBackgroundProps {
   chromaticAberration?: number;
   strength?: number;
   debug?: boolean;
+  // New configurable properties
+  brightness?: number;
+  saturation?: number;
+  contrast?: number;
+  opacity?: number;
+  redMultiplier?: number;
+  greenMultiplier?: number;
+  blueMultiplier?: number;
+  noiseIntensity?: number;
+  distortionScale?: number;
 }
 
 export function GlassBackground({ 
@@ -18,7 +28,17 @@ export function GlassBackground({
   blur = 1,
   chromaticAberration = 5,
   strength = 100,
-  debug = false
+  debug = false,
+  // New configurable properties with defaults
+  brightness = 0.7,
+  saturation = 1.5,
+  contrast = 1.0,
+  opacity = 0.1,
+  redMultiplier = 4,
+  greenMultiplier = 2,
+  blueMultiplier = 0.5,
+  noiseIntensity = 1,
+  distortionScale = 1
 }: GlassBackgroundProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const depthRef = useRef(baseDepth);
@@ -61,7 +81,7 @@ export function GlassBackground({
       </defs>
 
       <rect x="0" y="0" height="${height}" width="${width}" fill="#808080" />
-      <g filter="blur(1px)">
+      <g filter="blur(${noiseIntensity}px)">
         <rect x="0" y="0" height="${height}" width="${width}" fill="#000080" />
         <rect
             x="0"
@@ -80,14 +100,14 @@ export function GlassBackground({
             class="mix"
         />
         <rect
-            x="${depth}"
-            y="${depth}"
-            height="${height - 2 * depth}"
-            width="${width - 2 * depth}"
+            x="${depth * distortionScale}"
+            y="${depth * distortionScale}"
+            height="${height - 2 * depth * distortionScale}"
+            width="${width - 2 * depth * distortionScale}"
             fill="#808080"
             rx="${radius}"
             ry="${radius}"
-            filter="blur(${depth}px)"
+            filter="blur(${depth * distortionScale}px)"
         />
       </g>
   </svg>`);

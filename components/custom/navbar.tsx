@@ -52,10 +52,19 @@ export const Navbar = ({ session }: NavbarProps) => {
           <div className="glass-container glass-container--rounded glass-container--large">
             {/* Apply new glass background effect that adapts to container shape */}
             <GlassBackground 
-              chromaticAberration={3}
-              strength={50}
+              chromaticAberration={0.5}
+              strength={30}
               depth={8}
-              blur={2}
+              blur={0}
+              brightness={0.8}
+              saturation={1.3}
+              contrast={1.1}
+              opacity={0.01}
+              redMultiplier={3}
+              greenMultiplier={1.5}
+              blueMultiplier={0.8}
+              noiseIntensity={0}
+              distortionScale={0.5}
             />
             
             {/* Keep original glass-content with exact same styling */}
