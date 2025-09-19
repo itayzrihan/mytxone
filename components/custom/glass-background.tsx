@@ -213,8 +213,8 @@ export function GlassBackground({
         depth: depthRef.current,
         strength,
         chromaticAberration,
-      })}') blur(${blur}px) brightness(1.1) saturate(1.5);
-      background: rgba(255, 255, 255, 0.1);
+      })}') blur(${blur}px) brightness(0.7) saturate(1.5);
+      background: rgba(${className?.includes('bright') ? '255, 255, 255' : '0, 0, 0'}, 0.1);
       border-radius: ${computedStyle.borderRadius || `${borderRadius}px`};
     `;
 
@@ -281,22 +281,24 @@ export function GlassBackground({
     updateGlassEffect();
   };
 
-  return (
+return (
     <div
-      ref={elementRef}
-      className={cn(
-        "absolute inset-0 pointer-events-none",
-        "bg-white/10 shadow-[inset_0_0_4px_0px_white]",
-        className
-      )}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      style={{
-        zIndex: 0, // Ensure it's behind content
-      }}
+        ref={elementRef}
+        className={cn(
+            "absolute inset-0 pointer-events-none",
+            className?.includes('bright') 
+                ? "bg-white/10 shadow-[inset_0_0_4px_0px_white]"
+                : "bg-black/10 shadow-[inset_0_0_4px_0px_rgba(255,255,255,0.3)]",
+            className
+        )}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{
+            zIndex: 0, // Ensure it's behind content
+        }}
     />
-  );
+);
 }
 
 // HOC version for easier application
