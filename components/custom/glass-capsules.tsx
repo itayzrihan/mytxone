@@ -69,6 +69,15 @@ export function GlassCapsules() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showLanguages) {
+        const target = event.target as Element;
+        const languageDropdown = document.querySelector('.language-dropdown');
+        const languageButton = document.getElementById('language-selector-button');
+        
+        // Don't close if clicking inside the dropdown or on the button
+        if (languageDropdown?.contains(target) || languageButton?.contains(target)) {
+          return;
+        }
+        
         setShowLanguages(false);
       }
     };
@@ -201,7 +210,7 @@ export function GlassCapsules() {
       {showLanguages && (
         <div className="absolute mt-2 mx-4 md:mx-0 z-50">
           <div 
-            className="relative overflow-hidden w-fit min-w-[120px] max-w-[200px] rounded-xl cursor-pointer group shadow-lg shadow-black/20"
+            className="language-dropdown relative overflow-hidden w-fit min-w-[120px] max-w-[200px] rounded-xl cursor-pointer group shadow-lg shadow-black/20"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Glass effect layers for dropdown */}
