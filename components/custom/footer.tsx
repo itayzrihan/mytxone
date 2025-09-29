@@ -7,7 +7,7 @@ export function Footer() {
   const pathname = usePathname();
 
   // Hide footer on specific routes
-  const shouldHideFooter = pathname === "/mytx/create";
+  const shouldHideFooter = pathname === "/mytx/create" || pathname.includes("/teleprompter");
 
   // Don't render footer on certain pages
   if (shouldHideFooter) {

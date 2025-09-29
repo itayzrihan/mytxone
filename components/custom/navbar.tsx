@@ -25,7 +25,7 @@ export const Navbar = ({ session }: NavbarProps) => {
   const pathname = usePathname();
 
   // Hide navbar on specific routes
-  const shouldHideNavbar = pathname === "/mytx/create";
+  const shouldHideNavbar = pathname === "/mytx/create" || pathname.includes("/teleprompter");
 
   // Prevent hydration mismatch by only rendering session-dependent UI on client
   useEffect(() => {
