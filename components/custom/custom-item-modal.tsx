@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,25 @@ export function CustomItemModal({ isOpen, onClose, onSave, type: defaultType = '
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('ai');
   const [itemType, setItemType] = useState<'hook' | 'contentType'>(defaultType);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Sync itemType with the prop when it changes and reset form when modal opens
+  useEffect(() => {
+    setItemType(defaultType);
+    if (isOpen) {
+      // Reset form state when modal opens
+      setAiPrompt('');
+      setManualData({
+        label: '',
+        description: '',
+        example: '',
+        structure: '',
+        category: 'Educational & Instructional'
+      });
+      setGeneratedData(null);
+      setActiveTab('ai');
+      setIsPublic(true);
+    }
+  }, [defaultType, isOpen]);
   
   // AI Generation fields
   const [aiPrompt, setAiPrompt] = useState('');
