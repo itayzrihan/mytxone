@@ -759,3 +759,22 @@ export const UsersIcon = ({ size = 16 }: { size?: number }) => {
     </svg>
   );
 };
+
+export const PlusIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width={size}
+      style={{ color: "currentcolor" }}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M8.75 1.75V7.25H14.25V8.75H8.75V14.25H7.25V8.75H1.75V7.25H7.25V1.75H8.75Z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  );
+};

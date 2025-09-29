@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface GlassBackgroundProps {
@@ -60,6 +60,23 @@ export function GlassBackground({
 }: GlassBackgroundProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const depthRef = useRef(baseDepth);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile devices
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor;
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth <= 768;
+      
+      setIsMobile(isMobileDevice || (isTouchDevice && isSmallScreen));
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   const getDisplacementMap = ({
     height,
@@ -270,6 +287,29 @@ export function GlassBackground({
     
     console.log('Detected border radius:', borderRadius, 'px from parent element');
     
+    // Mobile-optimized fallback style
+    if (isMobile) {
+      const mobileStyle = `
+        background: linear-gradient(135deg, 
+          rgba(255, 255, 255, ${opacity * 0.8}) 0%,
+          rgba(255, 255, 255, ${opacity * 0.4}) 25%,
+          rgba(0, 255, 255, ${opacity * 0.3}) 50%,
+          rgba(255, 0, 255, ${opacity * 0.3}) 75%,
+          rgba(255, 255, 255, ${opacity * 0.1}) 100%
+        );
+        backdrop-filter: blur(${Math.min(blur * 2, 8)}px) brightness(${brightness}) saturate(${saturation});
+        border-radius: ${computedStyle.borderRadius || `${borderRadius}px`};
+        box-shadow: 
+          inset 0 1px 0 rgba(255, 255, 255, ${glowIntensity * 0.5}),
+          inset 0 0 ${glowSpread}px rgba(255, 255, 255, ${glowIntensity * 0.3}),
+          0 0 ${glowSpread * 2}px rgba(255, 255, 255, ${glowIntensity * 0.2});
+        border: 1px solid rgba(255, 255, 255, ${opacity * 2});
+      `;
+      elementRef.current.setAttribute("style", mobileStyle);
+      return;
+    }
+
+    // Desktop: Full effect with SVG filters
     const style = `
       backdrop-filter: blur(${blur / 2}px) url('${getDisplacementFilter({
         height: rect.height || 100,
@@ -339,7 +379,7 @@ export function GlassBackground({
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     };
-  }, [blur, chromaticAberration, strength, debug, brightness, saturation, contrast, opacity, redMultiplier, greenMultiplier, blueMultiplier, noiseIntensity, distortionScale, distortionSmoothness, prismaIntensity, glowIntensity, glowSpread, edgeSharpness, refractionIndex, surfaceRoughness, liquidFlow]);
+  }, [blur, chromaticAberration, strength, debug, brightness, saturation, contrast, opacity, redMultiplier, greenMultiplier, blueMultiplier, noiseIntensity, distortionScale, distortionSmoothness, prismaIntensity, glowIntensity, glowSpread, edgeSharpness, refractionIndex, surfaceRoughness, liquidFlow, isMobile]);
 
   const handleMouseDown = () => {
     depthRef.current = baseDepth / 0.7;

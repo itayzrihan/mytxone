@@ -6,8 +6,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import * as schema from "./schema"; // Import the entire schema
-const { user, chat, reservation, memories, apiKey, tasks, meditations } = schema; // Destructure needed tables
-import type { User, Memory, ApiKey, Task, Meditation } from "./schema"; // Import types separately
+const { user, chat, reservation, memories, apiKey, tasks, meditations, scripts } = schema; // Destructure needed tables
+import type { User, Memory, ApiKey, Task, Meditation, Script } from "./schema"; // Import types separately
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
@@ -496,5 +496,93 @@ export async function updateApiKeyLastUsed(keyId: string): Promise<void> {
       .where(eq(apiKey.id, keyId));
   } catch (error) {
     console.error("Failed to update API key lastUsedAt:", keyId, error);
+  }
+}
+
+// Script-related functions
+export async function getUserScripts(userId: string) {
+  try {
+    return await db.select().from(schema.scripts).where(eq(schema.scripts.userId, userId)).orderBy(desc(schema.scripts.updatedAt));
+  } catch (error) {
+    console.error("Failed to get user scripts from database");
+    throw error;
+  }
+}
+
+export async function getScriptById(scriptId: string) {
+  try {
+    const result = await db.select().from(schema.scripts).where(eq(schema.scripts.id, scriptId));
+    return result[0] || null;
+  } catch (error) {
+    console.error("Failed to get script by id from database");
+    throw error;
+  }
+}
+
+export async function createScript(scriptData: {
+  userId: string;
+  title: string;
+  description?: string;
+  content: string;
+  language: string;
+  hookType: string;
+  mainContentType: string;
+  contentFolderLink?: string;
+  productionVideoLink?: string;
+  uploadedVideoLinks?: string[];
+  status?: string;
+  tags?: string[];
+  isPublic?: boolean;
+}) {
+  try {
+    return await db.insert(schema.scripts).values({
+      ...scriptData,
+      tags: scriptData.tags ? JSON.stringify(scriptData.tags) : null,
+      uploadedVideoLinks: scriptData.uploadedVideoLinks ? JSON.stringify(scriptData.uploadedVideoLinks) : null,
+    }).returning();
+  } catch (error) {
+    console.error("Failed to create script in database");
+    throw error;
+  }
+}
+
+export async function updateScript(scriptId: string, scriptData: {
+  title?: string;
+  description?: string;
+  content?: string;
+  language?: string;
+  hookType?: string;
+  mainContentType?: string;
+  contentFolderLink?: string;
+  productionVideoLink?: string;
+  uploadedVideoLinks?: string[];
+  status?: string;
+  tags?: string[];
+  isPublic?: boolean;
+}) {
+  try {
+    const updateData = {
+      ...scriptData,
+      updatedAt: new Date(),
+      tags: scriptData.tags ? JSON.stringify(scriptData.tags) : undefined,
+      uploadedVideoLinks: scriptData.uploadedVideoLinks ? JSON.stringify(scriptData.uploadedVideoLinks) : undefined,
+    };
+    
+    return await db.update(schema.scripts)
+      .set(updateData)
+      .where(eq(schema.scripts.id, scriptId))
+      .returning();
+  } catch (error) {
+    console.error("Failed to update script in database");
+    throw error;
+  }
+}
+
+export async function deleteScript(scriptId: string) {
+  try {
+    return await db.delete(schema.scripts).where(eq(schema.scripts.id, scriptId));
+  } catch (error) {
+    console.error("Failed to delete script from database");
+    throw error;
   }
 }

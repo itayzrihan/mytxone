@@ -27,6 +27,9 @@ export const userRelations = relations(user, ({ many }) => ({
   tasks: many(tasks),
   meditations: many(meditations),
   protocols: many(protocols),
+  scripts: many(scripts),
+  customHooks: many(customHooks),
+  customContentTypes: many(customContentTypes),
 }));
 
 export const chat = pgTable("Chat", {
@@ -148,6 +151,97 @@ export type ApiKey = InferSelectModel<typeof apiKey>;
 export const apiKeyRelations = relations(apiKey, ({ one }) => ({
   user: one(user, {
     fields: [apiKey.userId],
+    references: [user.id],
+  }),
+}));
+
+export const scripts = pgTable("Script", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  content: text("content").notNull(),
+  language: text("language").notNull().default("english"), // spoken language for video script
+  hookType: text("hook_type").notNull(), // type of hook used
+  mainContentType: text("main_content_type").notNull().default("storytelling"), // main content type
+  contentFolderLink: text("content_folder_link"), // link to folder with editing content
+  productionVideoLink: text("production_video_link"), // link to production ready video
+  uploadedVideoLinks: json("uploaded_video_links"), // array of links to uploaded videos
+  status: text("status").notNull().default("in-progress"), // in-progress or ready
+  tags: json("tags"), // array of strings for categorization
+  isPublic: boolean("is_public").notNull().default(false),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type Script = InferSelectModel<typeof scripts>;
+
+export const scriptsRelations = relations(scripts, ({ one }) => ({
+  user: one(user, {
+    fields: [scripts.userId],
+    references: [user.id],
+  }),
+}));
+
+export const customHooks = pgTable("CustomHook", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  value: text("value").notNull(), // URL-friendly identifier
+  label: text("label").notNull(), // Human-readable name
+  description: text("description").notNull(),
+  example: text("example").notNull(),
+  structure: text("structure").notNull(),
+  isPublic: boolean("is_public").notNull().default(false),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type CustomHook = InferSelectModel<typeof customHooks>;
+
+export const customHooksRelations = relations(customHooks, ({ one }) => ({
+  user: one(user, {
+    fields: [customHooks.userId],
+    references: [user.id],
+  }),
+}));
+
+export const customContentTypes = pgTable("CustomContentType", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  value: text("value").notNull(), // URL-friendly identifier
+  label: text("label").notNull(), // Human-readable name
+  description: text("description").notNull(),
+  example: text("example").notNull(),
+  structure: text("structure").notNull(),
+  category: text("category").notNull(),
+  isPublic: boolean("is_public").notNull().default(false),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type CustomContentType = InferSelectModel<typeof customContentTypes>;
+
+export const customContentTypesRelations = relations(customContentTypes, ({ one }) => ({
+  user: one(user, {
+    fields: [customContentTypes.userId],
     references: [user.id],
   }),
 }));

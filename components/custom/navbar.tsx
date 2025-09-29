@@ -55,7 +55,7 @@ export const Navbar = ({ session }: NavbarProps) => {
               chromaticAberration={0.5}
               strength={30}
               depth={8}
-              blur={0}
+              blur={5}
               brightness={0.8}
               saturation={1.3}
               contrast={1.1}

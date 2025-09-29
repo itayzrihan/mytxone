@@ -15,6 +15,7 @@ import { useAuth } from "./auth-context";
 
 import {
   CalendarIcon,
+  FileIcon,
   InfoIcon,
   InfographicIcon,
   MenuIcon,
@@ -164,6 +165,15 @@ export const History = ({ user }: { user: User | undefined }) => {
               <Link href="/mytx/create">
                 <div>Create new meeting</div>
                 <CalendarIcon size={14} />
+              </Link>
+            </Button>
+            <Button
+              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+              asChild
+            >
+              <Link href="/scripts">
+                <div>Scripts</div>
+                <FileIcon size={14} />
               </Link>
             </Button>
             
