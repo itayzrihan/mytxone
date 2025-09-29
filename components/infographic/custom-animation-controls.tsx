@@ -1,14 +1,21 @@
 'use client';
 
-import { CustomSettings } from './hooks/use-infographic-state';
+import { CustomSettings, ProgressState } from './hooks/use-infographic-state';
 import { getTemplateByName, TemplateOrientation } from './templates';
 
 interface CustomAnimationControlsProps {
   settings: CustomSettings;
   onSettingsChange: (settings: CustomSettings) => void;
+  progressState: ProgressState;
+  onProgressChange: (state: ProgressState) => void;
 }
 
-export function CustomAnimationControls({ settings, onSettingsChange }: CustomAnimationControlsProps) {
+export function CustomAnimationControls({ 
+  settings, 
+  onSettingsChange, 
+  progressState, 
+  onProgressChange 
+}: CustomAnimationControlsProps) {
   const updateSettings = (updates: Partial<CustomSettings>) => {
     onSettingsChange({ ...settings, ...updates });
   };

@@ -486,7 +486,7 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
         {isEditMode && (
           <div className="mb-6 p-4 bg-blue-500/10 border border-blue-400/30 rounded-lg">
             <p className="text-blue-300 text-sm">
-              📝 You're editing an existing script. You can update the current script, save it as a new script, or save and generate another variation.
+              📝 You&apos;re editing an existing script. You can update the current script, save it as a new script, or save and generate another variation.
             </p>
           </div>
         )}
@@ -873,7 +873,7 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
                     Example:
                   </div>
                   <div className="text-sm text-zinc-300 italic bg-black/20 p-2 rounded">
-                    "{selectedHook.example}"
+                    &quot;{selectedHook.example}&quot;
                   </div>
                 </>
               )}
@@ -948,7 +948,7 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
                     Example:
                   </div>
                   <div className="text-sm text-zinc-300 italic bg-black/20 p-2 rounded">
-                    "{selectedContentType.example}"
+                    &quot;{selectedContentType.example}&quot;
                   </div>
                 </>
               )}

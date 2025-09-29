@@ -2,11 +2,38 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { DynamicMeetingLanding } from "@/components/custom/dynamic-meeting-landing";
 
+type GalleryItem = {
+  id: string;
+  type: 'video' | 'image';
+  src: string;
+  thumbnail?: string;
+  title?: string;
+  duration?: string;
+};
+
+type MeetingData = {
+  title: string;
+  subtitle: string;
+  description: string;
+  memberCount: string;
+  onlineCount: string;
+  adminCount: string;
+  isPrivate: boolean;
+  isFree: boolean;
+  instructor: string;
+  hasVerifiedBadge: boolean;
+  features: string[];
+  backgroundVideo: string;
+  thumbnailImage: string;
+  poweredBy: string;
+  gallery?: GalleryItem[];
+};
+
 // This could be expanded to fetch real meeting data
-async function getMeetingData(dynamicpagename: string) {
+async function getMeetingData(dynamicpagename: string): Promise<MeetingData | null> {
   // For now, return mock data. In the future, this would fetch from a database
   // based on the dynamic page name
-  const mockMeetings = {
+  const mockMeetings: Record<string, MeetingData> = {
     "mandarin-blueprint-lite": {
       title: "Mandarin Blueprint Lite",
       subtitle: "skool.com/mandarin-blueprint-free",
@@ -52,7 +79,7 @@ async function getMeetingData(dynamicpagename: string) {
       gallery: [
         {
           id: "video-1",
-          type: "video",
+          type: "video" as const,
           src: "/videos/tech-hub-preview.mp4",
           thumbnail: "/images/tech-hub-thumbnail.jpg",
           title: "Community Overview",
@@ -60,7 +87,7 @@ async function getMeetingData(dynamicpagename: string) {
         },
         {
           id: "video-2",
-          type: "video",
+          type: "video" as const,
           src: "/videos/startup-workshop.mp4",
           thumbnail: "/images/startup-workshop-thumb.jpg",
           title: "Startup Workshop",
@@ -68,13 +95,13 @@ async function getMeetingData(dynamicpagename: string) {
         },
         {
           id: "image-1",
-          type: "image",
+          type: "image" as const,
           src: "/images/innovation-lab.jpg",
           title: "Innovation Lab"
         },
         {
           id: "video-3",
-          type: "video",
+          type: "video" as const,
           src: "/videos/hackathon-highlights.mp4",
           thumbnail: "/images/hackathon-thumb.jpg",
           title: "Hackathon Highlights",
@@ -82,13 +109,13 @@ async function getMeetingData(dynamicpagename: string) {
         },
         {
           id: "image-2",
-          type: "image",
+          type: "image" as const,
           src: "/images/networking-event.jpg",
           title: "Networking Event"
         },
         {
           id: "video-4",
-          type: "video",
+          type: "video" as const,
           src: "/videos/mentor-sessions.mp4",
           thumbnail: "/images/mentor-sessions-thumb.jpg",
           title: "Mentor Sessions",
@@ -96,7 +123,7 @@ async function getMeetingData(dynamicpagename: string) {
         },
         {
           id: "image-3",
-          type: "image",
+          type: "image" as const,
           src: "/images/project-showcase.jpg",
           title: "Project Showcase"
         }

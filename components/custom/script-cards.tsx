@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, JSX } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Script } from "@/db/schema";
@@ -73,7 +73,11 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
     return icons[language.toLowerCase()] || icons.default;
   };
 
-  const formatDate = (dateString: string) => {
+    const getHookDisplayName = (script: any): string => {
+    return String(getHookById(script.hookType)?.name || script.hookType || 'Unknown Hook');
+  };
+
+  const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -223,7 +227,7 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
               {/* Hook Type Badge */}
               <div className="mb-3">
                 <span className="inline-block bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full text-xs font-medium">
-                  {String(getHookById((script as any).hookType)?.name || (script as any).hookType || 'Unknown Hook')}
+                  {getHookDisplayName(script)}
                 </span>
               </div>
 

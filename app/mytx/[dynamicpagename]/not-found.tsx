@@ -22,7 +22,7 @@ export default function NotFound() {
                 Meeting Not Found
               </h1>
               <p className="text-lg text-zinc-300">
-                The meeting page you're looking for doesn't exist or has been moved.
+                The meeting page you&apos;re looking for doesn&apos;t exist or has been moved.
               </p>
             </div>
 
@@ -63,7 +63,7 @@ export default function NotFound() {
               </li>
               <li className="flex items-center space-x-2">
                 <span className="text-cyan-400">•</span>
-                <span>Create a new meeting if you're looking to start one</span>
+                <span>Create a new meeting if you&apos;re looking to start one</span>
               </li>
               <li className="flex items-center space-x-2">
                 <span className="text-cyan-400">•</span>

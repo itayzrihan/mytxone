@@ -293,13 +293,13 @@ export default function CreateMeetingPage() {
           <div className="max-w-3xl mx-auto">
             <p className="text-2xl text-white leading-relaxed">
               Build, connect, and grow with{" "}
-              <span className="text-cyan-400">tomorrow's community leaders.</span>
+              <span className="text-cyan-400">tomorrow&apos;s community leaders.</span>
             </p>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto">
             <h2 className="text-2xl text-white leading-relaxed">
-              What's best for you?
+              What&apos;s best for you?
             </h2>
           </div>
         )}
