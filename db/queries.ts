@@ -519,6 +519,26 @@ export async function getScriptById(scriptId: string) {
   }
 }
 
+export async function getScriptsByUserId(userId: string) {
+  try {
+    return await db.select({
+      id: schema.scripts.id,
+      title: schema.scripts.title,
+      description: schema.scripts.description,
+      content: schema.scripts.content,
+      hookType: schema.scripts.hookType,
+      mainContentType: schema.scripts.mainContentType,
+      createdAt: schema.scripts.createdAt,
+      status: schema.scripts.status
+    }).from(schema.scripts)
+      .where(eq(schema.scripts.userId, userId))
+      .orderBy(desc(schema.scripts.createdAt));
+  } catch (error) {
+    console.error("Failed to get scripts by user id from database");
+    throw error;
+  }
+}
+
 export async function createScript(scriptData: {
   userId: string;
   title: string;

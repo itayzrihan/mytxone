@@ -1038,6 +1038,137 @@ export const CATEGORY_CONFIG = {
 // Script length options
 export type ScriptLength = '30' | '60' | '90' | '120' | '150' | '180' | '200';
 
+// Motif/Emotional tone options for video scripts
+export interface Motif {
+  value: string;
+  label: string;
+  description: string;
+  icon: string;
+  category: 'Positive' | 'Intense' | 'Emotional' | 'Professional';
+}
+
+export const VIDEO_MOTIFS: Motif[] = [
+  // Positive Motifs
+  {
+    value: "happy",
+    label: "Happy & Uplifting",
+    description: "Cheerful, positive, and optimistic tone that brings joy and lightness",
+    icon: "😊",
+    category: "Positive"
+  },
+  {
+    value: "motivational",
+    label: "Motivational & Inspiring",
+    description: "Empowering and encouraging tone that drives action and ambition",
+    icon: "🚀",
+    category: "Positive"
+  },
+  {
+    value: "hopeful",
+    label: "Hopeful & Optimistic",
+    description: "Forward-looking and encouraging tone that instills confidence",
+    icon: "🌟",
+    category: "Positive"
+  },
+
+  // Intense Motifs
+  {
+    value: "epic",
+    label: "Epic & Dramatic",
+    description: "Grand, powerful, and larger-than-life tone with strong impact",
+    icon: "⚡",
+    category: "Intense"
+  },
+  {
+    value: "influencing",
+    label: "Persuasive & Influential",
+    description: "Compelling and convincing tone designed to change minds and behaviors",
+    icon: "🎯",
+    category: "Intense"
+  },
+  {
+    value: "urgent",
+    label: "Urgent & Action-Driven",
+    description: "Time-sensitive and compelling tone that creates immediate need for action",
+    icon: "⏰",
+    category: "Intense"
+  },
+  {
+    value: "confident",
+    label: "Confident & Authoritative",
+    description: "Strong, assured, and commanding tone that establishes expertise",
+    icon: "👑",
+    category: "Intense"
+  },
+
+  // Emotional Motifs
+  {
+    value: "emotional",
+    label: "Deeply Emotional",
+    description: "Heart-touching and emotionally resonant tone that creates strong connections",
+    icon: "💝",
+    category: "Emotional"
+  },
+  {
+    value: "sad",
+    label: "Melancholic & Reflective",
+    description: "Thoughtful, somber tone that evokes empathy and deep contemplation",
+    icon: "😢",
+    category: "Emotional"
+  },
+  {
+    value: "nostalgic",
+    label: "Nostalgic & Sentimental",
+    description: "Warm, reminiscent tone that evokes memories and emotional connections",
+    icon: "🕰️",
+    category: "Emotional"
+  },
+  {
+    value: "vulnerable",
+    label: "Vulnerable & Authentic",
+    description: "Raw, honest, and open tone that creates intimate human connections",
+    icon: "💕",
+    category: "Emotional"
+  },
+
+  // Professional Motifs
+  {
+    value: "professional",
+    label: "Professional & Polished",
+    description: "Clean, sophisticated, and business-appropriate tone",
+    icon: "💼",
+    category: "Professional"
+  },
+  {
+    value: "educational",
+    label: "Educational & Informative",
+    description: "Clear, instructional tone focused on teaching and knowledge sharing",
+    icon: "📚",
+    category: "Professional"
+  },
+  {
+    value: "conversational",
+    label: "Conversational & Friendly",
+    description: "Natural, approachable tone like talking with a close friend",
+    icon: "💬",
+    category: "Professional"
+  },
+  {
+    value: "mysterious",
+    label: "Mysterious & Intriguing",
+    description: "Enigmatic and curiosity-building tone that keeps audiences guessing",
+    icon: "🔮",
+    category: "Professional"
+  }
+];
+
+export const MOTIF_CATEGORIES = {
+  "Positive": { icon: "✨", order: 1 },
+  "Intense": { icon: "🔥", order: 2 },
+  "Emotional": { icon: "💝", order: 3 },
+  "Professional": { icon: "💼", order: 4 }
+} as const;
+
 // Custom content types and hooks interfaces (matching database schema)
 export interface CustomHook {
   id: string;

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "next-auth";
 import { Button } from "@/components/ui/button";
-import { VIDEO_HOOKS, VIDEO_LANGUAGES, MAIN_CONTENT_TYPES, VIDEO_STATUS, SCRIPT_LENGTHS, getContentTypesByCategory, CATEGORY_CONFIG, type CustomHook, type CustomContentType } from "@/lib/video-script-constants";
+import { VIDEO_HOOKS, VIDEO_LANGUAGES, MAIN_CONTENT_TYPES, VIDEO_STATUS, SCRIPT_LENGTHS, VIDEO_MOTIFS, MOTIF_CATEGORIES, getContentTypesByCategory, CATEGORY_CONFIG, type CustomHook, type CustomContentType, type Motif } from "@/lib/video-script-constants";
 import { CustomItemModal } from "@/components/custom/custom-item-modal";
 import { Plus } from "lucide-react";
 
@@ -19,6 +19,8 @@ interface FormData {
   hookType: string;
   mainContentType: string;
   scriptLength: string;
+  motif: string;
+  strongReferenceId: string;
   contentFolderLink: string;
   productionVideoLink: string;
   uploadedVideoLinks: string;
@@ -28,36 +30,31 @@ interface FormData {
   isPublic: boolean;
 }
 
+interface UserScript {
+  id: string;
+  title: string;
+  description: string | null;
+  content: string;
+  hookType: string;
+  mainContentType: string;
+  createdAt: Date;
+  status: string;
+}
+
 export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
-  const getInitialLanguage = () => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("preferred-language") || "hebrew";
-    }
-    return "hebrew";
-  };
-
-  const getInitialHookType = () => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("preferred-hook-type") || "blue-ball";
-    }
-    return "blue-ball";
-  };
-
-  const getInitialContentType = () => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("preferred-content-type") || "storytelling";
-    }
-    return "storytelling";
-  };
-
-  const getInitialScriptLength = () => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("preferred-script-length") || "60";
-    }
-    return "60";
-  };
+  // Check if we're in edit mode
+  const editId = searchParams?.get('editId');
+  const isEditMode = !!editId;
+  
+  // Default values that will be used for both server and initial client render
+  const getInitialLanguage = () => "hebrew";
+  const getInitialHookType = () => "blue-ball";
+  const getInitialContentType = () => "storytelling";
+  const getInitialScriptLength = () => "60";
+  const getInitialMotif = () => "";
 
   const [formData, setFormData] = useState<FormData>({
     title: "",
@@ -66,6 +63,8 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
     hookType: getInitialHookType(),
     mainContentType: getInitialContentType(),
     scriptLength: getInitialScriptLength(),
+    motif: getInitialMotif(),
+    strongReferenceId: "",
     contentFolderLink: "",
     productionVideoLink: "",
     uploadedVideoLinks: "",
@@ -76,6 +75,8 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+  const [isSavingAndGenerating, setIsSavingAndGenerating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isHookPreviewExpanded, setIsHookPreviewExpanded] = useState(false);
   const [isContentTypePreviewExpanded, setIsContentTypePreviewExpanded] = useState(false);
   
@@ -84,19 +85,70 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
   const [customContentTypes, setCustomContentTypes] = useState<CustomContentType[]>([]);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [customModalType, setCustomModalType] = useState<'hook' | 'contentType'>('hook');
+  
+  // User scripts for strong reference
+  const [userScripts, setUserScripts] = useState<UserScript[]>([]);
+  const [isLoadingScripts, setIsLoadingScripts] = useState(false);
+  
+  // Hydration state
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Update form data with saved preferences after component mounts (for hydration safety)
   useEffect(() => {
+    setIsHydrated(true);
     if (typeof window !== "undefined") {
       setFormData(prev => ({
         ...prev,
         language: localStorage.getItem("preferred-language") || "hebrew",
         hookType: localStorage.getItem("preferred-hook-type") || "blue-ball",
         mainContentType: localStorage.getItem("preferred-content-type") || "storytelling",
-        scriptLength: localStorage.getItem("preferred-script-length") || "60"
+        scriptLength: localStorage.getItem("preferred-script-length") || "60",
+        motif: localStorage.getItem("preferred-motif") || ""
       }));
     }
   }, []);
+
+  // Handle URL parameters for "Create Similar" functionality and Edit mode
+  useEffect(() => {
+    if (searchParams) {
+      const title = searchParams.get('title');
+      const description = searchParams.get('description');
+      const content = searchParams.get('content');
+      const language = searchParams.get('language');
+      const hookType = searchParams.get('hookType');
+      const contentType = searchParams.get('contentType');
+      const scriptLength = searchParams.get('scriptLength');
+      const motif = searchParams.get('motif');
+      const strongReferenceId = searchParams.get('strongReferenceId');
+      const contentFolderLink = searchParams.get('contentFolderLink');
+      const productionVideoLink = searchParams.get('productionVideoLink');
+      const uploadedVideoLinks = searchParams.get('uploadedVideoLinks');
+      const tags = searchParams.get('tags');
+      const status = searchParams.get('status');
+      const isPublic = searchParams.get('isPublic');
+
+      if (title || description || language || hookType || contentType || strongReferenceId || editId) {
+        setFormData(prev => ({
+          ...prev,
+          title: title || prev.title,
+          description: description || prev.description,
+          content: content || (isEditMode ? (content || "") : ""), // Keep content in edit mode, clear for "create similar"
+          language: language || prev.language,
+          hookType: hookType || prev.hookType,
+          mainContentType: contentType || prev.mainContentType,
+          scriptLength: scriptLength || prev.scriptLength,
+          motif: motif || prev.motif,
+          strongReferenceId: strongReferenceId || prev.strongReferenceId,
+          contentFolderLink: contentFolderLink || prev.contentFolderLink,
+          productionVideoLink: productionVideoLink || prev.productionVideoLink,
+          uploadedVideoLinks: uploadedVideoLinks || prev.uploadedVideoLinks,
+          tags: tags || prev.tags,
+          status: status || prev.status,
+          isPublic: isPublic ? isPublic === 'true' : prev.isPublic,
+        }));
+      }
+    }
+  }, [searchParams, editId, isEditMode]);
 
   // Save preferences to localStorage when form data changes
   useEffect(() => {
@@ -105,8 +157,11 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
       localStorage.setItem("preferred-hook-type", formData.hookType);
       localStorage.setItem("preferred-content-type", formData.mainContentType);
       localStorage.setItem("preferred-script-length", formData.scriptLength);
+      if (formData.motif) {
+        localStorage.setItem("preferred-motif", formData.motif);
+      }
     }
-  }, [formData.language, formData.hookType, formData.mainContentType, formData.scriptLength]);
+  }, [formData.language, formData.hookType, formData.mainContentType, formData.scriptLength, formData.motif]);
 
   // Load custom items from database
   useEffect(() => {
@@ -128,8 +183,18 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
         const contentTypesData = await contentTypesResponse.json();
         setCustomContentTypes(contentTypesData.customContentTypes || []);
       }
+
+      // Load user scripts for strong reference
+      setIsLoadingScripts(true);
+      const scriptsResponse = await fetch('/api/user-scripts');
+      if (scriptsResponse.ok) {
+        const scriptsData = await scriptsResponse.json();
+        setUserScripts(scriptsData.scripts || []);
+      }
+      setIsLoadingScripts(false);
     } catch (error) {
       console.error("Error loading custom items:", error);
+      setIsLoadingScripts(false);
     }
   };
 
@@ -187,6 +252,8 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
           hookType: formData.hookType,
           contentType: formData.mainContentType,
           scriptLength: formData.scriptLength,
+          motif: formData.motif,
+          strongReferenceId: formData.strongReferenceId,
         }),
       });
 
@@ -217,6 +284,147 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
       alert("Failed to generate script. Please try again.");
     } finally {
       setIsGeneratingScript(false);
+    }
+  };
+
+  const handleSaveAndGenerateAnother = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim() || !formData.description.trim() || !formData.content.trim()) {
+      alert("Please ensure you have a title, description, and generated content before saving.");
+      return;
+    }
+
+    setIsSavingAndGenerating(true);
+
+    try {
+      // First, save the current script
+      const saveResponse = await fetch("/api/scripts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          tags: formData.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+          uploadedVideoLinks: formData.uploadedVideoLinks.split(",").map((link) => link.trim()).filter(Boolean),
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        console.error("Failed to save script");
+        alert("Failed to save the current script. Please try again.");
+        return;
+      }
+
+      const savedScript = await saveResponse.json();
+      console.log("Script saved successfully:", savedScript.id);
+
+      // Save user's preferences to localStorage for next time
+      if (typeof window !== "undefined") {
+        localStorage.setItem("lastVideoScriptLanguage", formData.language);
+        localStorage.setItem("lastVideoScriptHookType", formData.hookType);
+        localStorage.setItem("lastVideoScriptContentType", formData.mainContentType);
+      }
+
+      // Now generate a new script with the same parameters
+      const generateResponse = await fetch('/api/generate-video-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          language: formData.language,
+          hookType: formData.hookType,
+          contentType: formData.mainContentType,
+          scriptLength: formData.scriptLength,
+          motif: formData.motif,
+          strongReferenceId: formData.strongReferenceId,
+        }),
+      });
+
+      const generateResult = await generateResponse.json();
+
+      if (!generateResponse.ok || generateResult.error) {
+        console.error("Failed to generate new script:", generateResult.error || generateResult);
+        alert(`Script saved successfully! However, failed to generate new script: ${generateResult.error || 'Unknown error'}. You can generate manually or try again.`);
+        return;
+      }
+
+      // Update the form with the new generated script
+      setFormData(prev => ({
+        ...prev,
+        title: generateResult.suggestedTitle || `${prev.title} - New Variation`,
+        content: generateResult.script,
+        // Reset some fields for the new script
+        contentFolderLink: "",
+        productionVideoLink: "",
+        uploadedVideoLinks: "",
+        tags: "",
+      }));
+
+      // Show success message
+      alert(`🎉 Script saved successfully! New script generated and ready for editing. Check the content field below.`);
+
+    } catch (error) {
+      console.error("Error in save and generate another:", error);
+      alert("An error occurred while saving and generating. Please try again.");
+    } finally {
+      setIsSavingAndGenerating(false);
+    }
+  };
+
+  const handleUpdateCurrent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editId) {
+      alert("No script ID found for updating.");
+      return;
+    }
+    
+    if (!formData.title.trim() || !formData.description.trim()) {
+      alert("Please fill in both title and description.");
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      const response = await fetch(`/api/scripts/${editId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          tags: formData.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+          uploadedVideoLinks: formData.uploadedVideoLinks.split(",").map((link) => link.trim()).filter(Boolean),
+        }),
+      });
+
+      if (response.ok) {
+        const updatedScript = await response.json();
+        
+        // Save user's preferences to localStorage for next time
+        if (typeof window !== "undefined") {
+          localStorage.setItem("lastVideoScriptLanguage", formData.language);
+          localStorage.setItem("lastVideoScriptHookType", formData.hookType);
+          localStorage.setItem("lastVideoScriptContentType", formData.mainContentType);
+        }
+        
+        // Navigate back to the updated script
+        router.push(`/scripts/${editId}`);
+      } else {
+        console.error("Failed to update script");
+        alert("Failed to update script. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating script:", error);
+      alert("Error updating script. Please try again.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -271,7 +479,17 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
   return (
     <div className="flex flex-col min-h-screen p-4 pt-16">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-8">Create New Video Script</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">
+          {isEditMode ? "Edit Video Script" : "Create New Video Script"}
+        </h1>
+        
+        {isEditMode && (
+          <div className="mb-6 p-4 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+            <p className="text-blue-300 text-sm">
+              📝 You're editing an existing script. You can update the current script, save it as a new script, or save and generate another variation.
+            </p>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
@@ -480,6 +698,137 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
               </select>
             </div>
           </div>
+
+          {/* Motif and Strong Reference Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Motif */}
+            <div>
+              <label htmlFor="motif" className="block text-sm font-medium text-white mb-2">
+                Motif/Emotional Tone
+              </label>
+              <select
+                id="motif"
+                value={formData.motif}
+                onChange={(e) => {
+                  const newMotif = e.target.value;
+                  setFormData({ ...formData, motif: newMotif });
+                  if (typeof window !== "undefined") {
+                    if (newMotif) {
+                      localStorage.setItem("preferred-motif", newMotif);
+                    } else {
+                      localStorage.removeItem("preferred-motif");
+                    }
+                  }
+                }}
+                className="w-full p-3 bg-gray-500/20 backdrop-blur-lg border border-gray-400/30 rounded-xl text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 shadow-lg transition-all duration-300 hover:bg-gray-500/30"
+              >
+                <option value="" className="bg-gray-800 text-gray-300">No specific motif</option>
+                {(() => {
+                  const motifsByCategory = VIDEO_MOTIFS.reduce((acc, motif) => {
+                    if (!acc[motif.category]) acc[motif.category] = [];
+                    acc[motif.category].push(motif);
+                    return acc;
+                  }, {} as Record<string, Motif[]>);
+
+                  const sortedCategories = Object.keys(motifsByCategory).sort((a, b) => {
+                    const orderA = MOTIF_CATEGORIES[a as keyof typeof MOTIF_CATEGORIES]?.order || 999;
+                    const orderB = MOTIF_CATEGORIES[b as keyof typeof MOTIF_CATEGORIES]?.order || 999;
+                    return orderA - orderB;
+                  });
+
+                  return sortedCategories.map((category) => (
+                    <optgroup key={`motif-${category}`} label={`${MOTIF_CATEGORIES[category as keyof typeof MOTIF_CATEGORIES]?.icon || "🎭"} ${category}`} className="bg-gray-700 text-cyan-300 font-semibold">
+                      {motifsByCategory[category].map((motif) => (
+                        <option 
+                          key={motif.value} 
+                          value={motif.value} 
+                          className="bg-gray-800 text-white hover:bg-gray-700 pl-4"
+                          title={motif.description}
+                        >
+                          {motif.icon} {motif.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ));
+                })()}
+              </select>
+            </div>
+
+            {/* Strong Reference */}
+            <div>
+              <label htmlFor="strongReference" className="block text-sm font-medium text-white mb-2">
+                Strong Reference Script
+              </label>
+              <select
+                id="strongReference"
+                value={formData.strongReferenceId}
+                onChange={(e) => setFormData({ ...formData, strongReferenceId: e.target.value })}
+                className="w-full p-3 bg-gray-500/20 backdrop-blur-lg border border-gray-400/30 rounded-xl text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 shadow-lg transition-all duration-300 hover:bg-gray-500/30"
+                disabled={isLoadingScripts}
+              >
+                <option value="" className="bg-gray-800 text-gray-300">
+                  {isLoadingScripts ? "Loading scripts..." : "No strong reference"}
+                </option>
+                {userScripts.map((script) => (
+                  <option 
+                    key={script.id} 
+                    value={script.id} 
+                    className="bg-gray-800 text-white hover:bg-gray-700"
+                    title={script.description || script.title}
+                  >
+                    📝 {script.title} ({script.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Motif Preview */}
+          {formData.motif && (() => {
+            const selectedMotif = VIDEO_MOTIFS.find(motif => motif.value === formData.motif);
+            return selectedMotif && (
+              <div className="p-4 bg-purple-500/10 border border-purple-400/20 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">{selectedMotif.icon}</span>
+                  <div className="text-lg font-medium text-purple-300">
+                    {selectedMotif.label}
+                  </div>
+                  <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full">
+                    {selectedMotif.category}
+                  </span>
+                </div>
+                <div className="text-sm text-zinc-300">
+                  {selectedMotif.description}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Strong Reference Preview */}
+          {formData.strongReferenceId && (() => {
+            const selectedScript = userScripts.find(script => script.id === formData.strongReferenceId);
+            return selectedScript && (
+              <div className="p-4 bg-green-500/10 border border-green-400/20 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">⭐</span>
+                  <div className="text-lg font-medium text-green-300">
+                    Strong Reference: {selectedScript.title}
+                  </div>
+                  <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">
+                    {selectedScript.status}
+                  </span>
+                </div>
+                {selectedScript.description && (
+                  <div className="text-sm text-zinc-300 mb-2">
+                    {selectedScript.description}
+                  </div>
+                )}
+                <div className="text-xs text-zinc-400">
+                  Hook: {selectedScript.hookType} | Content: {selectedScript.mainContentType}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Hook Preview */}
           {selectedHook && (
@@ -762,7 +1111,7 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-4 pt-6">
+          <div className="flex flex-wrap gap-4 pt-6">
             <Button
               type="button"
               variant="outline"
@@ -771,13 +1120,64 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300 text-white"
-            >
-              {isSubmitting ? "Creating..." : "Create Video Script"}
-            </Button>
+            
+            {isEditMode ? (
+              <>
+                {/* Update Current Script Button */}
+                <Button
+                  type="button"
+                  onClick={handleUpdateCurrent}
+                  disabled={isUpdating || isSubmitting || isSavingAndGenerating}
+                  className="bg-orange-500/20 backdrop-blur-md border border-orange-400/30 hover:bg-orange-500/30 transition-all duration-300 text-white"
+                >
+                  {isUpdating ? "Updating..." : "Update Current Script"}
+                </Button>
+                
+                {/* Save as New Script Button */}
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || isUpdating || isSavingAndGenerating}
+                  className="bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300 text-white"
+                >
+                  {isSubmitting ? "Creating..." : "Save as New Script"}
+                </Button>
+                
+                {/* Save & Generate Another Button */}
+                {formData.content.trim() && (
+                  <Button
+                    type="button"
+                    onClick={handleSaveAndGenerateAnother}
+                    disabled={isSubmitting || isSavingAndGenerating || isGeneratingScript || isUpdating}
+                    className="bg-green-500/20 backdrop-blur-md border border-green-400/30 hover:bg-green-500/30 transition-all duration-300 text-white"
+                  >
+                    {isSavingAndGenerating ? "Saving & Generating..." : "Save & Generate Another"}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Create New Script Button */}
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || isSavingAndGenerating}
+                  className="bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300 text-white"
+                >
+                  {isSubmitting ? "Creating..." : "Create Video Script"}
+                </Button>
+                
+                {/* Save & Generate Another Button */}
+                {formData.content.trim() && (
+                  <Button
+                    type="button"
+                    onClick={handleSaveAndGenerateAnother}
+                    disabled={isSubmitting || isSavingAndGenerating || isGeneratingScript}
+                    className="bg-green-500/20 backdrop-blur-md border border-green-400/30 hover:bg-green-500/30 transition-all duration-300 text-white"
+                  >
+                    {isSavingAndGenerating ? "Saving & Generating..." : "Save & Generate Another"}
+                  </Button>
+                )}
+              </>
+            )}
           </div>
         </form>
 

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { title, description, language, hookType, contentType, scriptLength } = await request.json();
+    const { title, description, language, hookType, contentType, scriptLength, motif, strongReferenceId } = await request.json();
 
     // Validate required fields
     if (!title || !description || !language || !hookType || !contentType || !scriptLength) {
@@ -32,6 +32,9 @@ export async function POST(request: NextRequest) {
       hookType,
       contentType,
       scriptLength,
+      motif,
+      strongReferenceId,
+      userId: session.user.id, // Pass user ID for strong reference lookup
     });
 
     // Check for errors

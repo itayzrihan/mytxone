@@ -186,7 +186,7 @@ export function ScriptDetailPageContent({ scriptId, user }: ScriptDetailPageCont
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-zinc-400 mb-2">Tags</h3>
                 <div className="flex flex-wrap gap-2">
-                  {(script.tags as string[]).map((tag: string, index: number) => (
+                  {(script.tags as string[]).map((tag, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-zinc-300"
