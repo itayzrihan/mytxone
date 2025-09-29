@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CountdownSettings, CustomSettings, InfographicMode } from './hooks/use-infographic-state';
 
 interface PreviewAreaProps {
@@ -15,7 +15,7 @@ export function PreviewArea({ mode, countdownSettings, customSettings }: Preview
   const [previewText, setPreviewText] = useState(countdownSettings.countdown.toString());
 
   // Canvas drawing functions
-  const drawBackground = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+  const drawBackground = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
     if (countdownSettings.backgroundType === 'transparent') {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     } else if (countdownSettings.backgroundType === 'gradient') {
@@ -31,9 +31,9 @@ export function PreviewArea({ mode, countdownSettings, customSettings }: Preview
       ctx.fillStyle = countdownSettings.backgroundColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-  };
+  }, [countdownSettings]);
 
-  const drawText = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, text: string) => {
+  const drawText = useCallback((ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, text: string) => {
     ctx.save();
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -89,9 +89,9 @@ export function PreviewArea({ mode, countdownSettings, customSettings }: Preview
 
     ctx.fillText(text, centerX, centerY);
     ctx.restore();
-  };
+  }, [countdownSettings]);
 
-  const drawPreview = () => {
+  const drawPreview = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -100,9 +100,9 @@ export function PreviewArea({ mode, countdownSettings, customSettings }: Preview
 
     drawBackground(ctx, canvas);
     drawText(ctx, canvas, previewText);
-  };
+  }, [drawBackground, drawText, previewText]);
 
-  const parseUnifiedCode = (code: string) => {
+  const parseUnifiedCode = useCallback((code: string) => {
     // For complete HTML documents, just return the code as-is
     if (code.includes('<!DOCTYPE html>') || code.includes('<html>')) {
       return code;
@@ -134,9 +134,9 @@ ${css}
 ${html}
 </body>
 </html>`;
-  };
+  }, []);
 
-  const previewCustomAnimation = () => {
+  const previewCustomAnimation = useCallback(() => {
     const customPreview = customPreviewRef.current;
     if (!customPreview) return;
     
@@ -184,7 +184,7 @@ ${html}
     
     // Add iframe directly to preview without scaling container
     customPreview.appendChild(iframe);
-  };
+  }, [customSettings, parseUnifiedCode]);
 
   // Update canvas size based on video orientation
   useEffect(() => {
@@ -200,21 +200,21 @@ ${html}
     }
     
     drawPreview();
-  }, [countdownSettings.videoSize]);
+  }, [countdownSettings.videoSize, drawPreview]);
 
   // Redraw when settings change
   useEffect(() => {
     if (mode === 'countdown') {
       drawPreview();
     }
-  }, [countdownSettings, mode]);
+  }, [countdownSettings, mode, drawPreview]);
 
   // Update custom preview when settings change
   useEffect(() => {
     if (mode === 'custom') {
       previewCustomAnimation();
     }
-  }, [customSettings.unifiedCode, customSettings.orientation, mode]);
+  }, [customSettings.orientation, customSettings.unifiedCode, mode, previewCustomAnimation]);
 
   return (
     <div className="bg-white/95 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/20 flex flex-col items-center">

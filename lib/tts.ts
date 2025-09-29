@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import wav from 'wav';
+import { FileWriter } from 'wav';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -48,7 +48,7 @@ export async function saveWaveFile(
   sampleWidth = 2,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const writer = new wav.FileWriter(filename, {
+  const writer = new FileWriter(filename, {
       channels,
       sampleRate: rate,
       bitDepth: sampleWidth * 8,

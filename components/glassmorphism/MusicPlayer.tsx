@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface MusicPlayerProps {
   title?: string;
@@ -19,10 +20,13 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({
       <div className="glass-content">
         <div className="player">
           <div className="player__thumb">
-            <img 
-              className="player__img" 
-              src={imageUrl} 
+            <Image
+              className="player__img"
+              src={imageUrl}
               alt={`${title} by ${artist}`}
+              width={120}
+              height={120}
+              priority
             />
             <div className="player__legend">
               <h3 className="player__legend__title">{title}</h3>

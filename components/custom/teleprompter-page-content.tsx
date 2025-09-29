@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "next-auth";
 import { Script } from "@/db/schema";
@@ -279,7 +279,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
     };
   }, [isFullscreen]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (!isPlaying && containerRef.current) {
       const currentPosition = containerRef.current.scrollTop;
       const maxScroll = containerRef.current.scrollHeight - containerRef.current.clientHeight;
@@ -291,15 +291,15 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
       }
     }
     setIsPlaying(!isPlaying);
-  };
+  }, [isPlaying]);
   
-  const resetPosition = () => {
+  const resetPosition = useCallback(() => {
     setPosition(0);
     setIsPlaying(false);
     if (containerRef.current) {
       containerRef.current.scrollTop = 0;
     }
-  };
+  }, []);
 
   const toggleFullscreen = async () => {
     if (!document.fullscreenElement) {
@@ -317,7 +317,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
     setFontSize(prev => Math.max(24, Math.min(96, prev + delta)));
   };
 
-  const skipPosition = (seconds: number) => {
+  const skipPosition = useCallback((seconds: number) => {
     const pixelsPerSecond = 60; // Approximate based on reading speed
     const deltaPixels = seconds * pixelsPerSecond;
     
@@ -332,7 +332,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
       
       return finalPosition;
     });
-  };
+  }, []);
 
   // Add keyboard navigation for scroll control - works during playback
   useEffect(() => {
@@ -377,7 +377,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [isPlaying, showSettings]);
+  }, [isPlaying, showSettings, togglePlay, skipPosition, resetPosition]);
 
   // Prevent body scrolling when teleprompter is active
   useEffect(() => {

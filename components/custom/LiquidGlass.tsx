@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 
 interface LiquidGlassProps {
   className?: string
@@ -220,13 +221,14 @@ export function LiquidGlass({
             }}
           >
             {icons.map((icon, index) => (
-              <img 
+              <Image
                 key={index}
-                src={icon} 
+                src={icon}
                 alt={`Icon ${index + 1}`}
+                width={64}
+                height={64}
                 className="glass-icon"
-                loading="eager"
-                decoding="async"
+                priority
               />
             ))}
           </nav>

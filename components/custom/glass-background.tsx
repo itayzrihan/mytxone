@@ -78,7 +78,7 @@ export function GlassBackground({
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  const getDisplacementMap = ({
+  const getDisplacementMap = useCallback(({
     height,
     width,
     radius,
@@ -148,9 +148,18 @@ export function GlassBackground({
             opacity="${refractionIndex / 2}"
         />
       </g>
-  </svg>`);
+  </svg>`), [
+    distortionScale,
+    distortionSmoothness,
+    edgeSharpness,
+    liquidFlow,
+    noiseIntensity,
+    prismaIntensity,
+    refractionIndex,
+    surfaceRoughness,
+  ]);
 
-  const getDisplacementFilter = ({
+  const getDisplacementFilter = useCallback(({
     height,
     width,
     radius,
@@ -257,7 +266,18 @@ export function GlassBackground({
           </filter>
       </defs>
   </svg>`) +
-    "#displace";
+    "#displace",
+  [
+    blueMultiplier,
+    distortionScale,
+    getDisplacementMap,
+    glowIntensity,
+    glowSpread,
+    greenMultiplier,
+    prismaIntensity,
+    redMultiplier,
+    refractionIndex,
+  ]);
 
   const updateGlassEffect = useCallback(() => {
     if (!elementRef.current) return;

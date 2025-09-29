@@ -31,7 +31,7 @@ export function GlassBg({
   const elementRef = useRef<HTMLDivElement>(null);
   const depthRef = useRef(baseDepth);
 
-  const getDisplacementMap = ({
+  const getDisplacementMap = useCallback(({
     height,
     width,
     radius,
@@ -98,9 +98,9 @@ export function GlassBg({
             filter="blur(${depth}px)"
         />
       </g>
-  </svg>`);
+  </svg>`), []);
 
-  const getDisplacementFilter = ({
+  const getDisplacementFilter = useCallback(({
     height,
     width,
     radius,
@@ -183,9 +183,10 @@ export function GlassBg({
           </filter>
       </defs>
   </svg>`) +
-    "#displace";
+    "#displace",
+  [getDisplacementMap]);
 
-  const setStyle = () => {
+  const setStyle = useCallback(() => {
     if (!elementRef.current) return;
     
     const style = `
@@ -216,11 +217,21 @@ export function GlassBg({
     } else {
       elementRef.current.setAttribute("style", style);
     }
-  };
+  }, [
+    blur,
+    chromaticAberration,
+    debug,
+    getDisplacementFilter,
+    getDisplacementMap,
+    height,
+    radius,
+    strength,
+    width,
+  ]);
 
   useEffect(() => {
     setStyle();
-  }, [height, width, radius, blur, chromaticAberration, strength, debug]);
+  }, [setStyle]);
 
   const handleMouseDown = () => {
     depthRef.current = baseDepth / 0.7;

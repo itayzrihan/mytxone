@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface AppIcon {
   id: string;
@@ -49,7 +50,7 @@ export const AppDock: React.FC = () => {
       <div className="glass-content">
         {apps.map((app) => (
           <a key={app.id} className="glass-content__link" href={app.href}>
-            <img src={app.imageUrl} alt={app.name} />
+            <Image src={app.imageUrl} alt={app.name} width={64} height={64} />
           </a>
         ))}
       </div>

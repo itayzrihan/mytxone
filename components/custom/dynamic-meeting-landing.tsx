@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { CalendarIcon } from "./icons";
 import { Button } from "@/components/ui/button";
@@ -113,10 +114,12 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                             <source src={activeGalleryItem.src} type="video/mp4" />
                           </video>
                         ) : (
-                          <img 
-                            src={activeGalleryItem.src} 
+                          <Image
+                            src={activeGalleryItem.src}
                             alt={activeGalleryItem.title || "Gallery image"}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, 768px"
                           />
                         )
                       ) : (
@@ -177,10 +180,12 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                       >
                         <div className="absolute inset-0 bg-white/5 backdrop-blur-md border border-white/10"></div>
                         <div className="relative w-full h-full">
-                          <img 
-                            src={item.thumbnail || item.src} 
+                          <Image
+                            src={item.thumbnail || item.src}
                             alt={item.title || "Gallery item"}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="120px"
                           />
                           
                           {/* Video Play Icon Overlay */}
@@ -300,10 +305,13 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                   <div className="relative p-8 text-center space-y-6">
                     {/* Full-width Thumbnail */}
                     <div className="relative aspect-video bg-gradient-to-br from-cyan-400/20 to-blue-600/20 rounded-t-xl overflow-hidden -mx-8 -mt-8 mb-6">
-                      <img 
-                        src={meetingData.thumbnailImage || "/images/tech-hub-thumbnail.jpg"} 
+                      <Image
+                        src={meetingData.thumbnailImage || "/images/tech-hub-thumbnail.jpg"}
                         alt={meetingData.title}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 480px"
+                        priority
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                     </div>
@@ -398,10 +406,12 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                           <source src={activeGalleryItem.src} type="video/mp4" />
                         </video>
                       ) : (
-                        <img 
-                          src={activeGalleryItem.src} 
+                        <Image
+                          src={activeGalleryItem.src}
                           alt={activeGalleryItem.title || "Gallery image"}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="100vw"
                         />
                       )
                     ) : (
@@ -459,10 +469,12 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                     >
                       <div className="absolute inset-0 bg-white/5 backdrop-blur-md border border-white/10"></div>
                       <div className="relative w-full h-full">
-                        <img 
-                          src={item.thumbnail || item.src} 
+                        <Image
+                          src={item.thumbnail || item.src}
                           alt={item.title || "Gallery item"}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="96px"
                         />
                         
                         {/* Video Play Icon Overlay */}
@@ -590,10 +602,13 @@ export function DynamicMeetingLanding({ meetingData, pageName }: DynamicMeetingL
                 <div className="relative p-8 text-center space-y-6">
                   {/* Full-width Thumbnail */}
                   <div className="relative aspect-video bg-gradient-to-br from-cyan-400/20 to-blue-600/20 rounded-t-xl overflow-hidden -mx-8 -mt-8 mb-6">
-                    <img 
-                      src={meetingData.thumbnailImage || "/images/tech-hub-thumbnail.jpg"} 
+                    <Image
+                      src={meetingData.thumbnailImage || "/images/tech-hub-thumbnail.jpg"}
                       alt={meetingData.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 480px"
+                      priority
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                   </div>
