@@ -51,7 +51,6 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [position, setPosition] = useState(0);
-  const [autoScrollPosition, setAutoScrollPosition] = useState(0); // Tracks where auto-scroll would be
   const [showSettings, setShowSettings] = useState(false);
   
   // Recording states
@@ -136,37 +135,50 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
     }
   };
 
-  // Auto-scroll functionality - never stops when playing
+  // Simple auto-scroll effect
   useEffect(() => {
-    const animate = () => {
-      if (isPlaying && contentRef.current && containerRef.current) {
-        setAutoScrollPosition(prev => {
-          const newPosition = prev + speed;
-          const maxScroll = contentRef.current!.scrollHeight - containerRef.current!.clientHeight;
-          
-          if (newPosition >= maxScroll) {
-            setIsPlaying(false);
-            setPosition(maxScroll);
-            containerRef.current!.scrollTop = maxScroll;
-            return maxScroll;
-          }
-          
-          // Always update scroll position - manual scrolling just adjusts this position
-          containerRef.current!.scrollTop = newPosition;
-          setPosition(newPosition);
-          
-          return newPosition;
-        });
+    if (!isPlaying) return;
+
+    let lastTime = 0;
+    const animate = (currentTime: number) => {
+      if (!lastTime) lastTime = currentTime;
+      const deltaTime = currentTime - lastTime;
+      
+      if (containerRef.current && contentRef.current && deltaTime > 0) {
+        const container = containerRef.current;
+        const maxScroll = contentRef.current.scrollHeight - container.clientHeight;
+        const currentScroll = container.scrollTop;
         
-        // Always continue animation when playing
+        // Speed is likely in pixels per frame or small increments
+        // Convert to smooth movement: speed * frames per second
+        // At 60fps, deltaTime is ~16.67ms, so multiply by appropriate factor
+        const pixelsToMove = speed * (deltaTime / 16.67); // Normalize to 60fps
+        const newScroll = currentScroll + pixelsToMove;
+
+        if (newScroll >= maxScroll) {
+          setIsPlaying(false);
+          setIsRecording(false);
+          container.scrollTop = maxScroll;
+          setPosition(maxScroll);
+          
+          // Reset to beginning after reaching end
+          setTimeout(() => {
+            container.scrollTop = 0;
+            setPosition(0);
+          }, 1000);
+        } else {
+          container.scrollTop = newScroll;
+          setPosition(newScroll);
+        }
+      }
+      
+      lastTime = currentTime;
+      if (isPlaying) {
         animationRef.current = requestAnimationFrame(animate);
       }
     };
 
-    if (isPlaying) {
-      animationRef.current = requestAnimationFrame(animate);
-    }
-
+    animationRef.current = requestAnimationFrame(animate);
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
@@ -174,48 +186,36 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
     };
   }, [isPlaying, speed]);
 
-  // Manual scroll handling - adjusts auto-scroll position instead of pausing
+  // Simple scroll tracking - only when not playing
   useEffect(() => {
+    if (isPlaying) return; // Don't interfere during auto-scroll
+
     const handleScroll = () => {
       if (containerRef.current) {
-        const scrollTop = containerRef.current.scrollTop;
-        
-        // If user manually scrolls during playback, adjust the auto-scroll position
-        if (isPlaying && Math.abs(scrollTop - autoScrollPosition) > 10) {
-          // Adjust auto-scroll position to current manual position
-          setAutoScrollPosition(scrollTop);
-          setPosition(scrollTop);
-        } else if (!isPlaying) {
-          // Only sync position when not playing
-          setPosition(scrollTop);
-          setAutoScrollPosition(scrollTop);
-        }
+        setPosition(containerRef.current.scrollTop);
       }
     };
 
     const container = containerRef.current;
     if (container) {
       container.addEventListener('scroll', handleScroll, { passive: true });
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-      };
+      return () => container.removeEventListener('scroll', handleScroll);
     }
-  }, [isPlaying, position, autoScrollPosition]);
+  }, [isPlaying]);
 
-  // Handle wheel events - adjusts auto-scroll position during playback
+  // Simple wheel handling
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
+      // Don't interfere during auto-scroll
+      if (isPlaying) return;
+      
+      e.preventDefault();
       if (containerRef.current) {
         const delta = e.deltaY;
         const currentScroll = containerRef.current.scrollTop;
         const newScroll = Math.max(0, currentScroll + delta);
         const maxScroll = contentRef.current!.scrollHeight - containerRef.current!.clientHeight;
         const finalScroll = Math.min(newScroll, maxScroll);
-        
-        // If playing, adjust the auto-scroll position to the new manual position
-        if (isPlaying) {
-          setAutoScrollPosition(finalScroll);
-        }
         
         containerRef.current.scrollTop = finalScroll;
         setPosition(finalScroll);
@@ -280,10 +280,14 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
   }, [isFullscreen]);
 
   const togglePlay = () => {
-    if (!isPlaying) {
-      // When starting to play, sync auto-scroll position with current position
-      if (containerRef.current) {
-        setAutoScrollPosition(containerRef.current.scrollTop);
+    if (!isPlaying && containerRef.current) {
+      const currentPosition = containerRef.current.scrollTop;
+      const maxScroll = containerRef.current.scrollHeight - containerRef.current.clientHeight;
+      
+      // If we're at the end, reset to beginning
+      if (currentPosition >= maxScroll - 10) {
+        setPosition(0);
+        containerRef.current.scrollTop = 0;
       }
     }
     setIsPlaying(!isPlaying);
@@ -291,7 +295,6 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
   
   const resetPosition = () => {
     setPosition(0);
-    setAutoScrollPosition(0);
     setIsPlaying(false);
     if (containerRef.current) {
       containerRef.current.scrollTop = 0;
@@ -342,45 +345,24 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
             break;
           case 'ArrowUp':
             e.preventDefault();
-            if (isPlaying) {
-              // Adjust auto-scroll position instead of pausing
-              const newPos = Math.max(0, autoScrollPosition - 120); // 2 seconds worth at 60px/s
-              setAutoScrollPosition(newPos);
-              if (containerRef.current) {
-                containerRef.current.scrollTop = newPos;
-                setPosition(newPos);
-              }
-            } else {
+            if (!isPlaying) {
               skipPosition(-2);
             }
             break;
           case 'ArrowDown':
             e.preventDefault();
-            if (isPlaying) {
-              // Adjust auto-scroll position instead of pausing
-              const maxScroll = contentRef.current!.scrollHeight - containerRef.current!.clientHeight;
-              const newPos = Math.min(maxScroll, autoScrollPosition + 120); // 2 seconds worth
-              setAutoScrollPosition(newPos);
-              if (containerRef.current) {
-                containerRef.current.scrollTop = newPos;
-                setPosition(newPos);
-              }
-            } else {
+            if (!isPlaying) {
               skipPosition(2);
             }
             break;
           case 'Home':
             e.preventDefault();
-            if (isPlaying) {
-              setAutoScrollPosition(0);
-            }
             resetPosition();
             break;
           case 'End':
             e.preventDefault();
-            if (isPlaying && containerRef.current && contentRef.current) {
+            if (!isPlaying && containerRef.current && contentRef.current) {
               const maxScroll = contentRef.current.scrollHeight - containerRef.current.clientHeight;
-              setAutoScrollPosition(maxScroll);
               setPosition(maxScroll);
               containerRef.current.scrollTop = maxScroll;
             } else if (containerRef.current && contentRef.current) {
@@ -421,7 +403,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (isScrolling && containerRef.current) {
+      if (isScrolling && containerRef.current && !isPlaying) {
         const currentY = e.touches[0].clientY;
         const deltaY = startY - currentY;
         
@@ -429,11 +411,6 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
         const newScroll = Math.max(0, currentScroll + deltaY);
         const maxScroll = contentRef.current!.scrollHeight - containerRef.current!.clientHeight;
         const finalScroll = Math.min(newScroll, maxScroll);
-        
-        // If playing, adjust the auto-scroll position to the new manual position
-        if (isPlaying) {
-          setAutoScrollPosition(finalScroll);
-        }
         
         containerRef.current.scrollTop = finalScroll;
         setPosition(finalScroll);
