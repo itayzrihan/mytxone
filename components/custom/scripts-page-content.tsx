@@ -41,7 +41,7 @@ export function ScriptsPageContent({ user }: ScriptsPageContentProps) {
         
         {/* Scripts Cards Section */}
         <div className="w-full">
-          <ScriptCards userId={user.id} />
+          {user.id && <ScriptCards userId={user.id} />}
         </div>
       </div>
     </div>

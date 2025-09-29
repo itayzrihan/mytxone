@@ -75,6 +75,9 @@ export function ScriptDetailPageContent({ scriptId, user }: ScriptDetailPageCont
   }
 
   const canEdit = script.userId === user.id;
+  const tags = Array.isArray(script.tags)
+    ? (script.tags as unknown[]).filter((tag): tag is string => typeof tag === "string")
+    : [];
 
   return (
     <div className="flex flex-col min-h-screen p-4 pt-16">
@@ -118,10 +121,10 @@ export function ScriptDetailPageContent({ scriptId, user }: ScriptDetailPageCont
                       strongReferenceId: (script as any).strongReferenceId || '',
                       contentFolderLink: (script as any).contentFolderLink || '',
                       productionVideoLink: (script as any).productionVideoLink || '',
-                      uploadedVideoLinks: Array.isArray((script as any).uploadedVideoLinks) 
-                        ? (script as any).uploadedVideoLinks.join(',') 
+                      uploadedVideoLinks: Array.isArray((script as any).uploadedVideoLinks)
+                        ? (script as any).uploadedVideoLinks.join(',')
                         : (script as any).uploadedVideoLinks || '',
-                      tags: Array.isArray(script.tags) ? script.tags.join(',') : '',
+                      tags: tags.join(','),
                       status: script.status,
                       isPublic: script.isPublic.toString()
                     });
@@ -181,12 +184,12 @@ export function ScriptDetailPageContent({ scriptId, user }: ScriptDetailPageCont
               </div>
             </div>
 
-            {/* Tags */}
-            {script.tags && Array.isArray(script.tags) && script.tags.length > 0 && (
+       
+            {tags.length > 0 && (
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-zinc-400 mb-2">Tags</h3>
                 <div className="flex flex-wrap gap-2">
-                  {(script.tags as string[]).map((tag, index) => (
+                  {tags.map((tag, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-zinc-300"

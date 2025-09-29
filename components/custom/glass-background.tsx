@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface GlassBackgroundProps {
@@ -259,7 +259,7 @@ export function GlassBackground({
   </svg>`) +
     "#displace";
 
-  const updateGlassEffect = () => {
+  const updateGlassEffect = useCallback(() => {
     if (!elementRef.current) return;
     
     const parent = elementRef.current.parentElement;
@@ -342,7 +342,23 @@ export function GlassBackground({
     } else {
       elementRef.current.setAttribute("style", style);
     }
-  };
+  }, [
+    blur,
+    brightness,
+    chromaticAberration,
+    className,
+    contrast,
+    debug,
+    distortionSmoothness,
+    getDisplacementFilter,
+    getDisplacementMap,
+    glowIntensity,
+    glowSpread,
+    isMobile,
+    opacity,
+    saturation,
+    strength,
+  ]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -379,7 +395,7 @@ export function GlassBackground({
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     };
-  }, [blur, chromaticAberration, strength, debug, brightness, saturation, contrast, opacity, redMultiplier, greenMultiplier, blueMultiplier, noiseIntensity, distortionScale, distortionSmoothness, prismaIntensity, glowIntensity, glowSpread, edgeSharpness, refractionIndex, surfaceRoughness, liquidFlow, isMobile]);
+  }, [updateGlassEffect]);
 
   const handleMouseDown = () => {
     depthRef.current = baseDepth / 0.7;

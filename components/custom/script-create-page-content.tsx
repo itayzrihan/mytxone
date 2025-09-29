@@ -1081,7 +1081,7 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
             </div>
           </div>
 
-          {/* Tags */}
+ 
           <div>
             <label htmlFor="tags" className="block text-sm font-medium text-white mb-2">
               Tags (comma-separated)

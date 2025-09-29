@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, JSX } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Script } from "@/db/schema";
@@ -77,6 +77,19 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
     return String(getHookById(script.hookType)?.name || script.hookType || 'Unknown Hook');
   };
 
+  const renderDescription = (description: string | null): React.ReactNode => {
+    if (!description) return null;
+    return (
+      <div className="mb-4 h-12 overflow-hidden">
+        <p className="text-zinc-300 text-sm leading-relaxed">
+          {description.length > 80 
+            ? `${description.substring(0, 80)}...` 
+            : description}
+        </p>
+      </div>
+    );
+  };
+
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
@@ -128,10 +141,12 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
     e.preventDefault();
     e.stopPropagation();
     
+    const description = typeof script.description === "string" ? script.description : "";
+
     // Build the URL with all the script parameters as search params
     const params = new URLSearchParams({
       title: `${script.title} - Similar`,
-      description: script.description || '',
+      description,
       language: (script as any).language || 'hebrew',
       hookType: (script as any).hookType || 'blue-ball',
       contentType: (script as any).mainContentType || 'storytelling',
@@ -183,11 +198,17 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {scripts.map((script) => (
-        <div
-          key={script.id}
-          className="block bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden hover:bg-white/10 hover:border-white/20 transition-all duration-300 group shadow-lg shadow-black/20"
-        >
+      {scripts.map((script) => {
+        const description = typeof script.description === "string" ? script.description : null;
+        const displayTags = Array.isArray(script.tags)
+          ? (script.tags as unknown[]).filter((tag): tag is string => typeof tag === "string")
+          : [];
+
+        return (
+          <div
+            key={script.id}
+            className="block bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden hover:bg-white/10 hover:border-white/20 transition-all duration-300 group shadow-lg shadow-black/20"
+          >
           {/* Clickable area for navigation */}
           <Link href={`/scripts/${script.id}`} className="block">
             {/* Language Header */}
@@ -224,28 +245,17 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
                 {script.title}
               </h3>
 
-              {/* Hook Type Badge */}
               <div className="mb-3">
                 <span className="inline-block bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full text-xs font-medium">
                   {getHookDisplayName(script)}
                 </span>
               </div>
+                
+              {renderDescription(description)}
 
-              {/* Description */}
-              {script.description && (
-                <div className="mb-4 h-12 overflow-hidden">
-                  <p className="text-zinc-300 text-sm leading-relaxed">
-                    {script.description.length > 80 
-                      ? `${script.description.substring(0, 80)}...` 
-                      : script.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Tags */}
-              {script.tags && Array.isArray(script.tags) && script.tags.length > 0 && (
+              {displayTags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {(script.tags as string[]).slice(0, 3).map((tag, index) => (
+                  {displayTags.slice(0, 3).map((tag, index) => (
                     <span
                       key={index}
                       className="text-xs bg-white/10 text-zinc-300 px-2 py-1 rounded-full"
@@ -253,9 +263,9 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
                       {tag}
                     </span>
                   ))}
-                  {(script.tags as string[]).length > 3 && (
+                  {displayTags.length > 3 && (
                     <span className="text-xs text-zinc-400 px-2 py-1">
-                      +{(script.tags as string[]).length - 3} more
+                      +{displayTags.length - 3} more
                     </span>
                   )}
                 </div>
@@ -315,7 +325,8 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
             </Button>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

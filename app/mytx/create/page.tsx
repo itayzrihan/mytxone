@@ -132,7 +132,7 @@ export default function CreateMeetingPage() {
       const timeoutId = setTimeout(recheckAuth, 2000);
       return () => clearTimeout(timeoutId);
     }
-  }, [isAuthModalOpen]);
+  }, [isAuthModalOpen, user]);
 
   // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
