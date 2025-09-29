@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "next-auth";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,48 @@ interface UserScript {
   createdAt: Date;
   status: string;
 }
+
+const SCRIPT_START_MARKER = "SCRIPT_START";
+const SCRIPT_END_MARKER = "SCRIPT_END";
+const TITLE_MARKER = "SUGGESTED_TITLE:";
+
+interface StreamedScriptState {
+  script: string;
+  hasStarted: boolean;
+  hasEnded: boolean;
+  title: string;
+}
+
+const parseStreamedScriptState = (buffer: string): StreamedScriptState => {
+  const startIndex = buffer.indexOf(SCRIPT_START_MARKER);
+  if (startIndex === -1) {
+    return { script: "", hasStarted: false, hasEnded: false, title: "" };
+  }
+
+  const afterStart = buffer.slice(startIndex + SCRIPT_START_MARKER.length);
+  const endIndex = afterStart.indexOf(SCRIPT_END_MARKER);
+  const hasEnded = endIndex !== -1;
+  const scriptSection = hasEnded ? afterStart.slice(0, endIndex) : afterStart;
+
+  const normalizedScript = scriptSection.replace(/\r/g, "");
+  const script = normalizedScript.replace(/^[\s\n]+/, "").replace(/[\s\n]+$/, "");
+
+  let title = "";
+  if (hasEnded) {
+    const afterEnd = afterStart.slice(endIndex + SCRIPT_END_MARKER.length);
+    const titleIndex = afterEnd.indexOf(TITLE_MARKER);
+    if (titleIndex !== -1) {
+      title = afterEnd.slice(titleIndex + TITLE_MARKER.length).trim();
+    }
+  }
+
+  return {
+    script,
+    hasStarted: true,
+    hasEnded,
+    title,
+  };
+};
 
 export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) {
   const router = useRouter();
@@ -222,6 +264,173 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
     setIsCustomModalOpen(true);
   };
 
+  const streamScriptGeneration = useCallback(
+    async (
+      body: Record<string, unknown>,
+      onScriptUpdate?: (script: string) => void,
+    ) => {
+      const response = await fetch('/api/generate-video-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to initiate script generation.';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.error || errorData?.details || errorMessage;
+        } catch (parseError) {
+          console.error('Failed to parse error response from script generation:', parseError);
+        }
+        throw new Error(errorMessage);
+      }
+
+      if (!response.body) {
+        throw new Error('Streaming not supported in this environment.');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let aggregated = '';
+      let latestScript = '';
+      let finalTitle = '';
+      let lastEmittedScript = '';
+
+      const emitUpdate = (scriptValue: string) => {
+        if (!scriptValue.length || scriptValue === lastEmittedScript) {
+          return;
+        }
+        lastEmittedScript = scriptValue;
+        latestScript = scriptValue;
+        onScriptUpdate?.(scriptValue);
+      };
+
+      const processEvent = (eventType: string, data: unknown) => {
+        if (eventType === 'chunk') {
+          const content = typeof (data as { content?: unknown })?.content === 'string'
+            ? (data as { content?: string }).content
+            : '';
+
+          if (!content) {
+            return;
+          }
+
+          aggregated += content;
+          const state = parseStreamedScriptState(aggregated);
+
+          if (state.hasStarted) {
+            emitUpdate(state.script);
+            if (state.hasEnded && state.title) {
+              finalTitle = state.title;
+            }
+          }
+        } else if (eventType === 'complete') {
+          const scriptField = (data as { script?: unknown })?.script;
+          const titleField = (data as { suggestedTitle?: unknown })?.suggestedTitle;
+          const scriptValue = typeof scriptField === 'string' ? scriptField.trim() : '';
+          const titleValue = typeof titleField === 'string' ? titleField.trim() : '';
+
+          if (scriptValue) {
+            emitUpdate(scriptValue);
+          }
+
+          if (titleValue) {
+            finalTitle = titleValue;
+          }
+        } else if (eventType === 'error') {
+          const message = typeof (data as { message?: unknown })?.message === 'string'
+            ? (data as { message?: string }).message
+            : 'Failed to generate script.';
+          throw new Error(message);
+        }
+      };
+
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+
+          let delimiterIndex: number;
+          while ((delimiterIndex = buffer.indexOf('\n\n')) !== -1) {
+            const eventBlock = buffer.slice(0, delimiterIndex);
+            buffer = buffer.slice(delimiterIndex + 2);
+
+            if (!eventBlock.trim()) {
+              continue;
+            }
+
+            const lines = eventBlock.split('\n');
+            let eventType = 'message';
+            let dataPayload = '';
+
+            for (const line of lines) {
+              if (line.startsWith('event:')) {
+                eventType = line.slice(6).trim();
+              } else if (line.startsWith('data:')) {
+                const payloadLine = line.slice(5).trim();
+                dataPayload += dataPayload ? `\n${payloadLine}` : payloadLine;
+              }
+            }
+
+            if (!dataPayload) {
+              continue;
+            }
+
+            let parsedData: unknown;
+            try {
+              parsedData = JSON.parse(dataPayload);
+            } catch (parseError) {
+              console.error('Failed to parse SSE payload:', parseError, { dataPayload });
+              continue;
+            }
+
+            try {
+              processEvent(eventType, parsedData);
+            } catch (streamError) {
+              if (streamError instanceof Error) {
+                throw streamError;
+              }
+              throw new Error('Failed to process script generation stream.');
+            }
+          }
+        }
+      } catch (streamError) {
+        if (streamError instanceof Error) {
+          throw streamError;
+        }
+        throw new Error('Unknown error during script streaming.');
+      }
+
+      if (!latestScript) {
+        const fallbackState = parseStreamedScriptState(aggregated);
+        if (fallbackState.script) {
+          emitUpdate(fallbackState.script);
+        }
+        if (!finalTitle && fallbackState.title) {
+          finalTitle = fallbackState.title.trim();
+        }
+      }
+
+      if (!latestScript) {
+        throw new Error('No script content received from the stream.');
+      }
+
+      return {
+        script: latestScript.trim(),
+        suggestedTitle: finalTitle.trim(),
+      };
+    },
+    [],
+  );
+
   const generateScript = async () => {
     if (!formData.title.trim() || !formData.description.trim()) {
       alert("Please fill in both title and description before generating a script.");
@@ -229,6 +438,8 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
     }
 
     setIsGeneratingScript(true);
+
+    const previousContent = formData.content;
 
     try {
       console.log("Starting script generation with params:", {
@@ -240,12 +451,10 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
         scriptLength: formData.scriptLength
       });
 
-      const response = await fetch('/api/generate-video-script', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      setFormData(prev => ({ ...prev, content: '' }));
+
+      const { script, suggestedTitle } = await streamScriptGeneration(
+        {
           title: formData.title,
           description: formData.description,
           language: formData.language,
@@ -254,34 +463,25 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
           scriptLength: formData.scriptLength,
           motif: formData.motif,
           strongReferenceId: formData.strongReferenceId,
-        }),
-      });
+        },
+        (partialScript) => {
+          setFormData(prev => ({ ...prev, content: partialScript }));
+        },
+      );
 
-      const result = await response.json();
-
-      if (!response.ok || result.error) {
-        console.error("Failed to generate script:", result.error || result);
-        console.error("Full response:", result);
-        alert(`Failed to generate script: ${result.error || result.details || 'Unknown error'}. Please try again.`);
-        return;
-      }
-
-      // Use the generated script directly - it's already a complete, flowing script
-      const generatedScript = result.script;
-
-      // Update the form data with the generated script and suggested title
       setFormData(prev => ({
         ...prev,
-        title: result.suggestedTitle || prev.title,
-        content: generatedScript
+        title: suggestedTitle || prev.title,
+        content: script,
       }));
 
-      // Show success message
       alert("🎉 Viral video script generated successfully! Check the content field below.");
 
     } catch (error) {
       console.error("Error generating script:", error);
-      alert("Failed to generate script. Please try again.");
+      setFormData(prev => ({ ...prev, content: previousContent }));
+      const message = error instanceof Error ? error.message : 'Failed to generate script. Please try again.';
+      alert(`Failed to generate script: ${message}`);
     } finally {
       setIsGeneratingScript(false);
     }
@@ -320,53 +520,51 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
       const savedScript = await saveResponse.json();
       console.log("Script saved successfully:", savedScript.id);
 
-      // Save user's preferences to localStorage for next time
       if (typeof window !== "undefined") {
         localStorage.setItem("lastVideoScriptLanguage", formData.language);
         localStorage.setItem("lastVideoScriptHookType", formData.hookType);
         localStorage.setItem("lastVideoScriptContentType", formData.mainContentType);
       }
 
-      // Now generate a new script with the same parameters
-      const generateResponse = await fetch('/api/generate-video-script', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          language: formData.language,
-          hookType: formData.hookType,
-          contentType: formData.mainContentType,
-          scriptLength: formData.scriptLength,
-          motif: formData.motif,
-          strongReferenceId: formData.strongReferenceId,
-        }),
-      });
+      const previousContent = formData.content;
+      const previousTitle = formData.title;
 
-      const generateResult = await generateResponse.json();
+      setFormData(prev => ({ ...prev, content: '' }));
 
-      if (!generateResponse.ok || generateResult.error) {
-        console.error("Failed to generate new script:", generateResult.error || generateResult);
-        alert(`Script saved successfully! However, failed to generate new script: ${generateResult.error || 'Unknown error'}. You can generate manually or try again.`);
-        return;
+      try {
+        const { script, suggestedTitle } = await streamScriptGeneration(
+          {
+            title: formData.title,
+            description: formData.description,
+            language: formData.language,
+            hookType: formData.hookType,
+            contentType: formData.mainContentType,
+            scriptLength: formData.scriptLength,
+            motif: formData.motif,
+            strongReferenceId: formData.strongReferenceId,
+          },
+          (partialScript) => {
+            setFormData(prev => ({ ...prev, content: partialScript }));
+          },
+        );
+
+        setFormData(prev => ({
+          ...prev,
+          title: suggestedTitle || `${previousTitle} - New Variation`,
+          content: script,
+          contentFolderLink: "",
+          productionVideoLink: "",
+          uploadedVideoLinks: "",
+          tags: "",
+        }));
+
+        alert(`🎉 Script saved successfully! New script generated and ready for editing. Check the content field below.`);
+      } catch (streamError) {
+        console.error("Failed to stream new script:", streamError);
+        setFormData(prev => ({ ...prev, content: previousContent }));
+        const message = streamError instanceof Error ? streamError.message : 'Unknown error';
+        alert(`Script saved successfully! However, failed to generate new script: ${message}. You can generate manually or try again.`);
       }
-
-      // Update the form with the new generated script
-      setFormData(prev => ({
-        ...prev,
-        title: generateResult.suggestedTitle || `${prev.title} - New Variation`,
-        content: generateResult.script,
-        // Reset some fields for the new script
-        contentFolderLink: "",
-        productionVideoLink: "",
-        uploadedVideoLinks: "",
-        tags: "",
-      }));
-
-      // Show success message
-      alert(`🎉 Script saved successfully! New script generated and ready for editing. Check the content field below.`);
 
     } catch (error) {
       console.error("Error in save and generate another:", error);

@@ -4,28 +4,18 @@ import { google } from "@ai-sdk/google";
 import { experimental_wrapLanguageModel as wrapLanguageModel } from "ai";
 
 import { customMiddleware } from "./custom-middleware";
-import { VIDEO_HOOKS, MAIN_CONTENT_TYPES, VIDEO_MOTIFS, type Hook, type ContentType, type CustomHook, type CustomContentType, type Motif } from "@/lib/video-script-constants";
+import { VIDEO_HOOKS, MAIN_CONTENT_TYPES, VIDEO_MOTIFS, type CustomHook, type CustomContentType } from "@/lib/video-script-constants";
 import { getScriptById } from "@/db/queries";
 
 // Create a local instance of the model to avoid import dependency issues
-const geminiProModel = wrapLanguageModel({
+export const videoScriptModel = wrapLanguageModel({
   model: google("gemini-2.5-pro"),
   middleware: customMiddleware,
 });
 
-export async function generateVideoScriptAction({
-  title,
-  description,
-  language,
-  hookType,
-  contentType,
-  scriptLength,
-  motif,
-  strongReferenceId,
-  userId,
-  customHooks = [],
-  customContentTypes = [],
-}: {
+type VideoScriptGenerationMode = "object" | "stream";
+
+export interface VideoScriptGenerationParams {
   title: string;
   description: string;
   language: string;
@@ -37,44 +27,63 @@ export async function generateVideoScriptAction({
   userId?: string;
   customHooks?: CustomHook[];
   customContentTypes?: CustomContentType[];
-}) {
-  console.log(`Action: Generating viral video script for: ${title}`);
-  
-  try {
-    console.log("Starting AI generation with parameters:", {
-      title,
-      description,
-      language,
-      hookType,
-      contentType
-    });
+}
 
-    // Get detailed information about the selected hook and content type (built-in or custom)
-    const selectedHook = VIDEO_HOOKS.find(hook => hook.id === hookType) || 
-                         customHooks.find(hook => hook.value === hookType);
-    const selectedContentType = MAIN_CONTENT_TYPES.find(ct => ct.value === contentType) ||
-                                customContentTypes.find(ct => ct.value === contentType);
+async function buildVideoScriptPrompt(
+  {
+    title,
+    description,
+    language,
+    hookType,
+    contentType,
+    scriptLength,
+    motif,
+    strongReferenceId,
+    userId,
+    customHooks = [],
+    customContentTypes = [],
+  }: VideoScriptGenerationParams,
+  mode: VideoScriptGenerationMode,
+) {
+  // Get detailed information about the selected hook and content type (built-in or custom)
+  const selectedHook = VIDEO_HOOKS.find((hook) => hook.id === hookType) ||
+    customHooks.find((hook) => hook.value === hookType);
+  const selectedContentType = MAIN_CONTENT_TYPES.find((ct) => ct.value === contentType) ||
+    customContentTypes.find((ct) => ct.value === contentType);
 
-    // Get motif details if specified
-    const selectedMotif = motif ? VIDEO_MOTIFS.find(m => m.value === motif) : null;
+  // Get motif details if specified
+  const selectedMotif = motif ? VIDEO_MOTIFS.find((m) => m.value === motif) : null;
 
-    // Get strong reference script if specified
-    let strongReferenceScript = null;
-    if (strongReferenceId && userId) {
-      try {
-        strongReferenceScript = await getScriptById(strongReferenceId);
-        // Verify the script belongs to the user for security
-        if (strongReferenceScript && strongReferenceScript.userId !== userId) {
-          strongReferenceScript = null;
-        }
-      } catch (error) {
-        console.error("Error fetching strong reference script:", error);
+  // Get strong reference script if specified
+  let strongReferenceScript: Awaited<ReturnType<typeof getScriptById>> | null = null;
+  if (strongReferenceId && userId) {
+    try {
+      strongReferenceScript = await getScriptById(strongReferenceId);
+      // Verify the script belongs to the user for security
+      if (strongReferenceScript && strongReferenceScript.userId !== userId) {
+        strongReferenceScript = null;
       }
+    } catch (error) {
+      console.error("Error fetching strong reference script:", error);
     }
+  }
 
-    const { object: videoScript } = await generateObject({
-      model: geminiProModel,
-      prompt: `You are the world's best viral video script writer. 
+  const outputInstruction =
+    mode === "object"
+      ? `Write ONLY the script content - no formatting, no sections, no labels. Just the pure, powerful script that someone would speak directly to camera. Keep it engaging but within exactly ${scriptLength} seconds.`
+      : `OUTPUT FORMAT (FOLLOW EXACTLY):
+SCRIPT_START
+[Write the complete script content that satisfies all requirements above]
+SCRIPT_END
+SUGGESTED_TITLE: [Provide the optimized viral title in ${language}]
+
+IMPORTANT OUTPUT RULES:
+- Do not include any text before SCRIPT_START or after the SUGGESTED_TITLE line.
+- The script between SCRIPT_START and SCRIPT_END must strictly follow every instruction above and maintain a natural, spoken flow within ${scriptLength} seconds.
+- The suggested title must be concise, emotionally compelling, and tailored for virality in ${language}.
+- Never add additional commentary, labels, or metadata beyond this format.`;
+
+  const prompt = `You are the world's best viral video script writer. 
 
 CRITICAL INSTRUCTION: Before generating ANY content, you MUST first analyze and understand ALL the requirements below. Take time to process the hook structure, content type structure, motif, and reference material. Only after fully understanding all requirements should you begin writing the script.
 
@@ -87,7 +96,7 @@ SPECIFICATIONS:
 
 HOOK STRUCTURE REQUIREMENTS (MUST FOLLOW EXACTLY):
 ${selectedHook ? `
-Hook: ${'name' in selectedHook ? selectedHook.name : selectedHook.label}
+Hook: ${"name" in selectedHook ? selectedHook.name : selectedHook.label}
 Description: ${selectedHook.description}
 Example: ${selectedHook.example}
 MANDATORY STRUCTURE: ${selectedHook.structure}
@@ -186,7 +195,63 @@ MANDATORY REQUIREMENTS:
 - End with compelling reason to engage (like, comment, share, follow)
 - Keep the flow natural and conversational
 
-Write ONLY the script content - no formatting, no sections, no labels. Just the pure, powerful script that someone would speak directly to camera. Keep it engaging but within exactly ${scriptLength} seconds.`,
+${outputInstruction}`;
+
+  return {
+    prompt,
+  };
+}
+
+export async function buildStreamingVideoScriptPrompt(params: VideoScriptGenerationParams) {
+  const { prompt } = await buildVideoScriptPrompt(params, "stream");
+  return prompt;
+}
+
+export async function generateVideoScriptAction(params: VideoScriptGenerationParams) {
+  const {
+    title,
+    description,
+    language,
+    hookType,
+    contentType,
+    scriptLength,
+    motif,
+    strongReferenceId,
+    userId,
+    customHooks = [],
+    customContentTypes = [],
+  } = params;
+
+  console.log(`Action: Generating viral video script for: ${title}`);
+  
+  try {
+    console.log("Starting AI generation with parameters:", {
+      title,
+      description,
+      language,
+      hookType,
+      contentType
+    });
+    const { prompt } = await buildVideoScriptPrompt(
+      {
+        title,
+        description,
+        language,
+        hookType,
+        contentType,
+        scriptLength,
+        motif,
+        strongReferenceId,
+        userId,
+        customHooks,
+        customContentTypes,
+      },
+      "object",
+    );
+
+    const { object: videoScript } = await generateObject({
+      model: videoScriptModel,
+      prompt,
       schema: z.object({
         script: z.string().describe("The complete, flowing video script ready to be spoken"),
         suggestedTitle: z.string().describe("An optimized, viral-worthy title for maximum impact"),

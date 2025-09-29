@@ -940,7 +940,7 @@ export const VIDEO_HOOKS: Hook[] = [
   },
   {
     id: "blue-ball",
-    name: "Curiosity Gap",
+    name: "Curiosity Gap - blue ball",
     description: "Create irresistible curiosity by hinting at valuable information without revealing it",
     example: "This one mistake destroys 90% of businesses in their first year. I see everyone making it, even smart people. Let me show you what it is and how to avoid it.",
     structure: "This one [mistake/secret/method] [major impact]. I see [who does it], even [surprising group]. Let me show you [what it is/how to use it]."
