@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs_20", "pnpm", "openssl"]
 
 [phases.install]
-cmds = ["pnpm install --frozen-lockfile --no-workspace"]
+cmds = ["pnpm install --frozen-lockfile --workspace-root"]
 
 [phases.build]
 cmds = ["pnpm run build"]
