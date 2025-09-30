@@ -4,3 +4,7 @@ ignoredBuiltDependencies:
 
 onlyBuiltDependencies:
   - '@firebase/util'
+
+
+packages:
+  - .
