@@ -6,8 +6,12 @@ cmds = ["pnpm install --frozen-lockfile"]
 
 [phases.build]
 cmds = ["pnpm run build"]
-cacheDirs = [".next/cache", "node_modules/.cache"]  # << הוספתי שורה שמבטלת את ברירת המחדל הבעייתית
+cacheDirs = [
+  ".next/cache",
+  "node_modules/.cache"
+]
 env = [
+  "NODE_ENV=production",
   "DATABASE_URL",
   "POSTGRES_URL",
   "AUTH_SECRET",
