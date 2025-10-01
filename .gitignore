@@ -37,7 +37,4 @@ yarn-error.log*
 .vscode
 .env*.local
 
-# TypeScript
-tsconfig.tsbuildinfo
-
 segments
