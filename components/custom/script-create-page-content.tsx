@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User } from "next-auth";
 import { Button } from "@/components/ui/button";
-import { VIDEO_HOOKS, VIDEO_LANGUAGES, MAIN_CONTENT_TYPES, VIDEO_STATUS, SCRIPT_LENGTHS, VIDEO_MOTIFS, MOTIF_CATEGORIES, getContentTypesByCategory, CATEGORY_CONFIG, type CustomHook, type CustomContentType, type Motif } from "@/lib/video-script-constants";
+import { VIDEO_HOOKS, VIDEO_LANGUAGES, MAIN_CONTENT_TYPES, VIDEO_STATUS, SCRIPT_LENGTHS, VIDEO_MOTIFS, MOTIF_CATEGORIES, getContentTypesByCategory, CATEGORY_CONFIG, getContentTypesWithFavorites, getHooksWithFavorites, type CustomHook, type CustomContentType, type Motif, type ContentType, type Hook } from "@/lib/video-script-constants";
 import { CustomItemModal } from "@/components/custom/custom-item-modal";
-import { Plus } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 
 interface ScriptCreatePageContentProps {
   user: User;
@@ -128,6 +128,11 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [customModalType, setCustomModalType] = useState<'hook' | 'contentType'>('hook');
   
+  // Favorites state
+  const [favoriteContentTypes, setFavoriteContentTypes] = useState<string[]>([]);
+  const [favoriteHooks, setFavoriteHooks] = useState<string[]>([]);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
+  
   // User scripts for strong reference
   const [userScripts, setUserScripts] = useState<UserScript[]>([]);
   const [isLoadingScripts, setIsLoadingScripts] = useState(false);
@@ -208,7 +213,66 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
   // Load custom items from database
   useEffect(() => {
     loadCustomItems();
+    loadFavorites();
   }, []);
+
+  const loadFavorites = async () => {
+    try {
+      setIsLoadingFavorites(true);
+      const response = await fetch('/api/favorites');
+      if (response.ok) {
+        const data = await response.json();
+        const contentTypeFavorites = data.favorites
+          .filter((fav: any) => fav.favoriteType === 'content_type')
+          .map((fav: any) => fav.favoriteId);
+        const hookFavorites = data.favorites
+          .filter((fav: any) => fav.favoriteType === 'hook')
+          .map((fav: any) => fav.favoriteId);
+        
+        setFavoriteContentTypes(contentTypeFavorites);
+        setFavoriteHooks(hookFavorites);
+      }
+    } catch (error) {
+      console.error("Error loading favorites:", error);
+    } finally {
+      setIsLoadingFavorites(false);
+    }
+  };
+
+  const toggleFavorite = async (type: 'content_type' | 'hook', id: string) => {
+    try {
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          favoriteType: type,
+          favoriteId: id,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (type === 'content_type') {
+          if (data.isFavorite) {
+            setFavoriteContentTypes([...favoriteContentTypes, id]);
+          } else {
+            setFavoriteContentTypes(favoriteContentTypes.filter(fav => fav !== id));
+          }
+        } else {
+          if (data.isFavorite) {
+            setFavoriteHooks([...favoriteHooks, id]);
+          } else {
+            setFavoriteHooks(favoriteHooks.filter(fav => fav !== id));
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  };
 
   const loadCustomItems = async () => {
     try {
@@ -771,8 +835,9 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
                 
                 {/* Built-in hooks */}
                 <optgroup label="📚 Built-in Hooks" className="bg-gray-700 text-cyan-300 font-semibold">
-                  {VIDEO_HOOKS.map((hook) => (
-                    <option key={hook.id} value={hook.id} className="bg-gray-800 text-white hover:bg-gray-700">
+                  {getHooksWithFavorites(favoriteHooks).map((hook) => (
+                    <option key={hook.id} value={hook.id} className="bg-gray-800 text-white hover:bg-gray-700 relative">
+                      {hook.isFavorite ? "⭐ " : ""}
                       {hook.name}
                     </option>
                   ))}
@@ -819,7 +884,14 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
                 
                 {/* Built-in content types */}
                 {(() => {
-                  const contentTypesByCategory = getContentTypesByCategory();
+                  const contentTypesWithFavorites = getContentTypesWithFavorites(favoriteContentTypes);
+                  const contentTypesByCategory = contentTypesWithFavorites.reduce((acc, type) => {
+                    const category = type.category || "Other";
+                    if (!acc[category]) acc[category] = [];
+                    acc[category].push(type);
+                    return acc;
+                  }, {} as Record<string, ContentType[]>);
+                  
                   const sortedCategories = Object.keys(contentTypesByCategory).sort((a, b) => {
                     const orderA = CATEGORY_CONFIG[a as keyof typeof CATEGORY_CONFIG]?.order || 999;
                     const orderB = CATEGORY_CONFIG[b as keyof typeof CATEGORY_CONFIG]?.order || 999;
@@ -835,6 +907,7 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
                           className="bg-gray-800 text-white hover:bg-gray-700 pl-4"
                           title={type.description}
                         >
+                          {type.isFavorite ? "⭐ " : ""}
                           {type.isTrending ? "🔥 " : ""}
                           {type.isPowerful ? "⚡ " : ""}
                           {type.isAuthorityBuilding ? "👑 " : ""}
@@ -1032,12 +1105,31 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
           {selectedHook && (
             <div className="p-4 bg-cyan-500/10 border border-cyan-400/20 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <div className="text-lg font-medium text-cyan-300">
-                  {'name' in selectedHook ? selectedHook.name : selectedHook.label}
-                  {'isPublic' in selectedHook && !selectedHook.isPublic && (
-                    <span className="ml-2 text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded">
-                      Private
-                    </span>
+                <div className="flex items-center gap-3">
+                  <div className="text-lg font-medium text-cyan-300">
+                    {'name' in selectedHook ? selectedHook.name : selectedHook.label}
+                    {'isPublic' in selectedHook && !selectedHook.isPublic && (
+                      <span className="ml-2 text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded">
+                        Private
+                      </span>
+                    )}
+                  </div>
+                  {/* Favorite Button for Hooks */}
+                  {'id' in selectedHook && (
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite('hook', selectedHook.id)}
+                      className={`p-2 rounded-full transition-all ${
+                        favoriteHooks.includes(selectedHook.id)
+                          ? 'text-yellow-400 hover:text-yellow-300 bg-yellow-400/10'
+                          : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10'
+                      }`}
+                      title={favoriteHooks.includes(selectedHook.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Star 
+                        className={`w-4 h-4 ${favoriteHooks.includes(selectedHook.id) ? 'fill-current' : ''}`}
+                      />
+                    </button>
                   )}
                 </div>
                 <button
@@ -1108,6 +1200,23 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
                     <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full border border-purple-400/30">
                       PRIVATE
                     </span>
+                  )}
+                  {/* Favorite Button for Content Types */}
+                  {'value' in selectedContentType && (
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite('content_type', selectedContentType.value)}
+                      className={`p-2 rounded-full transition-all ${
+                        favoriteContentTypes.includes(selectedContentType.value)
+                          ? 'text-yellow-400 hover:text-yellow-300 bg-yellow-400/10'
+                          : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10'
+                      }`}
+                      title={favoriteContentTypes.includes(selectedContentType.value) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Star 
+                        className={`w-4 h-4 ${favoriteContentTypes.includes(selectedContentType.value) ? 'fill-current' : ''}`}
+                      />
+                    </button>
                   )}
                 </div>
                 <button
