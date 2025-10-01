@@ -99,6 +99,13 @@
       "when": 1759146715803,
       "tag": "0013_overconfident_king_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1759283223031,
+      "tag": "0014_talented_nightshade",
+      "breakpoints": true
     }
   ]
 }

@@ -24,6 +24,7 @@ export interface ContentType {
   isTrending?: boolean;
   isPowerful?: boolean;
   isAuthorityBuilding?: boolean;
+  isFavorite?: boolean;
 }
 
 export const MAIN_CONTENT_TYPES: ContentType[] = [
@@ -865,6 +866,7 @@ export interface Hook {
   description: string;
   example: string;
   structure: string;
+  isFavorite?: boolean;
 }
 
 export const VIDEO_HOOKS: Hook[] = [
@@ -1223,3 +1225,49 @@ export interface GenerateCustomItemResponse {
   };
   error?: string;
 }
+
+// Favorites Management Utilities
+export const sortWithFavorites = <T extends { isFavorite?: boolean }>(items: T[]): T[] => {
+  return [...items].sort((a, b) => {
+    // Favorites first
+    if (a.isFavorite && !b.isFavorite) return -1;
+    if (!a.isFavorite && b.isFavorite) return 1;
+    return 0;
+  });
+};
+
+export const getContentTypesWithFavorites = (userFavorites: string[] = []): ContentType[] => {
+  return sortWithFavorites(
+    MAIN_CONTENT_TYPES.map(type => ({
+      ...type,
+      isFavorite: userFavorites.includes(type.value)
+    }))
+  );
+};
+
+export const getHooksWithFavorites = (userFavorites: string[] = []): Hook[] => {
+  return sortWithFavorites(
+    VIDEO_HOOKS.map(hook => ({
+      ...hook,
+      isFavorite: userFavorites.includes(hook.id)
+    }))
+  );
+};
+
+export const toggleFavoriteContentType = (contentTypeValue: string, currentFavorites: string[]): string[] => {
+  const index = currentFavorites.indexOf(contentTypeValue);
+  if (index > -1) {
+    return currentFavorites.filter(fav => fav !== contentTypeValue);
+  } else {
+    return [...currentFavorites, contentTypeValue];
+  }
+};
+
+export const toggleFavoriteHook = (hookId: string, currentFavorites: string[]): string[] => {
+  const index = currentFavorites.indexOf(hookId);
+  if (index > -1) {
+    return currentFavorites.filter(fav => fav !== hookId);
+  } else {
+    return [...currentFavorites, hookId];
+  }
+};

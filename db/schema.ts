@@ -30,6 +30,7 @@ export const userRelations = relations(user, ({ many }) => ({
   scripts: many(scripts),
   customHooks: many(customHooks),
   customContentTypes: many(customContentTypes),
+  userFavorites: many(userFavorites),
 }));
 
 export const chat = pgTable("Chat", {
@@ -242,6 +243,27 @@ export type CustomContentType = InferSelectModel<typeof customContentTypes>;
 export const customContentTypesRelations = relations(customContentTypes, ({ one }) => ({
   user: one(user, {
     fields: [customContentTypes.userId],
+    references: [user.id],
+  }),
+}));
+
+export const userFavorites = pgTable("UserFavorites", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  favoriteType: varchar("favorite_type", { length: 20 }).notNull(), // 'content_type' or 'hook'
+  favoriteId: varchar("favorite_id", { length: 100 }).notNull(), // The value/id of the content type or hook
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type UserFavorite = InferSelectModel<typeof userFavorites>;
+
+export const userFavoritesRelations = relations(userFavorites, ({ one }) => ({
+  user: one(user, {
+    fields: [userFavorites.userId],
     references: [user.id],
   }),
 }));
