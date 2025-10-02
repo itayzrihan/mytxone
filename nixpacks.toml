@@ -6,7 +6,6 @@ cmds = ["pnpm install --frozen-lockfile"]
 
 [phases.build]
 cmds = [
-  "rm -f tsconfig.tsbuildinfo",
   "NODE_ENV=production pnpm run build:production"
 ]
 cacheDirs = [
