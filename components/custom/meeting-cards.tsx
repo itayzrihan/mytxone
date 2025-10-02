@@ -10,6 +10,7 @@ interface MeetingCard {
   description: string;
   attendees: number;
   price: string;
+  typeOfPage: 'Meeting' | 'Community';
 }
 
 interface MeetingCardsProps {}
@@ -55,7 +56,8 @@ export function MeetingCards() {
       title: meetingTitles[i % meetingTitles.length],
       description: descriptions[i % descriptions.length],
       attendees: Math.floor(seededRandom(i * 123) * 5000) + 100,
-      price: seededRandom(i * 456) > 0.3 ? `$${Math.floor(seededRandom(i * 789) * 50) + 5}/month` : "Free"
+      price: seededRandom(i * 456) > 0.3 ? `$${Math.floor(seededRandom(i * 789) * 50) + 5}/month` : "Free",
+      typeOfPage: seededRandom(i * 999) > 0.5 ? 'Meeting' : 'Community'
     }));
   };
 
@@ -129,6 +131,14 @@ export function MeetingCards() {
               {/* Card number badge */}
               <div className="absolute top-3 left-3 bg-black/30 backdrop-blur-sm rounded-lg px-2 py-1 text-white/70 text-xs font-medium">
                 #{meeting.id.padStart(2, '0')}
+              </div>
+              {/* Type of page badge */}
+              <div className={`absolute top-3 right-3 backdrop-blur-sm rounded-lg px-2 py-1 text-xs font-medium ${
+                meeting.typeOfPage === 'Meeting' 
+                  ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400/20' 
+                  : 'bg-purple-500/30 text-purple-300 border border-purple-400/20'
+              }`}>
+                {meeting.typeOfPage}
               </div>
             </div>
 

@@ -606,3 +606,134 @@ export async function deleteScript(scriptId: string) {
     throw error;
   }
 }
+
+// ===== USER MANAGEMENT & ADMIN FUNCTIONS =====
+
+// Safe user type without password field
+export type SafeUser = Omit<User, 'password'>;
+
+export async function getAllUsers(): Promise<Array<SafeUser>> {
+  try {
+    return await db.select({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      subscription: user.subscription,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      // Exclude password field for security
+    }).from(user).orderBy(desc(user.createdAt));
+  } catch (error) {
+    console.error("Failed to get all users from database");
+    throw error;
+  }
+}
+
+export async function getUserById(userId: string): Promise<SafeUser | null> {
+  try {
+    const users = await db.select({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      subscription: user.subscription,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      // Exclude password field for security
+    }).from(user).where(eq(user.id, userId));
+    return users[0] || null;
+  } catch (error) {
+    console.error("Failed to get user by ID from database");
+    throw error;
+  }
+}
+
+export async function updateUserRole(userId: string, role: 'user' | 'admin'): Promise<SafeUser | null> {
+  try {
+    const [updatedUser] = await db.update(user)
+      .set({ 
+        role,
+        updatedAt: new Date()
+      })
+      .where(eq(user.id, userId))
+      .returning({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        subscription: user.subscription,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      });
+    return updatedUser || null;
+  } catch (error) {
+    console.error("Failed to update user role in database");
+    throw error;
+  }
+}
+
+export async function updateUserSubscription(userId: string, subscription: 'free' | 'basic' | 'pro'): Promise<SafeUser | null> {
+  try {
+    const [updatedUser] = await db.update(user)
+      .set({ 
+        subscription,
+        updatedAt: new Date()
+      })
+      .where(eq(user.id, userId))
+      .returning({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        subscription: user.subscription,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      });
+    return updatedUser || null;
+  } catch (error) {
+    console.error("Failed to update user subscription in database");
+    throw error;
+  }
+}
+
+export async function checkIfUserIsAdmin(userId: string): Promise<boolean> {
+  try {
+    const users = await db.select({ role: user.role })
+      .from(user)
+      .where(eq(user.id, userId));
+    return users[0]?.role === 'admin';
+  } catch (error) {
+    console.error("Failed to check user admin status");
+    return false;
+  }
+}
+
+export async function getUsersCount(): Promise<{ 
+  total: number; 
+  admins: number; 
+  users: number;
+  subscriptions: {
+    free: number;
+    basic: number;
+    pro: number;
+  }
+}> {
+  try {
+    const allUsers = await db.select({ 
+      role: user.role, 
+      subscription: user.subscription 
+    }).from(user);
+    
+    const total = allUsers.length;
+    const admins = allUsers.filter(u => u.role === 'admin').length;
+    const users = allUsers.filter(u => u.role === 'user').length;
+    
+    const subscriptions = {
+      free: allUsers.filter(u => u.subscription === 'free').length,
+      basic: allUsers.filter(u => u.subscription === 'basic').length,
+      pro: allUsers.filter(u => u.subscription === 'pro').length,
+    };
+    
+    return { total, admins, users, subscriptions };
+  } catch (error) {
+    console.error("Failed to get user counts from database");
+    throw error;
+  }
+}

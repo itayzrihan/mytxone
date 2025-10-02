@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { Shield } from "lucide-react";
 
 import { History } from "./history";
 import { SlashIcon } from "./icons";
@@ -21,6 +22,8 @@ interface NavbarProps {
 export const Navbar = ({ session }: NavbarProps) => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
   const { openAuthModal } = useAuth();
   const pathname = usePathname();
 
@@ -31,6 +34,30 @@ export const Navbar = ({ session }: NavbarProps) => {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (session?.user?.id && isClient) {
+        setIsCheckingAdmin(true);
+        try {
+          const response = await fetch('/api/auth/admin-status');
+          if (response.ok) {
+            const data = await response.json();
+            setIsAdmin(data.isAdmin);
+          } else {
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error('Error checking admin status:', error);
+          setIsAdmin(false);
+        }
+        setIsCheckingAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [session?.user?.id, isClient]);
 
   const handleMobileSearchToggle = (isOpen: boolean) => {
     setIsMobileSearchOpen(isOpen);
@@ -136,6 +163,27 @@ export const Navbar = ({ session }: NavbarProps) => {
                       />
                     </div>
                     
+                    {/* Admin Dashboard Button - Only show for admin users */}
+                    {isClient && session && !isCheckingAdmin && isAdmin && (
+                      <Link href="/admin">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="
+                            bg-red-500/20 backdrop-blur-md 
+                            text-red-300 border border-red-400/30
+                            hover:bg-red-500/30 hover:border-red-400/50
+                            shadow-lg shadow-black/20
+                            transition-all duration-300
+                            hover:shadow-xl hover:shadow-red-500/20
+                            flex items-center gap-2
+                          "
+                        >
+                          <Shield className="w-4 h-4" />
+                          <span className="hidden sm:inline">Admin</span>
+                        </Button>
+                      </Link>
+                    )}
                     
                     {isClient ? (
                       session ? (

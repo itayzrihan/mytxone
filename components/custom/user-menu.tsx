@@ -1,9 +1,9 @@
-// filepath: components/custom/user-menu.tsx
 "use client";
 
-import { Loader2, Trash2, Copy } from "lucide-react";
+import { Loader2, Trash2, Copy, Shield } from "lucide-react";
 import { Session } from "next-auth";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 import {
   logout,
@@ -54,6 +54,31 @@ export function UserMenu({ session }: UserMenuProps) {
   const [newKeyInfo, setNewKeyInfo] = useState<{ key: string; name: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState(""); // State for the new key name input
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (session.user?.id) {
+        try {
+          const response = await fetch('/api/auth/admin-status');
+          if (response.ok) {
+            const data = await response.json();
+            setIsAdmin(data.isAdmin);
+          } else {
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error('Error checking admin status:', error);
+          setIsAdmin(false);
+        }
+      }
+      setIsCheckingAdmin(false);
+    };
+
+    checkAdminStatus();
+  }, [session.user?.id]);
 
   // Fetch keys when dialog opens
   useEffect(() => {
@@ -144,6 +169,23 @@ export function UserMenu({ session }: UserMenuProps) {
             <ThemeToggle />
           </DropdownMenuItem>
           <DropdownMenuSeparator /> {/* Separator */}
+          
+          {/* Admin Dashboard - Only show for admin users */}
+          {!isCheckingAdmin && isAdmin && (
+            <>
+              <DropdownMenuItem asChild>
+                <Link 
+                  href="/admin" 
+                  className="cursor-pointer flex items-center gap-2 text-red-400 hover:text-red-300"
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          
           {/* Use DialogTrigger for the API Keys item */}
           <DialogTrigger asChild>
             <DropdownMenuItem className="cursor-pointer">

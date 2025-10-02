@@ -94,24 +94,24 @@ SPECIFICATIONS:
 - Hook Type: ${hookType}
 - Content Type: ${contentType}
 
-HOOK STRUCTURE REQUIREMENTS (MUST FOLLOW EXACTLY):
+HOOK STRUCTURE REQUIREMENTS (USE AS FOUNDATION):
 ${selectedHook ? `
 Hook: ${"name" in selectedHook ? selectedHook.name : selectedHook.label}
 Description: ${selectedHook.description}
 Example: ${selectedHook.example}
-MANDATORY STRUCTURE: ${selectedHook.structure}
+STRUCTURE FOUNDATION: ${selectedHook.structure}
 
-IMPORTANT: You MUST follow this exact structure format. If it's "Immediate Storytelling", start IMMEDIATELY with the character/situation described in the structure pattern.
+IMPORTANT: Use this structure as your STARTING FOUNDATION. You may adapt the exact wording and flow to create a seamless transition into your main content. The goal is natural flow, not rigid adherence.
 ` : `Hook Type: ${hookType} - Use this style for opening`}
 
-CONTENT TYPE STRUCTURE REQUIREMENTS (MUST FOLLOW EXACTLY):
+CONTENT TYPE STRUCTURE REQUIREMENTS (USE AS GUIDE):
 ${selectedContentType ? `
 Content Type: ${selectedContentType.label}
 Description: ${selectedContentType.description}
 Example: ${selectedContentType.example}
-MANDATORY STRUCTURE: ${selectedContentType.structure}
+STRUCTURE GUIDE: ${selectedContentType.structure}
 
-IMPORTANT: You MUST incorporate this content structure into your script. If it's "Animal Analogy", you MUST use an actual animal as the main metaphor throughout the content.
+IMPORTANT: Use this structure as your CONTENT GUIDE. Adapt and modify the format to naturally continue from your hook bridge. If it's "Animal Analogy", you MUST use an actual animal as the main metaphor, but the exact structure can flow organically from your hook.
 ` : `Content Type: ${contentType} - Follow this format for main content`}
 
 ${selectedMotif ? `
@@ -144,11 +144,11 @@ Use these insights to create a new script that captures similar powerful element
 STEP-BY-STEP GENERATION PROCESS:
 
 STEP 1: ANALYZE ALL REQUIREMENTS
-- Read and understand the hook structure pattern completely
-- Read and understand the content type structure pattern completely
-- Identify how to combine both structures seamlessly
+- Read and understand the hook structure pattern as a foundation to build upon
+- Read and understand the content type structure pattern as a guide to inform your content
+- Identify the LINKING EDGE opportunities between hook and content for seamless combination
 - If using animal analogy, choose the appropriate animal for the topic
-- Plan how the immediate storytelling will incorporate the animal analogy
+- Plan how to create ONE UNIFIED FLOW that feels natural and conversational throughout
 
 SPECIAL COMBINATION RULES:
 ${hookType === 'immediate-storytelling' && contentType === 'animal-analogy' ? `
@@ -169,21 +169,36 @@ ${contentType === 'animal-analogy' ? `
 ` : ''}
 
 STEP 2: STRUCTURE PLANNING
-- Plan the opening following the EXACT hook structure format
-- Plan the middle content following the EXACT content type structure format
+- Plan the opening using the hook structure as your foundation
+- Plan the middle content using the content type structure as your guide
 - Plan the closing with a strong call-to-action
 - Ensure the animal (if animal analogy) is the MAIN character throughout
+
+STEP 2.5: SEAMLESS LINKING STRATEGY
+🔗 CRITICAL: Find a LINKING EDGE between hook and main content for seamless flow:
+- Identify the EMOTIONAL or THEMATIC bridge that connects your hook ending to your main content beginning
+- The structure patterns are RECOMMENDATIONS, not rigid constraints - you can adapt them for better flow
+- Create a natural transition sentence/phrase that makes the hook and main content feel like ONE unified story
+- Look for shared elements: characters, emotions, situations, metaphors, or concepts that can create continuity
+- The audience should NOT feel any jarring shift between sections - it should flow like natural conversation
+- Examples of linking edges:
+  * If hook ends with curiosity → main content starts by addressing that curiosity
+  * If hook introduces a character → main content continues with that same character's journey
+  * If hook poses a question → main content begins answering while building on the emotional state
+  * If hook creates tension → main content maintains and resolves that tension organically
 
 STEP 3: GENERATE THE SCRIPT
 Write ONE complete, flowing video script in ${language} that:
 
-1. OPENS with the EXACT "${hookType}" hook structure pattern (no deviations)
-2. DEVELOPS using the EXACT "${contentType}" structure pattern (no deviations)
-3. ENDS with a powerful call-to-action that drives engagement
+1. OPENS with the "${hookType}" hook structure (use as foundation, adapt for flow)
+2. CREATES A SEAMLESS BRIDGE using your identified linking edge
+3. DEVELOPS using the "${contentType}" structure (use as guide, adapt for natural continuation)
+4. ENDS with a powerful call-to-action that drives engagement
 
 MANDATORY REQUIREMENTS:
-- Follow the EXACT hook structure word-for-word pattern provided above
-- Follow the EXACT content type structure word-for-word pattern provided above  
+- Use the hook structure as a FOUNDATION - adapt it as needed for seamless flow into main content
+- Use the content type structure as a GUIDE - modify it to naturally continue from your hook bridge
+- PRIORITIZE SEAMLESS FLOW over rigid structure adherence - the script should feel like one unified piece
 - If it's "Immediate Storytelling" + "Animal Analogy": Start IMMEDIATELY with the animal, not a human character
 - Make it EXTREMELY engaging and addictive from the first word
 - Write in natural, conversational ${language} (use ניקוד for Hebrew if needed)
@@ -193,7 +208,7 @@ MANDATORY REQUIREMENTS:
 - Use psychological triggers that make content go viral
 - Make every word count - be impactful but stay within ${scriptLength} seconds
 - End with compelling reason to engage (like, comment, share, follow)
-- Keep the flow natural and conversational
+- Keep the flow natural and conversational throughout - NO jarring transitions between sections
 
 ${outputInstruction}`;
 

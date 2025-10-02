@@ -137,6 +137,10 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
   const [userScripts, setUserScripts] = useState<UserScript[]>([]);
   const [isLoadingScripts, setIsLoadingScripts] = useState(false);
   
+  // Subscription state
+  const [userSubscription, setUserSubscription] = useState<'free' | 'basic' | 'pro' | null>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
+  
   // Hydration state
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -214,6 +218,7 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
   useEffect(() => {
     loadCustomItems();
     loadFavorites();
+    loadUserSubscription();
   }, []);
 
   const loadFavorites = async () => {
@@ -301,6 +306,26 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
     } catch (error) {
       console.error("Error loading custom items:", error);
       setIsLoadingScripts(false);
+    }
+  };
+
+  // Load user subscription status
+  const loadUserSubscription = async () => {
+    try {
+      setIsLoadingSubscription(true);
+      const response = await fetch('/api/user/subscription');
+      if (response.ok) {
+        const data = await response.json();
+        setUserSubscription(data.subscription);
+      } else {
+        console.error('Failed to fetch user subscription');
+        setUserSubscription('free'); // Default to free on error
+      }
+    } catch (error) {
+      console.error("Error loading user subscription:", error);
+      setUserSubscription('free'); // Default to free on error
+    } finally {
+      setIsLoadingSubscription(false);
     }
   };
 
@@ -1279,23 +1304,33 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
             
             {/* Generate Script Button */}
             <div className="mt-3 flex justify-center">
-              <Button
-                type="button"
-                onClick={generateScript}
-                disabled={isGeneratingScript || !formData.title.trim() || !formData.description.trim()}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium px-6 py-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isGeneratingScript ? (
-                  <>
-                    <div className="animate-spin -ml-1 mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    Generating Viral Script...
-                  </>
-                ) : (
-                  <>
-                    ✨ Generate Viral Script with AI
-                  </>
-                )}
-              </Button>
+              {userSubscription === 'free' ? (
+                <Button
+                  type="button"
+                  onClick={() => alert('Upgrade to Basic or Pro plan to use AI script generation!')}
+                  className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium px-6 py-2 rounded-lg transition-all duration-200"
+                >
+                  🔒 Upgrade to Use AI Generate
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={generateScript}
+                  disabled={isGeneratingScript || !formData.title.trim() || !formData.description.trim() || isLoadingSubscription}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium px-6 py-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingScript ? (
+                    <>
+                      <div className="animate-spin -ml-1 mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                      Generating Viral Script...
+                    </>
+                  ) : (
+                    <>
+                      ✨ Generate Viral Script with AI
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
             
             {(!formData.title.trim() || !formData.description.trim()) && (

@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "subscription" varchar(20) DEFAULT 'free' NOT NULL;

@@ -3,6 +3,7 @@ import { streamText } from "ai";
 
 import { auth } from "@/app/(auth)/auth";
 import { buildStreamingVideoScriptPrompt, videoScriptModel } from "@/ai/video-script-actions";
+import { getUserById } from "@/db/queries";
 
 const encoder = new TextEncoder();
 
@@ -45,6 +46,19 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check user subscription - only basic and pro users can generate scripts
+    const user = await getUserById(session.user.id);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (user.subscription === 'free') {
+      return NextResponse.json({ 
+        error: "Subscription required", 
+        message: "AI script generation requires a Basic or Pro subscription. Please upgrade your account." 
+      }, { status: 403 });
     }
 
     const { title, description, language, hookType, contentType, scriptLength, motif, strongReferenceId } = await request.json();
