@@ -33,7 +33,7 @@ export default function NotFound() {
                 </Button>
               </Link>
               
-              <Link href="/mytx/create">
+              <Link href="/mytx/create-meeting">
                 <Button 
                   variant="outline" 
                   className="w-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white transition-all duration-300"

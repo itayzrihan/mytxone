@@ -4,7 +4,7 @@ import BackgroundGlow from "@/components/custom/BackgroundGlow";
 import { ThemeProvider } from "@/components/custom/theme-provider";
 import { AuthWrapper } from "@/components/custom/auth-wrapper";
 
-export default function CreateLayout({
+export default function CreateMeetingLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/custom/auth-context";
@@ -44,16 +43,20 @@ const carouselThumbnails = [
   }
 ];
 
-export default function CreateMeetingPage() {
+interface UpgradePlanWallProps {
+  type: 'meeting' | 'community';
+  user: any;
+}
+
+export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
   const [selectedThumbnail, setSelectedThumbnail] = useState(1);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [showPricing, setShowPricing] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState('basic'); // 'basic' or 'pro'
+  const [selectedPlan, setSelectedPlan] = useState('basic');
   const [showModal, setShowModal] = useState(false);
-  const [modalPlan, setModalPlan] = useState('basic'); // Plan selected in modal
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [modalPlan, setModalPlan] = useState('basic');
+  const [isLoading, setIsLoading] = useState(false);
   const { openAuthModal, isAuthModalOpen } = useAuth();
   const [formData, setFormData] = useState({
     communityName: '',
@@ -62,43 +65,11 @@ export default function CreateMeetingPage() {
     csv: ''
   });
 
-  // Check user authentication status - only once on mount
-  useEffect(() => {
-    let isMounted = true;
-    
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/session', {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        if (response.ok && isMounted) {
-          const sessionData = await response.json();
-          setUser(sessionData?.user || null);
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        if (isMounted) {
-          setUser(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
+  const buttonText = type === 'meeting' ? 'CREATE A MEETING' : 'CREATE A COMMUNITY';
+  const modalTitle = type === 'meeting' ? 'Create a Meeting' : 'Create a Community';
 
-    checkAuth();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Handle create meeting button click - simplified
-  const handleCreateMeeting = () => {
+  // Handle create button click
+  const handleCreateClick = () => {
     if (!user) {
       openAuthModal('login');
     } else {
@@ -106,7 +77,7 @@ export default function CreateMeetingPage() {
     }
   };
 
-  // Simple check after auth modal closes - no polling
+  // Simple check after auth modal closes
   useEffect(() => {
     if (!isAuthModalOpen && !user) {
       const recheckAuth = async () => {
@@ -120,7 +91,6 @@ export default function CreateMeetingPage() {
           if (response.ok) {
             const sessionData = await response.json();
             if (sessionData?.user) {
-              setUser(sessionData.user);
               // Don't automatically show pricing, let user click again
             }
           }
@@ -134,17 +104,15 @@ export default function CreateMeetingPage() {
     }
   }, [isAuthModalOpen, user]);
 
-  // Handle touch start
+  // Handle touch events for carousel
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
   };
 
-  // Handle touch move
   const handleTouchMove = (e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
-  // Handle touch end - determine swipe direction
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     
@@ -153,56 +121,41 @@ export default function CreateMeetingPage() {
     const isRightSwipe = distance < -50;
 
     if (isLeftSwipe) {
-      // Swipe left - go to next
       const nextId = selectedThumbnail < carouselThumbnails.length ? selectedThumbnail + 1 : 1;
       setSelectedThumbnail(nextId);
     }
 
     if (isRightSwipe) {
-      // Swipe right - go to previous
       const prevId = selectedThumbnail > 1 ? selectedThumbnail - 1 : carouselThumbnails.length;
       setSelectedThumbnail(prevId);
     }
   };
 
-  // Handle expiry date formatting
+  // Handle form input changes
   const handleExpiryDateChange = (value: string) => {
-    // Remove all non-digit characters
     const digitsOnly = value.replace(/\D/g, '');
-    
-    // Format as MM/YY
     let formatted = digitsOnly;
     if (digitsOnly.length >= 2) {
       formatted = digitsOnly.slice(0, 2) + '/' + digitsOnly.slice(2, 4);
     }
-    
-    // Update state
     setFormData(prev => ({ ...prev, expiryDate: formatted }));
   };
 
-  // Handle card number formatting with visual spaces
   const handleCardNumberChange = (value: string) => {
-    // Remove all non-digit characters
     const digitsOnly = value.replace(/\D/g, '');
-    
-    // Format with spaces every 4 digits
     const formatted = digitsOnly.replace(/(\d{4})(?=\d)/g, '$1 ');
-    
-    // Update state
     setFormData(prev => ({ ...prev, cardNumber: formatted }));
   };
 
   // PayPal Integration Effect
   useEffect(() => {
     if (showModal && typeof window !== 'undefined') {
-      // Load PayPal SDK dynamically
       const script = document.createElement('script');
       script.src = modalPlan === 'basic' 
         ? "https://www.paypal.com/sdk/js?client-id=ARMvBbzMghnZIpuJv0MUfhxI2cAMK8-Bhk-DIganTEWt1qJRbFCPuQx6VKZcKahdjOooF9NOz7KTL5vy&vault=true&intent=subscription"
         : "https://www.paypal.com/sdk/js?client-id=AfpHnFO-NEeZ8gF4IaICl8rjlpEw7WNeUKkPcpMvbQ1V3cgjzJjAsO-V2JA4XLRiUiJE5Ch0eLClAPhv&vault=true&intent=subscription";
       
       script.onload = () => {
-        // Initialize PayPal button
         const containerId = modalPlan === 'basic' 
           ? 'paypal-button-container-P-5LP69495C05013828NDDAIUY'
           : 'paypal-button-container-P-59286886LU147733XNDDAKDQ';
@@ -211,12 +164,10 @@ export default function CreateMeetingPage() {
           ? 'P-5LP69495C05013828NDDAIUY'
           : 'P-59286886LU147733XNDDAKDQ';
 
-        // Clear existing button
         const container = document.getElementById(containerId);
         if (container) {
           container.innerHTML = '';
           
-          // Check if required fields are filled
           const isFormValid = user?.email && formData.communityName;
           
           if (!isFormValid) {
@@ -224,7 +175,6 @@ export default function CreateMeetingPage() {
             return;
           }
           
-          // Render PayPal button
           (window as any).paypal.Buttons({
             style: {
               shape: 'pill',
@@ -235,7 +185,7 @@ export default function CreateMeetingPage() {
             createSubscription: function(data: any, actions: any) {
               return actions.subscription.create({
                 plan_id: planId,
-                custom_id: user?.email, // Store email as custom ID for tracking
+                custom_id: user?.email,
                 subscriber: {
                   email_address: user?.email,
                   name: {
@@ -250,7 +200,6 @@ export default function CreateMeetingPage() {
             },
             onApprove: function(data: any, actions: any) {
               alert(`Subscription created: ${data.subscriptionID}`);
-              // You can add success handling here
               setShowModal(false);
             }
           }).render(`#${containerId}`);
@@ -259,7 +208,6 @@ export default function CreateMeetingPage() {
 
       document.head.appendChild(script);
 
-      // Cleanup function
       return () => {
         if (document.head.contains(script)) {
           document.head.removeChild(script);
@@ -270,19 +218,9 @@ export default function CreateMeetingPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
-      {isLoading ? (
-        <div className="text-center">
-          <div className="text-4xl font-bold mb-4">
-            <span className="text-cyan-400">MYT</span>
-            <span className="text-white">X</span>
-          </div>
-          <div className="text-white/60">Loading...</div>
-        </div>
-      ) : (
-        <>
-          <div className="max-w-4xl mx-auto text-center space-y-3">
+      <div className="max-w-4xl mx-auto text-center space-y-3">
         
-        {/* MYTX Logo - Smaller and with more space above */}
+        {/* MYTX Logo */}
         <div className="text-4xl font-bold">
           <span className="text-cyan-400">MYT</span>
           <span className="text-white">X</span>
@@ -311,7 +249,7 @@ export default function CreateMeetingPage() {
             <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl shadow-black/20"></div>
             <div className="relative p-6 space-y-1 overflow-hidden">
               
-              {/* Carousel Container - with overflow hidden */}
+              {/* Carousel Container */}
               <div 
                 className="relative h-36 flex items-center justify-center overflow-hidden" 
                 style={{ perspective: '1000px' }}
@@ -325,11 +263,9 @@ export default function CreateMeetingPage() {
                   const isSelected = thumb.id === selectedThumbnail;
                   const selectedIndex = carouselThumbnails.findIndex(t => t.id === selectedThumbnail);
                   
-                  // Only show current, previous, and next
                   const isPrevious = index === selectedIndex - 1;
                   const isNext = index === selectedIndex + 1;
                   
-                  // Don't render if not in visible range
                   if (!isSelected && !isPrevious && !isNext) {
                     return null;
                   }
@@ -391,7 +327,7 @@ export default function CreateMeetingPage() {
                 })}
               </div>
 
-              {/* Carousel Navigation Dots - Much closer to carousel */}
+              {/* Carousel Navigation Dots */}
               <div className="flex justify-center space-x-2 -mt-6">
                 {carouselThumbnails.map((thumb) => (
                   <button
@@ -406,13 +342,13 @@ export default function CreateMeetingPage() {
                 ))}
               </div>
 
-              {/* Create New Meeting Button */}
+              {/* Create Button */}
               <div className="pt-6">
                 <Button 
-                  onClick={handleCreateMeeting}
+                  onClick={handleCreateClick}
                   className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 px-12 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-lg"
                 >
-                  CREATE A MEETING
+                  {buttonText}
                 </Button>
               </div>
             </div>
@@ -423,6 +359,18 @@ export default function CreateMeetingPage() {
             {/* Mobile Tabs */}
             <div className="md:hidden mb-6">
               <div className="flex bg-white/10 backdrop-blur-md rounded-2xl p-1 border border-white/20">
+                {type === 'meeting' && (
+                  <button
+                    onClick={() => setSelectedPlan('free')}
+                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                      selectedPlan === 'free'
+                        ? 'bg-white text-black shadow-lg'
+                        : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    Free
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedPlan('basic')}
                   className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
@@ -447,7 +395,72 @@ export default function CreateMeetingPage() {
             </div>
 
             {/* Desktop Side by Side / Mobile Single Card */}
-            <div className="md:grid md:grid-cols-2 md:gap-6">
+            <div className={`${type === 'meeting' ? 'md:grid md:grid-cols-3 md:gap-6' : 'md:grid md:grid-cols-2 md:gap-6'}`}>
+              
+              {/* Free Plan - Only for meetings */}
+              {type === 'meeting' && (
+                <div className={`${selectedPlan === 'free' ? 'block' : 'hidden'} md:block`}>
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl shadow-black/20"></div>
+                    <div className="relative p-8 text-center space-y-6">
+                      <div>
+                        <div className="text-4xl font-bold text-white mb-2">
+                          <span className="text-3xl">$</span>0<span className="text-lg">/month</span>
+                        </div>
+                        <h3 className="text-xl font-semibold text-white">Free</h3>
+                      </div>
+                      
+                      <div className="space-y-4 text-left">
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="text-white">Basic features</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="text-white">Up to 10 participants</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="text-white">1 hour meetings</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full bg-gray-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="text-white/60">Recording</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full bg-gray-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="text-white/60">Advanced features</span>
+                        </div>
+                      </div>
+
+                      <Button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+                        START FREE
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Basic Plan */}
               <div className={`${selectedPlan === 'basic' ? 'block' : 'hidden'} md:block`}>
                 <div className="relative">
@@ -629,7 +642,7 @@ export default function CreateMeetingPage() {
 
               {/* Title and Trial Info */}
               <div className="text-center space-y-2">
-                <h2 className="text-xl font-semibold text-white">Create a Meeting</h2>
+                <h2 className="text-xl font-semibold text-white">{modalTitle}</h2>
                 <div className="text-cyan-400 font-medium">7 day free trial</div>
                 {user?.email && (
                   <div className="text-white/60 text-sm">
@@ -680,49 +693,6 @@ export default function CreateMeetingPage() {
                   />
                 </div>
 
-                {/* IDEAL UI - Credit Card Fields (Commented Out) */}
-                {/* 
-                <div>
-                  <label className="block text-white/80 text-sm font-medium mb-2">
-                    Card Details
-                  </label>
-                  <div className="flex bg-white/10 border border-white/20 rounded-xl backdrop-blur-sm overflow-hidden">
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={formData.cardNumber}
-                        onChange={(e) => handleCardNumberChange(e.target.value)}
-                        className="w-full px-3 py-3 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-0 border-0"
-                        placeholder="1234 5678 9012 3456"
-                        maxLength={19}
-                      />
-                    </div>
-                    <div className="w-px bg-white/20"></div>
-                    <div className="w-16">
-                      <input
-                        type="text"
-                        value={formData.expiryDate}
-                        onChange={(e) => handleExpiryDateChange(e.target.value)}
-                        className="w-full px-1 py-3 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-0 border-0 text-center"
-                        placeholder="MM/YY"
-                        maxLength={5}
-                      />
-                    </div>
-                    <div className="w-px bg-white/20"></div>
-                    <div className="w-12">
-                      <input
-                        type="text"
-                        value={formData.csv}
-                        onChange={(e) => setFormData(prev => ({ ...prev, csv: e.target.value }))}
-                        className="w-full px-1 py-3 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-0 border-0 text-center"
-                        placeholder="CVC"
-                        maxLength={4}
-                      />
-                    </div>
-                  </div>
-                </div>
-                */}
-
                 {/* PayPal Subscription Integration */}
                 <div>
                   <label className="block text-white/80 text-sm font-medium mb-2">
@@ -735,8 +705,6 @@ export default function CreateMeetingPage() {
                 </div>
               </div>
 
-              {/* PayPal integration handles subscription creation dynamically */}
-
               {/* Disclaimer */}
               <div className="text-center">
                 <p className="text-white/60 text-xs leading-relaxed">
@@ -748,8 +716,6 @@ export default function CreateMeetingPage() {
             </div>
           </div>
         </div>
-      )}
-      </>
       )}
     </div>
   );
