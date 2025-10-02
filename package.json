@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "build": "tsx db/migrate && next build && tsx scripts/fix-chat-manifests.ts",
+    "build": "tsx db/safe-migrate && next build && tsx scripts/fix-chat-manifests.ts",
+    "build:production": "next build && tsx scripts/fix-chat-manifests.ts",
     "start": "next start",
     "lint": "next lint"
   },

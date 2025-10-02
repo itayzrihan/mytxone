@@ -5,7 +5,10 @@ nixPkgs = ["nodejs_20", "pnpm", "openssl"]
 cmds = ["pnpm install --frozen-lockfile"]
 
 [phases.build]
-cmds = ["pnpm run build"]
+cmds = [
+  "rm -f tsconfig.tsbuildinfo",
+  "NODE_ENV=production pnpm run build:production"
+]
 cacheDirs = [
   ".next/cache",
   "node_modules/.cache"
@@ -15,9 +18,13 @@ env = [
   "DATABASE_URL",
   "POSTGRES_URL",
   "AUTH_SECRET",
+  "AUTH_TRUST_HOST",
   "GOOGLE_GENERATIVE_AI_API_KEY",
+  "GOOGLE_APPLICATION_CREDENTIALS",
   "UPSTASH_REDIS_REST_URL",
-  "UPSTASH_REDIS_REST_TOKEN"
+  "UPSTASH_REDIS_REST_TOKEN",
+  "KV_REST_API_TOKEN",
+  "BYPASS_FIREBASE_AUTH"
 ]
 
 [start]
