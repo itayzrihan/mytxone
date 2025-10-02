@@ -1,15 +1,19 @@
 // Utility function to check user subscription status
+// NOTE: This is deprecated in favor of useSubscription hook
+// which properly checks the database via API
 export function getUserSubscriptionTier(user: any): 'free' | 'basic' | 'pro' {
-  // For now, return 'free' as default
-  // In a real implementation, this would check the user's subscription status
-  // You can extend this logic based on your user schema
-  
   if (!user) return 'free';
   
-  // Example logic - you would replace this with actual subscription check
+  // Check the database subscription field (this is the primary source of truth)
   if (user.subscription === 'pro') return 'pro';
   if (user.subscription === 'basic') return 'basic';
+  if (user.subscription === 'free') return 'free';
   
+  // Fallback for legacy compatibility
+  if (user.subscriptionTier === 'pro' || user.plan === 'pro') return 'pro';
+  if (user.subscriptionTier === 'basic' || user.plan === 'basic') return 'basic';
+  
+  // Default to free
   return 'free';
 }
 

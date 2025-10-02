@@ -7,7 +7,7 @@ export function Footer() {
   const pathname = usePathname();
 
   // Hide footer on specific routes
-  const shouldHideFooter = pathname === "/mytx/create" || pathname === "/mytx/create-meeting" || pathname === "/mytx/create-community" || pathname.includes("/teleprompter");
+  const shouldHideFooter = pathname.includes("/teleprompter");
 
   // Don't render footer on certain pages
   if (shouldHideFooter) {
@@ -45,7 +45,7 @@ export function Footer() {
   ];
 
   return (
-    <footer className="mt-auto border-t border-white/10 bg-black/80 backdrop-blur-xl">
+    <footer className="footer-container mt-auto border-t border-white/10 bg-black/80 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Main Footer Content */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 mb-8">

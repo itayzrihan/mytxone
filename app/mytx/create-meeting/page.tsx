@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import UpgradePlanWall from "@/components/custom/upgrade-plan-wall";
-import { isUserPaidSubscriber } from "@/lib/subscription-utils";
+import { useSubscription, isUserPaidSubscriber } from "@/lib/use-subscription";
 
 // Placeholder component for actual meeting creation
 function CreateMeetingForm() {
@@ -83,61 +82,69 @@ function CreateMeetingForm() {
 }
 
 export default function CreateMeetingPage() {
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { subscription, isLoading, error, isAuthenticated } = useSubscription();
 
-  // Check user authentication status
-  useEffect(() => {
-    let isMounted = true;
-    
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/session', {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        if (response.ok && isMounted) {
-          const sessionData = await response.json();
-          setUser(sessionData?.user || null);
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        if (isMounted) {
-          setUser(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    checkAuth();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
+  // Show loading state while checking subscription
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
-        <div className="text-center">
-          <div className="text-4xl font-bold mb-4">
-            <span className="text-cyan-400">MYT</span>
-            <span className="text-white">X</span>
+      <>
+        {/* Hide navbar and footer during loading */}
+        <style jsx global>{`
+          .navbar-container,
+          .footer-container {
+            display: none !important;
+          }
+        `}</style>
+        
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
+          <div className="text-center">
+            <div className="text-4xl font-bold mb-4">
+              <span className="text-cyan-400">MYT</span>
+              <span className="text-white">X</span>
+            </div>
+            <div className="text-white/60">Loading...</div>
           </div>
-          <div className="text-white/60">Loading...</div>
         </div>
-      </div>
+      </>
+    );
+  }
+
+  // Show error state if subscription check failed
+  if (error) {
+    return (
+      <>
+        {/* Hide navbar and footer during error */}
+        <style jsx global>{`
+          .navbar-container,
+          .footer-container {
+            display: none !important;
+          }
+        `}</style>
+        
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
+          <div className="text-center">
+            <div className="text-4xl font-bold mb-4">
+              <span className="text-cyan-400">MYT</span>
+              <span className="text-white">X</span>
+            </div>
+            <div className="text-red-400">Error: {error}</div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </>
     );
   }
 
   // Show upgrade plan wall for free users, direct access for paid users
-  if (!user || !isUserPaidSubscriber(user)) {
-    return <UpgradePlanWall type="meeting" user={user} />;
+  if (!subscription || !isUserPaidSubscriber(subscription)) {
+    // Create a minimal user object for the upgrade wall
+    const userForWall = isAuthenticated ? { subscription } : null;
+    return <UpgradePlanWall type="meeting" user={userForWall} />;
   }
 
   // Show actual meeting creation form for paid users

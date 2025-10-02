@@ -28,7 +28,7 @@ export const Navbar = ({ session }: NavbarProps) => {
   const pathname = usePathname();
 
   // Hide navbar on specific routes
-  const shouldHideNavbar = pathname === "/mytx/create" || pathname === "/mytx/create-meeting" || pathname === "/mytx/create-community" || pathname.includes("/teleprompter");
+  const shouldHideNavbar = pathname.includes("/teleprompter");
 
   // Prevent hydration mismatch by only rendering session-dependent UI on client
   useEffect(() => {
@@ -74,7 +74,7 @@ export const Navbar = ({ session }: NavbarProps) => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 w-full py-2 z-30">
+      <div className="navbar-container fixed top-0 left-0 w-full py-2 z-30">
         <div className="max-w-6xl mx-auto px-4 py-2 relative">
           <div className="glass-container glass-container--rounded glass-container--large">
             {/* Apply new glass background effect that adapts to container shape */}

@@ -217,7 +217,16 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
   }, [showModal, modalPlan, user?.email, formData.communityName]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
+    <>
+      {/* Hide navbar and footer when showing upgrade wall */}
+      <style jsx global>{`
+        .navbar-container,
+        .footer-container {
+          display: none !important;
+        }
+      `}</style>
+      
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
       <div className="max-w-4xl mx-auto text-center space-y-3">
         
         {/* MYTX Logo */}
@@ -717,6 +726,7 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
