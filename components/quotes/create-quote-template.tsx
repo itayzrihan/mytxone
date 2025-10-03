@@ -23,7 +23,10 @@ interface QuoteItem {
   maxPrice?: number;
   parameterType?: string;
   parameterUnit?: string;
+  parameterPricingMode?: 'fixed' | 'range';
   pricePerUnit?: number;
+  minPricePerUnit?: number;
+  maxPricePerUnit?: number;
   minUnits?: number;
   maxUnits?: number;
   options: QuoteOption[];
@@ -33,6 +36,7 @@ interface QuoteOption {
   id?: string;
   title: string;
   description: string;
+  pricingType: 'fixed' | 'range';
   fixedPrice?: number;
   minPrice?: number;
   maxPrice?: number;
@@ -83,7 +87,16 @@ export function CreateQuoteTemplate({ userId, onBack, editingTemplate }: CreateQ
       if (response.ok) {
         const data = await response.json();
         if (data.items) {
-          setItems(data.items);
+          // Ensure all items and options have required fields with defaults
+          const itemsWithDefaults = data.items.map((item: any) => ({
+            ...item,
+            parameterPricingMode: item.parameterPricingMode || 'fixed',
+            options: item.options?.map((option: any) => ({
+              ...option,
+              pricingType: option.pricingType || 'fixed',
+            })) || [],
+          }));
+          setItems(itemsWithDefaults);
         }
       }
     } catch (error) {
