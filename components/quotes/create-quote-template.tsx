@@ -246,7 +246,7 @@ export function CreateQuoteTemplate({ userId, onBack, editingTemplate }: CreateQ
               }
             />
             <Label htmlFor="allowGuests" className="text-white">
-              Allow guest submissions (customers don't need to register)
+              Allow guest submissions (customers don&apos;t need to register)
             </Label>
           </div>
         </CardContent>

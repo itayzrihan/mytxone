@@ -86,6 +86,7 @@ export function QuoteResponseForm({ template }: QuoteResponseFormProps) {
   // Calculate total price whenever selections change
   useEffect(() => {
     calculateTotal();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItems]);
 
   const calculateTotal = () => {

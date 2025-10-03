@@ -1,9 +1,9 @@
 import { auth } from '@/app/(auth)/auth';
 import { 
   updateQuoteResponseStatus,
-  getQuoteResponseById
+  getQuoteResponseById,
+  getQuoteTemplateById
 } from '@/db/quote-queries';
-import { getQuoteTemplateById } from '@/db/quote-queries';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface RouteParams {
