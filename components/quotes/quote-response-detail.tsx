@@ -195,21 +195,83 @@ export function QuoteResponseDetail({ response, onClose, onStatusUpdate }: Quote
           {/* Selected Items */}
           <div>
             <Label className="text-zinc-400">Selected Items</Label>
-            <div className="mt-2 space-y-2">
-              {Array.isArray(response.selectedItems) && response.selectedItems.map((item, index) => (
-                <div key={index} className="p-3 bg-white/5 rounded-lg border border-white/10">
-                  <p className="text-white">Item ID: {typeof item === 'object' && item?.itemId ? item.itemId : item}</p>
-                  {typeof item === 'object' && item?.parameterValue && (
-                    <p className="text-zinc-300 text-sm">Parameter: {item.parameterValue}</p>
+            <div className="mt-2 space-y-3">
+              {Array.isArray(response.selectedItems) && response.selectedItems.map((item: any, index: number) => (
+                <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-white font-semibold">{item.title || 'Unnamed Item'}</p>
+                      {item.description && (
+                        <p className="text-zinc-400 text-sm mt-1">{item.description}</p>
+                      )}
+                    </div>
+                    <div className="text-right ml-4">
+                      {item.itemType === 'fixed' && (
+                        <span className="text-green-300 font-semibold">
+                          {formatPrice(item.fixedPrice, null)}
+                        </span>
+                      )}
+                      {item.itemType === 'range' && (
+                        <span className="text-green-300 font-semibold">
+                          {formatPrice(item.minPrice, item.maxPrice)}
+                        </span>
+                      )}
+                      {item.itemType === 'parameter' && (
+                        <div className="text-green-300">
+                          <div className="font-semibold">
+                            {item.parameterValue || 0} {item.parameterUnit || 'units'}
+                          </div>
+                          <div className="text-xs text-zinc-400">
+                            @ {formatPrice(item.pricePerUnit, null)} per {item.parameterUnit || 'unit'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {item.itemType === 'parameter' && (
+                    <div className="mt-2 text-sm text-cyan-300">
+                      {item.parameterType}: {item.parameterValue || 0} {item.parameterUnit || 'units'}
+                    </div>
                   )}
-                  {typeof item === 'object' && item?.selectedOptionId && (
-                    <p className="text-zinc-300 text-sm">Option: {item.selectedOptionId}</p>
-                  )}
-                  {/* Note: In a real implementation, you'd fetch item details */}
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Selected Options */}
+          {Array.isArray(response.selectedOptions) && response.selectedOptions.length > 0 && (
+            <div>
+              <Label className="text-zinc-400">Selected Options</Label>
+              <div className="mt-2 space-y-3">
+                {response.selectedOptions.map((option: any, index: number) => (
+                  <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-zinc-400 text-xs mb-1">For: {option.itemTitle}</p>
+                        <p className="text-white font-semibold">{option.optionTitle}</p>
+                        {option.optionDescription && (
+                          <p className="text-zinc-400 text-sm mt-1">{option.optionDescription}</p>
+                        )}
+                      </div>
+                      <div className="text-right ml-4">
+                        {option.fixedPrice && (
+                          <span className="text-green-300 font-semibold">
+                            {formatPrice(option.fixedPrice, null)}
+                          </span>
+                        )}
+                        {option.minPrice && option.maxPrice && (
+                          <span className="text-green-300 font-semibold">
+                            {formatPrice(option.minPrice, option.maxPrice)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           {response.notes && (

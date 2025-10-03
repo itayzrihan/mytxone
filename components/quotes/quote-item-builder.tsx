@@ -14,6 +14,7 @@ interface QuoteOption {
   id?: string;
   title: string;
   description: string;
+  pricingType: 'fixed' | 'range';
   fixedPrice?: number;
   minPrice?: number;
   maxPrice?: number;
@@ -30,7 +31,10 @@ interface QuoteItem {
   maxPrice?: number;
   parameterType?: string;
   parameterUnit?: string;
+  parameterPricingMode?: 'fixed' | 'range';
   pricePerUnit?: number;
+  minPricePerUnit?: number;
+  maxPricePerUnit?: number;
   minUnits?: number;
   maxUnits?: number;
   options: QuoteOption[];
@@ -49,11 +53,20 @@ const itemTypes = [
 ];
 
 const parameterTypes = [
-  { value: 'video_length', label: 'Video Length (seconds)' },
-  { value: 'page_count', label: 'Page Count' },
-  { value: 'hours', label: 'Hours' },
-  { value: 'square_feet', label: 'Square Feet' },
   { value: 'custom', label: 'Custom Unit' },
+  { value: 'hours', label: 'Hours of Work' },
+  { value: 'page_count', label: 'Page Count' },
+  { value: 'word_count', label: 'Word Count' },
+  { value: 'video_length', label: 'Video Length (seconds)' },
+  { value: 'minutes', label: 'Minutes' },
+  { value: 'days', label: 'Days' },
+  { value: 'items', label: 'Number of Items' },
+  { value: 'square_feet', label: 'Square Feet' },
+  { value: 'square_meters', label: 'Square Meters' },
+  { value: 'users', label: 'Number of Users' },
+  { value: 'revisions', label: 'Number of Revisions' },
+  { value: 'months', label: 'Months' },
+  { value: 'sessions', label: 'Sessions' },
 ];
 
 export function QuoteItemBuilder({ item, onChange }: QuoteItemBuilderProps) {
@@ -65,6 +78,7 @@ export function QuoteItemBuilder({ item, onChange }: QuoteItemBuilderProps) {
     const newOption: QuoteOption = {
       title: '',
       description: '',
+      pricingType: 'fixed',
     };
     updateItem({ options: [...item.options, newOption] });
   };
@@ -219,43 +233,124 @@ export function QuoteItemBuilder({ item, onChange }: QuoteItemBuilderProps) {
                   </div>
                 )}
               </div>
-              
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="pricePerUnit" className="text-white">Price per Unit *</Label>
-                  <Input
-                    id="pricePerUnit"
-                    type="number"
-                    step="0.01"
-                    value={item.pricePerUnit || ''}
-                    onChange={(e) => updateItem({ pricePerUnit: parseFloat(e.target.value) || undefined })}
-                    placeholder="0.00"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="minUnits" className="text-white">Minimum Units</Label>
-                  <Input
-                    id="minUnits"
-                    type="number"
-                    value={item.minUnits || ''}
-                    onChange={(e) => updateItem({ minUnits: parseInt(e.target.value) || undefined })}
-                    placeholder="1"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maxUnits" className="text-white">Maximum Units</Label>
-                  <Input
-                    id="maxUnits"
-                    type="number"
-                    value={item.maxUnits || ''}
-                    onChange={(e) => updateItem({ maxUnits: parseInt(e.target.value) || undefined })}
-                    placeholder="100"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
-                  />
-                </div>
+
+              {/* Pricing Mode Selector */}
+              <div className="space-y-2">
+                <Label className="text-white">Pricing Mode *</Label>
+                <Select
+                  value={item.parameterPricingMode || 'fixed'}
+                  onValueChange={(value: 'fixed' | 'range') => updateItem({ 
+                    parameterPricingMode: value,
+                    // Clear opposite pricing fields
+                    ...(value === 'fixed' ? { minPricePerUnit: undefined, maxPricePerUnit: undefined } : { pricePerUnit: undefined })
+                  })}
+                >
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Select pricing mode" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black/90 backdrop-blur-md border-white/20">
+                    <SelectItem value="fixed" className="text-white hover:bg-white/10">
+                      Fixed Price per Unit
+                    </SelectItem>
+                    <SelectItem value="range" className="text-white hover:bg-white/10">
+                      Price Range per Unit
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              
+              {/* Price Per Unit Fields */}
+              {item.parameterPricingMode === 'fixed' || !item.parameterPricingMode ? (
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="pricePerUnit" className="text-white">Price per Unit *</Label>
+                    <Input
+                      id="pricePerUnit"
+                      type="number"
+                      step="0.01"
+                      value={item.pricePerUnit || ''}
+                      onChange={(e) => updateItem({ pricePerUnit: parseFloat(e.target.value) || undefined })}
+                      placeholder="0.00"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="minUnits" className="text-white">Minimum Units</Label>
+                    <Input
+                      id="minUnits"
+                      type="number"
+                      value={item.minUnits || ''}
+                      onChange={(e) => updateItem({ minUnits: parseInt(e.target.value) || undefined })}
+                      placeholder="1"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maxUnits" className="text-white">Maximum Units</Label>
+                    <Input
+                      id="maxUnits"
+                      type="number"
+                      value={item.maxUnits || ''}
+                      onChange={(e) => updateItem({ maxUnits: parseInt(e.target.value) || undefined })}
+                      placeholder="100"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="minPricePerUnit" className="text-white">Min Price per Unit *</Label>
+                      <Input
+                        id="minPricePerUnit"
+                        type="number"
+                        step="0.01"
+                        value={item.minPricePerUnit || ''}
+                        onChange={(e) => updateItem({ minPricePerUnit: parseFloat(e.target.value) || undefined })}
+                        placeholder="0.00"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="maxPricePerUnit" className="text-white">Max Price per Unit *</Label>
+                      <Input
+                        id="maxPricePerUnit"
+                        type="number"
+                        step="0.01"
+                        value={item.maxPricePerUnit || ''}
+                        onChange={(e) => updateItem({ maxPricePerUnit: parseFloat(e.target.value) || undefined })}
+                        placeholder="0.00"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="minUnits" className="text-white">Minimum Units</Label>
+                      <Input
+                        id="minUnits"
+                        type="number"
+                        value={item.minUnits || ''}
+                        onChange={(e) => updateItem({ minUnits: parseInt(e.target.value) || undefined })}
+                        placeholder="1"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="maxUnits" className="text-white">Maximum Units</Label>
+                      <Input
+                        id="maxUnits"
+                        type="number"
+                        value={item.maxUnits || ''}
+                        onChange={(e) => updateItem({ maxUnits: parseInt(e.target.value) || undefined })}
+                        placeholder="100"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -299,41 +394,80 @@ export function QuoteItemBuilder({ item, onChange }: QuoteItemBuilderProps) {
                             />
                           </div>
                           
-                          <div className="grid gap-3 md:grid-cols-3">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={option.fixedPrice || ''}
-                              onChange={(e) => updateOption(index, { 
+                          {/* Pricing Type Selector */}
+                          <div className="space-y-2">
+                            <Label className="text-white text-sm">Pricing Type</Label>
+                            <Select
+                              value={option.pricingType}
+                              onValueChange={(value: 'fixed' | 'range') => updateOption(index, { 
                                 ...option, 
-                                fixedPrice: parseFloat(e.target.value) || undefined 
+                                pricingType: value,
+                                // Clear opposite pricing fields
+                                ...(value === 'fixed' ? { minPrice: undefined, maxPrice: undefined } : { fixedPrice: undefined })
                               })}
-                              placeholder="Fixed price"
-                              className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
-                            />
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={option.minPrice || ''}
-                              onChange={(e) => updateOption(index, { 
-                                ...option, 
-                                minPrice: parseFloat(e.target.value) || undefined 
-                              })}
-                              placeholder="Min price"
-                              className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
-                            />
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={option.maxPrice || ''}
-                              onChange={(e) => updateOption(index, { 
-                                ...option, 
-                                maxPrice: parseFloat(e.target.value) || undefined 
-                              })}
-                              placeholder="Max price"
-                              className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
-                            />
+                            >
+                              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-black/90 backdrop-blur-md border-white/20">
+                                <SelectItem value="fixed" className="text-white hover:bg-white/10">
+                                  Fixed Price
+                                </SelectItem>
+                                <SelectItem value="range" className="text-white hover:bg-white/10">
+                                  Price Range
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
+
+                          {/* Pricing Fields */}
+                          {option.pricingType === 'fixed' ? (
+                            <div className="space-y-2">
+                              <Label className="text-white text-sm">Fixed Price *</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={option.fixedPrice || ''}
+                                onChange={(e) => updateOption(index, { 
+                                  ...option, 
+                                  fixedPrice: parseFloat(e.target.value) || undefined 
+                                })}
+                                placeholder="0.00"
+                                className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                              />
+                            </div>
+                          ) : (
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label className="text-white text-sm">Min Price *</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={option.minPrice || ''}
+                                  onChange={(e) => updateOption(index, { 
+                                    ...option, 
+                                    minPrice: parseFloat(e.target.value) || undefined 
+                                  })}
+                                  placeholder="0.00"
+                                  className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white text-sm">Max Price *</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={option.maxPrice || ''}
+                                  onChange={(e) => updateOption(index, { 
+                                    ...option, 
+                                    maxPrice: parseFloat(e.target.value) || undefined 
+                                  })}
+                                  placeholder="0.00"
+                                  className="bg-white/10 border-white/20 text-white placeholder:text-zinc-400"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                         
                         <Button

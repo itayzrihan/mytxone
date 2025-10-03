@@ -206,6 +206,52 @@ export function QuoteResponseForm({ template }: QuoteResponseFormProps) {
         }
       });
 
+      // Create full snapshots of selected items with all details
+      const selectedItemsSnapshot = selectedItemsArray.map(selection => {
+        const item = template.items.find(i => i.id === selection.itemId);
+        if (!item) return null;
+
+        return {
+          itemId: item.id,
+          title: item.title,
+          description: item.description,
+          itemType: item.itemType,
+          isRequired: item.isRequired,
+          fixedPrice: item.fixedPrice,
+          minPrice: item.minPrice,
+          maxPrice: item.maxPrice,
+          parameterType: item.parameterType,
+          parameterUnit: item.parameterUnit,
+          pricePerUnit: item.pricePerUnit,
+          minUnits: item.minUnits,
+          maxUnits: item.maxUnits,
+          parameterValue: selection.parameterValue,
+        };
+      }).filter(Boolean);
+
+      // Create full snapshots of selected options with all details
+      const selectedOptionsSnapshot = selectedItemsArray
+        .filter(s => s.selectedOptionId)
+        .map(selection => {
+          const item = template.items.find(i => i.id === selection.itemId);
+          if (!item) return null;
+
+          const option = item.options?.find(o => o.id === selection.selectedOptionId);
+          if (!option) return null;
+
+          return {
+            itemId: item.id,
+            itemTitle: item.title,
+            optionId: option.id,
+            optionTitle: option.title,
+            optionDescription: option.description,
+            fixedPrice: option.fixedPrice,
+            minPrice: option.minPrice,
+            maxPrice: option.maxPrice,
+          };
+        })
+        .filter(Boolean);
+
       const response = await fetch('/api/quotes/responses', {
         method: 'POST',
         headers: {
@@ -216,10 +262,8 @@ export function QuoteResponseForm({ template }: QuoteResponseFormProps) {
           customerName: customerInfo.name || null,
           customerEmail: customerInfo.email || null,
           customerPhone: customerInfo.phone || null,
-          selectedItems: selectedItemsArray,
-          selectedOptions: selectedItemsArray
-            .filter(s => s.selectedOptionId)
-            .map(s => ({ itemId: s.itemId, optionId: s.selectedOptionId })),
+          selectedItems: selectedItemsSnapshot,
+          selectedOptions: selectedOptionsSnapshot,
           parameterValues,
           totalMinPrice: totalPrice.min,
           totalMaxPrice: totalPrice.max,

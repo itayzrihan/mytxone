@@ -319,7 +319,10 @@ export const quoteItems = pgTable("QuoteItem", {
   maxPrice: decimal("max_price", { precision: 10, scale: 2 }),
   parameterType: text("parameter_type"), // "video_length", "page_count", "custom"
   parameterUnit: text("parameter_unit"), // "seconds", "pages", "hours", etc.
+  parameterPricingMode: text("parameter_pricing_mode"), // "fixed" or "range" - for parameter-based pricing
   pricePerUnit: decimal("price_per_unit", { precision: 10, scale: 2 }),
+  minPricePerUnit: decimal("min_price_per_unit", { precision: 10, scale: 2 }), // For range pricing per unit
+  maxPricePerUnit: decimal("max_price_per_unit", { precision: 10, scale: 2 }), // For range pricing per unit
   minUnits: integer("min_units"),
   maxUnits: integer("max_units"),
   displayOrder: integer("display_order").notNull().default(0),
@@ -345,6 +348,7 @@ export const quoteOptions = pgTable("QuoteOption", {
     .references(() => quoteItems.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
+  pricingType: text("pricing_type").notNull().default('fixed'), // "fixed" or "range"
   fixedPrice: decimal("fixed_price", { precision: 10, scale: 2 }),
   minPrice: decimal("min_price", { precision: 10, scale: 2 }),
   maxPrice: decimal("max_price", { precision: 10, scale: 2 }),

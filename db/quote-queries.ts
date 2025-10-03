@@ -120,7 +120,10 @@ export async function createQuoteItem(data: {
   maxPrice?: number;
   parameterType?: string;
   parameterUnit?: string;
+  parameterPricingMode?: string;
   pricePerUnit?: number;
+  minPricePerUnit?: number;
+  maxPricePerUnit?: number;
   minUnits?: number;
   maxUnits?: number;
   displayOrder?: number;
@@ -138,7 +141,10 @@ export async function createQuoteItem(data: {
       maxPrice: data.maxPrice?.toString(),
       parameterType: data.parameterType,
       parameterUnit: data.parameterUnit,
+      parameterPricingMode: data.parameterPricingMode,
       pricePerUnit: data.pricePerUnit?.toString(),
+      minPricePerUnit: data.minPricePerUnit?.toString(),
+      maxPricePerUnit: data.maxPricePerUnit?.toString(),
       minUnits: data.minUnits,
       maxUnits: data.maxUnits,
       displayOrder: data.displayOrder ?? 0,
@@ -172,6 +178,7 @@ export async function createQuoteOption(data: {
   itemId: string;
   title: string;
   description?: string;
+  pricingType?: string;
   fixedPrice?: number;
   minPrice?: number;
   maxPrice?: number;
@@ -183,6 +190,7 @@ export async function createQuoteOption(data: {
       itemId: data.itemId,
       title: data.title,
       description: data.description,
+      pricingType: data.pricingType || 'fixed',
       fixedPrice: data.fixedPrice?.toString(),
       minPrice: data.minPrice?.toString(),
       maxPrice: data.maxPrice?.toString(),
@@ -320,7 +328,10 @@ export async function updateTemplateItems(templateId: string, items: any[]) {
         maxPrice: item.maxPrice ? item.maxPrice.toString() : null,
         parameterType: item.parameterType || null,
         parameterUnit: item.parameterUnit || null,
+        parameterPricingMode: item.parameterPricingMode || null,
         pricePerUnit: item.pricePerUnit ? item.pricePerUnit.toString() : null,
+        minPricePerUnit: item.minPricePerUnit ? item.minPricePerUnit.toString() : null,
+        maxPricePerUnit: item.maxPricePerUnit ? item.maxPricePerUnit.toString() : null,
         minUnits: item.minUnits || null,
         maxUnits: item.maxUnits || null,
         displayOrder: index,
@@ -336,6 +347,7 @@ export async function updateTemplateItems(templateId: string, items: any[]) {
             itemId: newItem.id,
             title: option.title,
             description: option.description || null,
+            pricingType: option.pricingType || 'fixed',
             fixedPrice: option.fixedPrice ? option.fixedPrice.toString() : null,
             minPrice: option.minPrice ? option.minPrice.toString() : null,
             maxPrice: option.maxPrice ? option.maxPrice.toString() : null,
