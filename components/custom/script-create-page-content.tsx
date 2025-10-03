@@ -764,8 +764,8 @@ export function ScriptCreatePageContent({ user }: ScriptCreatePageContentProps) 
                               customContentTypes.find(type => type.value === formData.mainContentType);
 
   return (
-    <div className="flex flex-col min-h-screen p-4 pt-16">
-      <div className="max-w-4xl mx-auto">
+    <div className="flex flex-col min-h-screen p-4 pt-16 ">
+      <div className="max-w-4xl mx-auto bg-gray-900/50 backdrop-blur-lg p-8 rounded-2xl shadow-lg border border-gray-700">
         <h1 className="text-3xl font-bold text-white mb-8">
           {isEditMode ? "Edit Video Script" : "Create New Video Script"}
         </h1>

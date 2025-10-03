@@ -8,6 +8,8 @@ import {
   uuid,
   boolean,
   text,
+  integer,
+  decimal,
 } from "drizzle-orm/pg-core";
 import { protocols } from "./protocols-schema";
 
@@ -35,6 +37,7 @@ export const userRelations = relations(user, ({ many }) => ({
   customHooks: many(customHooks),
   customContentTypes: many(customContentTypes),
   userFavorites: many(userFavorites),
+  quoteTemplates: many(quoteTemplates),
 }));
 
 export const chat = pgTable("Chat", {
@@ -269,5 +272,122 @@ export const userFavoritesRelations = relations(userFavorites, ({ one }) => ({
   user: one(user, {
     fields: [userFavorites.userId],
     references: [user.id],
+  }),
+}));
+
+// Quote System Tables
+export const quoteTemplates = pgTable("QuoteTemplate", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  businessType: text("business_type").notNull(), // "digital", "installation", "consulting", etc.
+  isActive: boolean("is_active").notNull().default(true),
+  allowGuestSubmissions: boolean("allow_guest_submissions").notNull().default(true),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type QuoteTemplate = InferSelectModel<typeof quoteTemplates>;
+
+export const quoteTemplatesRelations = relations(quoteTemplates, ({ one, many }) => ({
+  user: one(user, {
+    fields: [quoteTemplates.userId],
+    references: [user.id],
+  }),
+  items: many(quoteItems),
+  responses: many(quoteResponses),
+}));
+
+export const quoteItems = pgTable("QuoteItem", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  templateId: uuid("template_id")
+    .notNull()
+    .references(() => quoteTemplates.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  isRequired: boolean("is_required").notNull().default(false),
+  itemType: text("item_type").notNull(), // "fixed", "range", "parameter", "option_group"
+  fixedPrice: decimal("fixed_price", { precision: 10, scale: 2 }),
+  minPrice: decimal("min_price", { precision: 10, scale: 2 }),
+  maxPrice: decimal("max_price", { precision: 10, scale: 2 }),
+  parameterType: text("parameter_type"), // "video_length", "page_count", "custom"
+  parameterUnit: text("parameter_unit"), // "seconds", "pages", "hours", etc.
+  pricePerUnit: decimal("price_per_unit", { precision: 10, scale: 2 }),
+  minUnits: integer("min_units"),
+  maxUnits: integer("max_units"),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type QuoteItem = InferSelectModel<typeof quoteItems>;
+
+export const quoteItemsRelations = relations(quoteItems, ({ one, many }) => ({
+  template: one(quoteTemplates, {
+    fields: [quoteItems.templateId],
+    references: [quoteTemplates.id],
+  }),
+  options: many(quoteOptions),
+}));
+
+export const quoteOptions = pgTable("QuoteOption", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  itemId: uuid("item_id")
+    .notNull()
+    .references(() => quoteItems.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  fixedPrice: decimal("fixed_price", { precision: 10, scale: 2 }),
+  minPrice: decimal("min_price", { precision: 10, scale: 2 }),
+  maxPrice: decimal("max_price", { precision: 10, scale: 2 }),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type QuoteOption = InferSelectModel<typeof quoteOptions>;
+
+export const quoteOptionsRelations = relations(quoteOptions, ({ one }) => ({
+  item: one(quoteItems, {
+    fields: [quoteOptions.itemId],
+    references: [quoteItems.id],
+  }),
+}));
+
+export const quoteResponses = pgTable("QuoteResponse", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  templateId: uuid("template_id")
+    .notNull()
+    .references(() => quoteTemplates.id),
+  customerName: text("customer_name"),
+  customerEmail: text("customer_email"),
+  customerPhone: text("customer_phone"),
+  selectedItems: json("selected_items").notNull(), // Array of selected item IDs with quantities/parameters
+  selectedOptions: json("selected_options").notNull(), // Array of selected option IDs
+  parameterValues: json("parameter_values"), // Object with parameter values for each item
+  totalMinPrice: decimal("total_min_price", { precision: 10, scale: 2 }),
+  totalMaxPrice: decimal("total_max_price", { precision: 10, scale: 2 }),
+  notes: text("notes"),
+  status: text("status").notNull().default("pending"), // "pending", "reviewed", "quoted", "closed"
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type QuoteResponse = InferSelectModel<typeof quoteResponses>;
+
+export const quoteResponsesRelations = relations(quoteResponses, ({ one }) => ({
+  template: one(quoteTemplates, {
+    fields: [quoteResponses.templateId],
+    references: [quoteTemplates.id],
   }),
 }));
