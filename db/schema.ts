@@ -190,10 +190,66 @@ export const scripts = pgTable("Script", {
 
 export type Script = InferSelectModel<typeof scripts>;
 
-export const scriptsRelations = relations(scripts, ({ one }) => ({
+export const scriptsRelations = relations(scripts, ({ one, many }) => ({
   user: one(user, {
     fields: [scripts.userId],
     references: [user.id],
+  }),
+  seriesLinks: many(scriptSeriesLinks),
+}));
+
+// Script Series (Folders)
+export const scriptSeries = pgTable("ScriptSeries", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  order: integer("order").notNull().default(0), // for custom ordering of series
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type ScriptSeries = InferSelectModel<typeof scriptSeries>;
+
+export const scriptSeriesRelations = relations(scriptSeries, ({ one, many }) => ({
+  user: one(user, {
+    fields: [scriptSeries.userId],
+    references: [user.id],
+  }),
+  scriptLinks: many(scriptSeriesLinks),
+}));
+
+// Junction table for many-to-many relationship between scripts and series
+export const scriptSeriesLinks = pgTable("ScriptSeriesLink", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  scriptId: uuid("script_id")
+    .notNull()
+    .references(() => scripts.id, { onDelete: "cascade" }),
+  seriesId: uuid("series_id")
+    .notNull()
+    .references(() => scriptSeries.id, { onDelete: "cascade" }),
+  orderInSeries: integer("order_in_series").notNull().default(0), // for custom ordering within a series
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type ScriptSeriesLink = InferSelectModel<typeof scriptSeriesLinks>;
+
+export const scriptSeriesLinksRelations = relations(scriptSeriesLinks, ({ one }) => ({
+  script: one(scripts, {
+    fields: [scriptSeriesLinks.scriptId],
+    references: [scripts.id],
+  }),
+  series: one(scriptSeries, {
+    fields: [scriptSeriesLinks.seriesId],
+    references: [scriptSeries.id],
   }),
 }));
 

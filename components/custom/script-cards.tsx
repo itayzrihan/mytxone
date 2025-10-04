@@ -3,10 +3,18 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Script } from "@/db/schema";
+import { Script, ScriptSeries } from "@/db/schema";
 import { FileIcon } from "./icons";
 import { getLanguageLabel, getHookById } from "@/lib/video-script-constants";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { FolderPlus, FolderMinus } from "lucide-react";
 
 interface ScriptCardsProps {
   userId: string;
@@ -16,6 +24,8 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
   const [scripts, setScripts] = useState<Script[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [allSeries, setAllSeries] = useState<ScriptSeries[]>([]);
+  const [scriptSeries, setScriptSeries] = useState<Record<string, string[]>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -25,6 +35,23 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
         if (response.ok) {
           const data = await response.json();
           setScripts(data);
+          
+          // Fetch series relationships for each script
+          const seriesMap: Record<string, string[]> = {};
+          await Promise.all(
+            data.map(async (script: Script) => {
+              try {
+                const seriesResponse = await fetch(`/api/scripts/${script.id}/series`);
+                if (seriesResponse.ok) {
+                  const scriptSeriesData = await seriesResponse.json();
+                  seriesMap[script.id] = scriptSeriesData.map((s: any) => s.id);
+                }
+              } catch (error) {
+                console.error(`Failed to fetch series for script ${script.id}:`, error);
+              }
+            })
+          );
+          setScriptSeries(seriesMap);
         }
       } catch (error) {
         console.error("Failed to fetch scripts:", error);
@@ -33,7 +60,20 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
       }
     };
 
+    const fetchSeries = async () => {
+      try {
+        const response = await fetch(`/api/series?userId=${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAllSeries(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch series:", error);
+      }
+    };
+
     fetchScripts();
+    fetchSeries();
   }, [userId]);
 
   const getLanguageColor = (language: string) => {
@@ -156,6 +196,62 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
     });
     
     router.push(`/scripts/create?${params.toString()}`);
+  };
+
+  const addScriptToSeries = async (scriptId: string, seriesId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const response = await fetch(`/api/series/${seriesId}/scripts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ scriptId }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setScriptSeries(prev => ({
+          ...prev,
+          [scriptId]: [...(prev[scriptId] || []), seriesId],
+        }));
+      } else {
+        alert("Failed to add script to series");
+      }
+    } catch (error) {
+      console.error("Error adding script to series:", error);
+      alert("Failed to add script to series");
+    }
+  };
+
+  const removeScriptFromSeries = async (scriptId: string, seriesId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const response = await fetch(`/api/series/${seriesId}/scripts?scriptId=${scriptId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Update local state
+        setScriptSeries(prev => ({
+          ...prev,
+          [scriptId]: (prev[scriptId] || []).filter(id => id !== seriesId),
+        }));
+      } else {
+        alert("Failed to remove script from series");
+      }
+    } catch (error) {
+      console.error("Error removing script from series:", error);
+      alert("Failed to remove script from series");
+    }
+  };
+
+  const isScriptInSeries = (scriptId: string, seriesId: string): boolean => {
+    return (scriptSeries[scriptId] || []).includes(seriesId);
   };
 
   if (loading) {
@@ -304,25 +400,82 @@ export function ScriptCards({ userId }: ScriptCardsProps) {
                 📺 Teleprompter
               </Button>
             </div>
-            {/* Second row: Status toggle */}
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={(e) => toggleStatus(script.id, script.status, e)}
-              disabled={updatingStatus === script.id}
-              className={`w-full text-xs ${
-                script.status === 'ready'
-                  ? 'bg-yellow-500/10 border-yellow-400/30 text-yellow-300 hover:bg-yellow-500/20 hover:border-yellow-400/50'
-                  : 'bg-green-500/10 border-green-400/30 text-green-300 hover:bg-green-500/20 hover:border-green-400/50'
-              }`}
-            >
-              {updatingStatus === script.id 
-                ? 'Updating...' 
-                : script.status === 'ready' 
-                  ? 'Mark as Pending' 
-                  : 'Mark as Ready'
-              }
-            </Button>
+            {/* Second row: Status and Series */}
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => toggleStatus(script.id, script.status, e)}
+                disabled={updatingStatus === script.id}
+                className={`flex-1 text-xs ${
+                  script.status === 'ready'
+                    ? 'bg-yellow-500/10 border-yellow-400/30 text-yellow-300 hover:bg-yellow-500/20 hover:border-yellow-400/50'
+                    : 'bg-green-500/10 border-green-400/30 text-green-300 hover:bg-green-500/20 hover:border-green-400/50'
+                }`}
+              >
+                {updatingStatus === script.id 
+                  ? 'Updating...' 
+                  : script.status === 'ready' 
+                    ? 'Mark as Pending' 
+                    : 'Mark as Ready'
+                }
+              </Button>
+              
+              {/* Series Dropdown */}
+              {allSeries.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      className="flex-1 bg-purple-500/10 border-purple-400/30 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400/50 text-xs"
+                    >
+                      <FolderPlus size={14} className="mr-1" />
+                      Series
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    className="bg-gray-900/95 backdrop-blur-lg border border-gray-700 text-white"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    {allSeries.map((series) => (
+                      <DropdownMenuItem
+                        key={series.id}
+                        onClick={(e) => {
+                          if (isScriptInSeries(script.id, series.id)) {
+                            removeScriptFromSeries(script.id, series.id, e);
+                          } else {
+                            addScriptToSeries(script.id, series.id, e);
+                          }
+                        }}
+                        className="cursor-pointer hover:bg-white/10 text-white"
+                      >
+                        <span className="flex items-center gap-2">
+                          {isScriptInSeries(script.id, series.id) ? (
+                            <>
+                              <FolderMinus size={14} className="text-red-400" />
+                              <span className="text-red-300">Remove from {series.name}</span>
+                            </>
+                          ) : (
+                            <>
+                              <FolderPlus size={14} className="text-green-400" />
+                              <span className="text-green-300">Add to {series.name}</span>
+                            </>
+                          )}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </div>
         </div>
         );

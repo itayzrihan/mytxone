@@ -607,6 +607,160 @@ export async function deleteScript(scriptId: string) {
   }
 }
 
+// ===== SCRIPT SERIES FUNCTIONS =====
+
+export async function getUserSeries(userId: string) {
+  try {
+    return await db.select()
+      .from(schema.scriptSeries)
+      .where(eq(schema.scriptSeries.userId, userId))
+      .orderBy(schema.scriptSeries.order, desc(schema.scriptSeries.createdAt));
+  } catch (error) {
+    console.error("Failed to get user series from database");
+    throw error;
+  }
+}
+
+export async function getSeriesById(seriesId: string) {
+  try {
+    const result = await db.select()
+      .from(schema.scriptSeries)
+      .where(eq(schema.scriptSeries.id, seriesId));
+    return result[0] || null;
+  } catch (error) {
+    console.error("Failed to get series by id from database");
+    throw error;
+  }
+}
+
+export async function createSeries(seriesData: {
+  userId: string;
+  name: string;
+  description?: string;
+  order?: number;
+}) {
+  try {
+    return await db.insert(schema.scriptSeries)
+      .values(seriesData)
+      .returning();
+  } catch (error) {
+    console.error("Failed to create series in database");
+    throw error;
+  }
+}
+
+export async function updateSeries(seriesId: string, seriesData: {
+  name?: string;
+  description?: string;
+  order?: number;
+}) {
+  try {
+    return await db.update(schema.scriptSeries)
+      .set({
+        ...seriesData,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.scriptSeries.id, seriesId))
+      .returning();
+  } catch (error) {
+    console.error("Failed to update series in database");
+    throw error;
+  }
+}
+
+export async function deleteSeries(seriesId: string) {
+  try {
+    return await db.delete(schema.scriptSeries)
+      .where(eq(schema.scriptSeries.id, seriesId));
+  } catch (error) {
+    console.error("Failed to delete series from database");
+    throw error;
+  }
+}
+
+export async function addScriptToSeries(scriptId: string, seriesId: string, orderInSeries?: number) {
+  try {
+    return await db.insert(schema.scriptSeriesLinks)
+      .values({
+        scriptId,
+        seriesId,
+        orderInSeries: orderInSeries || 0,
+      })
+      .returning();
+  } catch (error) {
+    console.error("Failed to add script to series in database");
+    throw error;
+  }
+}
+
+export async function removeScriptFromSeries(scriptId: string, seriesId: string) {
+  try {
+    return await db.delete(schema.scriptSeriesLinks)
+      .where(
+        and(
+          eq(schema.scriptSeriesLinks.scriptId, scriptId),
+          eq(schema.scriptSeriesLinks.seriesId, seriesId)
+        )
+      );
+  } catch (error) {
+    console.error("Failed to remove script from series in database");
+    throw error;
+  }
+}
+
+export async function getSeriesScripts(seriesId: string) {
+  try {
+    const results = await db.select({
+      script: schema.scripts,
+      link: schema.scriptSeriesLinks,
+    })
+      .from(schema.scriptSeriesLinks)
+      .innerJoin(schema.scripts, eq(schema.scriptSeriesLinks.scriptId, schema.scripts.id))
+      .where(eq(schema.scriptSeriesLinks.seriesId, seriesId))
+      .orderBy(schema.scriptSeriesLinks.orderInSeries, desc(schema.scriptSeriesLinks.createdAt));
+    
+    return results.map(r => ({ ...r.script, orderInSeries: r.link.orderInSeries }));
+  } catch (error) {
+    console.error("Failed to get series scripts from database");
+    throw error;
+  }
+}
+
+export async function getScriptSeries(scriptId: string) {
+  try {
+    const results = await db.select({
+      series: schema.scriptSeries,
+      link: schema.scriptSeriesLinks,
+    })
+      .from(schema.scriptSeriesLinks)
+      .innerJoin(schema.scriptSeries, eq(schema.scriptSeriesLinks.seriesId, schema.scriptSeries.id))
+      .where(eq(schema.scriptSeriesLinks.scriptId, scriptId))
+      .orderBy(schema.scriptSeries.order);
+    
+    return results.map(r => r.series);
+  } catch (error) {
+    console.error("Failed to get script series from database");
+    throw error;
+  }
+}
+
+export async function updateScriptOrderInSeries(scriptId: string, seriesId: string, newOrder: number) {
+  try {
+    return await db.update(schema.scriptSeriesLinks)
+      .set({ orderInSeries: newOrder })
+      .where(
+        and(
+          eq(schema.scriptSeriesLinks.scriptId, scriptId),
+          eq(schema.scriptSeriesLinks.seriesId, seriesId)
+        )
+      )
+      .returning();
+  } catch (error) {
+    console.error("Failed to update script order in series in database");
+    throw error;
+  }
+}
+
 // ===== USER MANAGEMENT & ADMIN FUNCTIONS =====
 
 // Safe user type without password field
