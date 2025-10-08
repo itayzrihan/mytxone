@@ -253,6 +253,37 @@ export const scriptSeriesLinksRelations = relations(scriptSeriesLinks, ({ one })
   }),
 }));
 
+// Prompts for AI interactions
+export const prompts = pgTable("Prompt", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  promptText: text("prompt_text").notNull(),
+  category: text("category").notNull().default("general"), // general, writing, coding, analysis, creative, etc.
+  tags: json("tags"), // array of strings for categorization
+  isFavorite: boolean("is_favorite").notNull().default(false),
+  isPublic: boolean("is_public").notNull().default(false),
+  usageCount: integer("usage_count").notNull().default(0), // track how often prompt is used
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type Prompt = InferSelectModel<typeof prompts>;
+
+export const promptsRelations = relations(prompts, ({ one }) => ({
+  user: one(user, {
+    fields: [prompts.userId],
+    references: [user.id],
+  }),
+}));
+
 export const customHooks = pgTable("CustomHook", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   userId: uuid("user_id")

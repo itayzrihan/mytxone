@@ -778,3 +778,22 @@ export const PlusIcon = ({ size = 16 }: { size?: number }) => {
     </svg>
   );
 };
+
+export const WorkflowIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width={size}
+      style={{ color: "currentcolor" }}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2 3C2 2.44772 2.44772 2 3 2H5C5.55228 2 6 2.44772 6 3V5C6 5.55228 5.55228 6 5 6H3C2.44772 6 2 5.55228 2 5V3ZM10 3C10 2.44772 10.4477 2 11 2H13C13.5523 2 14 2.44772 14 3V5C14 5.55228 13.5523 6 13 6H11C10.4477 6 10 5.55228 10 5V3ZM6 11C6 10.4477 6.44772 10 7 10H9C9.55228 10 10 10.4477 10 11V13C10 13.5523 9.55228 14 9 14H7C6.44772 14 6 13.5523 6 13V11ZM6.5 4H7.5V8H8.5V9H7.5V8H6.5V4ZM8.5 4H9.5V8H8.5V4Z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  );
+};

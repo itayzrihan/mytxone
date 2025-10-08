@@ -761,6 +761,111 @@ export async function updateScriptOrderInSeries(scriptId: string, seriesId: stri
   }
 }
 
+// ===== PROMPT FUNCTIONS =====
+
+export async function getUserPrompts(userId: string) {
+  try {
+    return await db.select()
+      .from(schema.prompts)
+      .where(eq(schema.prompts.userId, userId))
+      .orderBy(desc(schema.prompts.updatedAt));
+  } catch (error) {
+    console.error("Failed to get user prompts from database");
+    throw error;
+  }
+}
+
+export async function getPromptById(promptId: string) {
+  try {
+    const result = await db.select()
+      .from(schema.prompts)
+      .where(eq(schema.prompts.id, promptId));
+    return result[0] || null;
+  } catch (error) {
+    console.error("Failed to get prompt by id from database");
+    throw error;
+  }
+}
+
+export async function createPrompt(promptData: {
+  userId: string;
+  title: string;
+  description?: string;
+  promptText: string;
+  category?: string;
+  tags?: string[];
+  isFavorite?: boolean;
+  isPublic?: boolean;
+}) {
+  try {
+    return await db.insert(schema.prompts)
+      .values({
+        ...promptData,
+        tags: promptData.tags ? JSON.stringify(promptData.tags) : null,
+      })
+      .returning();
+  } catch (error) {
+    console.error("Failed to create prompt in database");
+    throw error;
+  }
+}
+
+export async function updatePrompt(promptId: string, promptData: {
+  title?: string;
+  description?: string;
+  promptText?: string;
+  category?: string;
+  tags?: string[];
+  isFavorite?: boolean;
+  isPublic?: boolean;
+}) {
+  try {
+    const updateData = {
+      ...promptData,
+      updatedAt: new Date(),
+      tags: promptData.tags ? JSON.stringify(promptData.tags) : undefined,
+    };
+    
+    return await db.update(schema.prompts)
+      .set(updateData)
+      .where(eq(schema.prompts.id, promptId))
+      .returning();
+  } catch (error) {
+    console.error("Failed to update prompt in database");
+    throw error;
+  }
+}
+
+export async function deletePrompt(promptId: string) {
+  try {
+    return await db.delete(schema.prompts)
+      .where(eq(schema.prompts.id, promptId));
+  } catch (error) {
+    console.error("Failed to delete prompt from database");
+    throw error;
+  }
+}
+
+export async function incrementPromptUsage(promptId: string) {
+  try {
+    const prompt = await getPromptById(promptId);
+    if (!prompt) {
+      throw new Error("Prompt not found");
+    }
+    
+    return await db.update(schema.prompts)
+      .set({ 
+        usageCount: prompt.usageCount + 1,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.prompts.id, promptId))
+      .returning();
+  } catch (error) {
+    console.error("Failed to increment prompt usage in database");
+    throw error;
+  }
+}
+
 // ===== USER MANAGEMENT & ADMIN FUNCTIONS =====
 
 // Safe user type without password field

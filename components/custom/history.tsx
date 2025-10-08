@@ -23,6 +23,7 @@ import {
   PencilEditIcon,
   TrashIcon,
   UsersIcon,
+  WorkflowIcon,
 } from "./icons";
 import {
   AlertDialog,
@@ -163,6 +164,15 @@ export const History = ({ user }: { user: User | undefined }) => {
               className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
               asChild
             >
+              <Link href="/workflows">
+                <div>Marketing Workflows</div>
+                <WorkflowIcon size={14} />
+              </Link>
+            </Button>
+            <Button
+              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+              asChild
+            >
               <Link href="/quotes">
                 <div>Quote Proposals</div>
                 <FileIcon size={14} />
@@ -192,6 +202,15 @@ export const History = ({ user }: { user: User | undefined }) => {
             >
               <Link href="/scripts">
                 <div>Scripts</div>
+                <FileIcon size={14} />
+              </Link>
+            </Button>
+            <Button
+              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+              asChild
+            >
+              <Link href="/prompts">
+                <div>Prompt Engineering</div>
                 <FileIcon size={14} />
               </Link>
             </Button>
