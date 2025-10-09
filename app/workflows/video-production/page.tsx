@@ -47,7 +47,7 @@ export default function VideoProductionWorkflow() {
     contentType: null
   });
 
-  const totalSteps = 10; // Total workflow steps
+  const totalSteps = 10; // Total workflow steps: 1-User Input, 2-Scripts, 3-Topics/Generation, 4-Filming, 5-Cutting, 6-Effects, 7-Naming, 8-Thumbnails, 9-Descriptions, 10-Organization
   const progressPercentage = (state.step / totalSteps) * 100;
 
   const handleNextStep = () => {
@@ -224,6 +224,64 @@ export default function VideoProductionWorkflow() {
     }
     
     setState(prev => ({ ...prev, isGenerating: false }));
+  };
+
+  // Download functions
+  const downloadCombinedScript = () => {
+    const combinedScript = state.generatedTopics.map((topic, index) => {
+      const script = state.generatedScripts[index];
+      if (script && script !== "Generating...") {
+        return `=== Video ${index + 1}: ${topic} ===\n\n${script}\n\n[Clap twice for success, three times for failure]\n\n${"=".repeat(50)}\n\n`;
+      }
+      return "";
+    }).filter(script => script !== "").join("");
+
+    const blob = new Blob([combinedScript], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${state.mainSubject.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_combined_scripts.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadIndividualScripts = () => {
+    state.generatedTopics.forEach((topic, index) => {
+      const script = state.generatedScripts[index];
+      if (script && script !== "Generating...") {
+        const content = `${topic}\n\n${script}`;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Video_${index + 1}_${topic.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 30)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Small delay between downloads
+        setTimeout(() => {}, 100);
+      }
+    });
+  };
+
+  const openTeleprompter = () => {
+    const combinedScript = state.generatedTopics.map((topic, index) => {
+      const script = state.generatedScripts[index];
+      if (script && script !== "Generating...") {
+        return `${topic}\n\n${script}\n\n[Remember: Clap twice for success, three times for failure]\n\n---\n\n`;
+      }
+      return "";
+    }).filter(script => script !== "").join("");
+
+    // Store the script in localStorage for the teleprompter
+    localStorage.setItem('workflowTeleprompterScript', combinedScript);
+    
+    // Open teleprompter in new tab
+    window.open('/teleprompter', '_blank');
   };
 
   const canProceedStep1 = state.mainSubject.trim() && state.tellMeMore.trim() && state.desiredCTA.trim();
@@ -495,7 +553,7 @@ export default function VideoProductionWorkflow() {
                           <div className="flex gap-3">
                             <Button 
                               className="bg-cyan-500 hover:bg-cyan-600 text-white"
-                              onClick={() => window.open('/teleprompter', '_blank')}
+                              onClick={openTeleprompter}
                             >
                               <PlayIcon className="w-4 h-4 mr-2" />
                               Open Teleprompter
@@ -503,6 +561,7 @@ export default function VideoProductionWorkflow() {
                             <Button 
                               variant="outline"
                               className="border-cyan-400 text-cyan-400 hover:bg-cyan-400/10"
+                              onClick={downloadCombinedScript}
                             >
                               <DownloadIcon className="w-4 h-4 mr-2" />
                               Download Script
@@ -538,6 +597,7 @@ export default function VideoProductionWorkflow() {
                           <div className="flex gap-3">
                             <Button 
                               className="bg-purple-500 hover:bg-purple-600 text-white"
+                              onClick={downloadIndividualScripts}
                             >
                               <DownloadIcon className="w-4 h-4 mr-2" />
                               Download All (.txt)
@@ -545,6 +605,7 @@ export default function VideoProductionWorkflow() {
                             <Button 
                               variant="outline"
                               className="border-purple-400 text-purple-400 hover:bg-purple-400/10"
+                              onClick={downloadIndividualScripts}
                             >
                               <DownloadIcon className="w-4 h-4 mr-2" />
                               Download All (.docx)
@@ -571,14 +632,290 @@ export default function VideoProductionWorkflow() {
           </Card>
         );
 
+      case 5:
+        return (
+          <Card className="w-full max-w-2xl mx-auto bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-2xl text-white flex items-center gap-2">
+                <VideoIcon className="w-6 h-6 text-orange-400" />
+                Step 5: Video Cutting & Editing
+              </CardTitle>
+              <CardDescription className="text-zinc-300">
+                Cut your long video into individual clips using claps as indicators
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-orange-400/10 rounded-lg border border-orange-400/30">
+                <h4 className="font-medium text-orange-300 mb-3">Cutting Instructions</h4>
+                <ul className="text-sm text-zinc-300 space-y-2">
+                  <li>• Import your recorded video into your editing software</li>
+                  <li>• Listen for the clapping sounds to identify each video segment</li>
+                  <li>• Two claps = successful take (use this clip)</li>
+                  <li>• Three claps = failed take (skip or re-record)</li>
+                  <li>• Cut each successful segment into a separate video file</li>
+                  <li>• Remove the clapping sounds from the beginning and end</li>
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-blue-400/10 rounded-lg border border-blue-400/30">
+                <h4 className="font-medium text-blue-300 mb-3">Recommended Editing Software</h4>
+                <ul className="text-sm text-zinc-300 space-y-1">
+                  <li>• <strong>Free:</strong> DaVinci Resolve, OpenShot, Shotcut</li>
+                  <li>• <strong>Paid:</strong> Adobe Premiere Pro, Final Cut Pro, Filmora</li>
+                  <li>• <strong>Online:</strong> Clipchamp, WeVideo, Kapwing</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 6:
+        return (
+          <Card className="w-full max-w-2xl mx-auto bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-2xl text-white flex items-center gap-2">
+                <VideoIcon className="w-6 h-6 text-purple-400" />
+                Step 6: Add Effects & Animations
+              </CardTitle>
+              <CardDescription className="text-zinc-300">
+                Apply consistent effects to make your videos more engaging
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-purple-400/10 rounded-lg border border-purple-400/30">
+                <h4 className="font-medium text-purple-300 mb-3">Recommended Effects (Optional)</h4>
+                <ul className="text-sm text-zinc-300 space-y-2">
+                  <li>• <strong>Hook Animation:</strong> Slow zoom-in during the first 3 seconds</li>
+                  <li>• <strong>Audio Riser:</strong> Add tension sound during the hook</li>
+                  <li>• <strong>Punch Effect:</strong> Quick zoom or shake at key moments</li>
+                  <li>• <strong>Ending:</strong> Zoom out to 100% scale for call-to-action</li>
+                  <li>• <strong>Captions:</strong> Add auto-generated or manual subtitles</li>
+                  <li>• <strong>Background Music:</strong> Light, non-competing background track</li>
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-yellow-400/10 rounded-lg border border-yellow-400/30">
+                <h4 className="font-medium text-yellow-300 mb-3">Effect Templates</h4>
+                <p className="text-sm text-zinc-300 mb-2">
+                  Create a template with your brand colors, fonts, and effects to apply consistently across all 50 videos.
+                </p>
+                <ul className="text-sm text-zinc-300 space-y-1">
+                  <li>• Save as a preset in your editing software</li>
+                  <li>• Use the same intro/outro for brand consistency</li>
+                  <li>• Keep effect timings consistent (3s hook, 25s content, 2s CTA)</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 7:
+        return (
+          <Card className="w-full max-w-2xl mx-auto bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-2xl text-white flex items-center gap-2">
+                <FileTextIcon className="w-6 h-6 text-green-400" />
+                Step 7: Name & Organize Videos
+              </CardTitle>
+              <CardDescription className="text-zinc-300">
+                Name each video file with its corresponding topic
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-green-400/10 rounded-lg border border-green-400/30">
+                <h4 className="font-medium text-green-300 mb-3">Naming Convention</h4>
+                <p className="text-sm text-zinc-300 mb-3">
+                  Use this naming pattern for consistency and easy organization:
+                </p>
+                <div className="bg-black/30 p-3 rounded font-mono text-sm text-green-300">
+                  Video_01_Topic_Name_Here.mp4<br/>
+                  Video_02_Next_Topic_Name.mp4<br/>
+                  Video_03_Another_Topic_Here.mp4
+                </div>
+              </div>
+              
+              <div className="p-4 bg-blue-400/10 rounded-lg border border-blue-400/30">
+                <h4 className="font-medium text-blue-300 mb-3">Your Video Topics</h4>
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  {state.generatedTopics.map((topic, index) => (
+                    <div key={index} className="text-sm text-zinc-300 p-2 bg-black/20 rounded">
+                      <span className="text-blue-300 font-medium">Video_{String(index + 1).padStart(2, '0')}:</span> {topic}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 8:
+        return (
+          <Card className="w-full max-w-2xl mx-auto bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-2xl text-white flex items-center gap-2">
+                <CameraIcon className="w-6 h-6 text-pink-400" />
+                Step 8: Generate Thumbnails
+              </CardTitle>
+              <CardDescription className="text-zinc-300">
+                Create eye-catching thumbnails for each video
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-pink-400/10 rounded-lg border border-pink-400/30">
+                <h4 className="font-medium text-pink-300 mb-3">Thumbnail Options</h4>
+                <ul className="text-sm text-zinc-300 space-y-2">
+                  <li>• <strong>Auto-generate:</strong> Use AI tools like Canva, Thumbnail.ai</li>
+                  <li>• <strong>Manual design:</strong> Create in Photoshop, GIMP, or Canva</li>
+                  <li>• <strong>Template-based:</strong> Design one template, change text for each video</li>
+                  <li>• <strong>Video frame:</strong> Use the best frame from each video as thumbnail</li>
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-orange-400/10 rounded-lg border border-orange-400/30">
+                <h4 className="font-medium text-orange-300 mb-3">Thumbnail Best Practices</h4>
+                <ul className="text-sm text-zinc-300 space-y-1">
+                  <li>• Use bright, contrasting colors</li>
+                  <li>• Include readable text (40+ font size)</li>
+                  <li>• Show clear facial expressions if using faces</li>
+                  <li>• Keep design consistent across all videos</li>
+                  <li>• Test visibility at small sizes</li>
+                  <li>• Size: 1280x720px (16:9 ratio)</li>
+                </ul>
+              </div>
+              
+              <Button className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90">
+                <CameraIcon className="w-4 h-4 mr-2" />
+                Bulk Generate Thumbnails (Coming Soon)
+              </Button>
+            </CardContent>
+          </Card>
+        );
+
+      case 9:
+        return (
+          <Card className="w-full max-w-2xl mx-auto bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-2xl text-white flex items-center gap-2">
+                <FileTextIcon className="w-6 h-6 text-cyan-400" />
+                Step 9: Generate Descriptions
+              </CardTitle>
+              <CardDescription className="text-zinc-300">
+                Create optimized descriptions and hashtags for each video
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-cyan-400/10 rounded-lg border border-cyan-400/30">
+                <h4 className="font-medium text-cyan-300 mb-3">Description Template</h4>
+                <div className="bg-black/30 p-3 rounded text-sm text-zinc-300">
+                  <p className="text-cyan-300 font-medium mb-2">Standard Format:</p>
+                  [Hook from the video]<br/><br/>
+                  [Brief description of the content]<br/><br/>
+                  [Call to action]<br/><br/>
+                  #hashtag1 #hashtag2 #hashtag3 #viral #trending
+                </div>
+              </div>
+              
+              <div className="p-4 bg-purple-400/10 rounded-lg border border-purple-400/30">
+                <h4 className="font-medium text-purple-300 mb-3">SEO Optimization</h4>
+                <ul className="text-sm text-zinc-300 space-y-1">
+                  <li>• Include relevant keywords from your niche</li>
+                  <li>• Use trending hashtags (research current ones)</li>
+                  <li>• Keep descriptions concise but informative</li>
+                  <li>• Include your call-to-action from the video</li>
+                  <li>• Add platform-specific hashtags</li>
+                </ul>
+              </div>
+              
+              <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-90">
+                <FileTextIcon className="w-4 h-4 mr-2" />
+                Bulk Generate Descriptions (Coming Soon)
+              </Button>
+            </CardContent>
+          </Card>
+        );
+
+      case 10:
+        return (
+          <Card className="w-full max-w-2xl mx-auto bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-2xl text-white flex items-center gap-2">
+                <FileTextIcon className="w-6 h-6 text-green-400" />
+                Step 10: Final Organization & Automation
+              </CardTitle>
+              <CardDescription className="text-zinc-300">
+                Organize files and prepare for automated uploading
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-green-400/10 rounded-lg border border-green-400/30">
+                <h4 className="font-medium text-green-300 mb-3">Folder Structure</h4>
+                <div className="bg-black/30 p-3 rounded font-mono text-sm text-green-300">
+                  📁 {state.mainSubject || "Your_Project"}_50_Videos/<br/>
+                  &nbsp;&nbsp;📁 01_Raw_Footage/<br/>
+                  &nbsp;&nbsp;📁 02_Edited_Videos/<br/>
+                  &nbsp;&nbsp;📁 03_Thumbnails/<br/>
+                  &nbsp;&nbsp;📁 04_Descriptions/<br/>
+                  &nbsp;&nbsp;📁 05_Ready_To_Upload/<br/>
+                  &nbsp;&nbsp;📄 Video_List.txt
+                </div>
+              </div>
+              
+              <div className="p-4 bg-blue-400/10 rounded-lg border border-blue-400/30">
+                <h4 className="font-medium text-blue-300 mb-3">Upload Preparation</h4>
+                <ul className="text-sm text-zinc-300 space-y-2">
+                  <li>• Ensure all videos are in the correct format for your platform</li>
+                  <li>• Match video files with their thumbnails and descriptions</li>
+                  <li>• Create a schedule for posting (1-2 videos per day recommended)</li>
+                  <li>• Backup all files before uploading</li>
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-purple-400/10 rounded-lg border border-purple-400/30">
+                <h4 className="font-medium text-purple-300 mb-3">Automation Setup</h4>
+                <p className="text-sm text-zinc-300 mb-3">
+                  Check if your files are properly organized in the automation folder:
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-purple-400 text-purple-400 hover:bg-purple-400/10"
+                  disabled
+                >
+                  Check Automation Folder (Coming Soon)
+                </Button>
+              </div>
+              
+              <div className="p-4 bg-cyan-400/10 rounded-lg border border-cyan-400/30 text-center">
+                <h4 className="font-medium text-cyan-300 mb-3">🎉 Congratulations!</h4>
+                <p className="text-sm text-zinc-300 mb-3">
+                  You've completed the 50 Videos Production Workflow! Your content is ready for the world.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button 
+                    onClick={() => router.push('/workflows')}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-90"
+                  >
+                    Back to Workflows
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="border-cyan-400 text-cyan-400 hover:bg-cyan-400/10"
+                    disabled
+                  >
+                    Start New Automation (Soon)
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
       default:
         return (
           <Card className="w-full max-w-2xl mx-auto bg-white/5 border-white/10">
             <CardContent className="py-12 text-center">
-              <h3 className="text-xl text-white mb-4">More Steps Coming Soon!</h3>
+              <h3 className="text-xl text-white mb-4">Workflow Complete!</h3>
               <p className="text-zinc-300">
-                We're working on the remaining workflow steps including post-production, 
-                thumbnails, descriptions, and automation features.
+                You've finished all the steps in the 50 Videos Production Workflow.
               </p>
             </CardContent>
           </Card>
@@ -658,11 +995,12 @@ export default function VideoProductionWorkflow() {
               disabled={
                 (state.step === 1 && !canProceedStep1) ||
                 (state.step === 3 && state.generatedTopics.length === 0) ||
+                (state.step === 4 && !state.contentType) ||
                 state.step >= totalSteps
               }
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-90 disabled:opacity-50"
             >
-              Next Step
+              {state.step === totalSteps ? "Complete Workflow" : "Next Step"}
               <ArrowRightIcon className="w-4 h-4 ml-2" />
             </Button>
           )}
