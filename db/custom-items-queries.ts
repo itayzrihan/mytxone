@@ -6,9 +6,27 @@ import postgres from "postgres";
 import * as schema from "./schema";
 import { customHooks, customContentTypes, type CustomHook, type CustomContentType } from "./schema";
 
-// Initialize database connection
-let client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
-export let db = drizzle(client, { schema });
+// Lazy database initialization
+let client: ReturnType<typeof postgres> | null = null;
+let dbInstance: ReturnType<typeof drizzle<typeof schema>> | null = null;
+
+function getDb() {
+  if (!dbInstance) {
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (!dbUrl) {
+      throw new Error("DATABASE_URL or POSTGRES_URL environment variable is not set");
+    }
+    client = postgres(`${dbUrl}?sslmode=require`);
+    dbInstance = drizzle(client, { schema });
+  }
+  return dbInstance;
+}
+
+export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
+  get(target, prop) {
+    return (getDb() as any)[prop];
+  }
+});
 
 // Custom Hooks Queries
 

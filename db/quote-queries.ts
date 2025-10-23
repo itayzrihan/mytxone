@@ -18,9 +18,27 @@ import type {
   QuoteResponse
 } from "./schema";
 
-const connectionString = process.env.POSTGRES_URL!;
-const pool = postgres(connectionString, { max: 1 });
-const db = drizzle(pool, { schema });
+// Lazy database initialization
+let pool: ReturnType<typeof postgres> | null = null;
+let dbInstance: ReturnType<typeof drizzle<typeof schema>> | null = null;
+
+function getDb() {
+  if (!dbInstance) {
+    const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (!connectionString) {
+      throw new Error("DATABASE_URL or POSTGRES_URL environment variable is not set");
+    }
+    pool = postgres(connectionString, { max: 1 });
+    dbInstance = drizzle(pool, { schema });
+  }
+  return dbInstance;
+}
+
+const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
+  get(target, prop) {
+    return (getDb() as any)[prop];
+  }
+});
 
 // Quote Template Queries
 export async function createQuoteTemplate(data: {
