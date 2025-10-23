@@ -167,7 +167,7 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">13. Links to Third-Party Sites and Services</h2>
               <p className="leading-relaxed">
-                The Application may contain links to sites and services of external parties. The Operator is not responsible for the privacy policies or the content of these sites, and any use of them is at the User's sole responsibility.
+                The Application may contain links to sites and services of external parties. The Operator is not responsible for the privacy policies or the content of these sites, and any use of them is at the User&apos;s sole responsibility.
               </p>
             </section>
 
@@ -181,7 +181,7 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">15. Supervision and Control Processes</h2>
               <p className="leading-relaxed">
-                The Operator conducts periodic internal and external audit processes to ensure the service's compliance with strict legal and technological standards.
+                The Operator conducts periodic internal and external audit processes to ensure the service&apos;s compliance with strict legal and technological standards.
               </p>
             </section>
 
@@ -216,7 +216,7 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">19. Force Majeure and Service Interruption</h2>
               <p className="leading-relaxed">
-                The Operator will not be responsible for any damage or loss caused due to force majeure situations, such as natural disasters, political events, strikes, terrorist acts, or large-scale technological failures. In these cases, the interruption of the service will not be considered a breach of the Operator's commitments.
+                The Operator will not be responsible for any damage or loss caused due to force majeure situations, such as natural disasters, political events, strikes, terrorist acts, or large-scale technological failures. In these cases, the interruption of the service will not be considered a breach of the Operator&apos;s commitments.
               </p>
             </section>
 
@@ -230,7 +230,7 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">21. Questions, Requests, and Comments</h2>
               <p className="leading-relaxed">
-                For any question, request, or comment regarding this Privacy Policy, please contact us at <a href="mailto:mytxone@gmail.com" className="text-cyan-400 hover:text-cyan-300">mytxone@gmail.com</a> or by phone <a href="tel:0515511591" className="text-cyan-400 hover:text-cyan-300">0515511591</a>. The Operator undertakes to handle inquiries in accordance with the law's guidelines and resource availability.
+                For any question, request, or comment regarding this Privacy Policy, please contact us at <a href="mailto:mytxone@gmail.com" className="text-cyan-400 hover:text-cyan-300">mytxone@gmail.com</a> or by phone <a href="tel:0515511591" className="text-cyan-400 hover:text-cyan-300">0515511591</a>. The Operator undertakes to handle inquiries in accordance with the law&apos;s guidelines and resource availability.
               </p>
             </section>
 

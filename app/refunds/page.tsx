@@ -160,7 +160,7 @@ export default function RefundsPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">14. Dispute Resolution</h2>
               <p className="leading-relaxed">
-                Any dispute, claim, or demand arising from or related to these Terms or your use of the site shall be brought before the competent courts in the city of Haifa, in accordance with the laws applicable in Israel. The court's judgment shall be final and enforceable in any competent court.
+                Any dispute, claim, or demand arising from or related to these Terms or your use of the site shall be brought before the competent courts in the city of Haifa, in accordance with the laws applicable in Israel. The court&apos;s judgment shall be final and enforceable in any competent court.
               </p>
             </section>
 
@@ -215,7 +215,7 @@ export default function RefundsPage() {
                 <strong className="text-cyan-400">In case you purchased a physical product:</strong>
               </p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Detailed usage instructions are on the site or on the back of the product's packaging.</li>
+                <li>Detailed usage instructions are on the site or on the back of the product&apos;s packaging.</li>
                 <li>The responsibility for using the products purchased through the site, whether virtual or physical, rests solely with the user, and you must act responsibly and cautiously in all types of use.</li>
                 <li>Do not use the products for purposes for which they were not intended.</li>
               </ul>

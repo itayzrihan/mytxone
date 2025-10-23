@@ -57,7 +57,7 @@ export default function AccessibilityPage() {
               
               <h3 className="text-xl font-semibold text-cyan-400 mb-3 mt-6">4.1. Agreement to the Current Situation:</h3>
               <p className="leading-relaxed">
-                The User confirms and is aware that, despite all efforts to improve accessibility, there may be cases where some functions or the interface will not be fully accessible. The use of the Application is at the User's sole responsibility.
+                The User confirms and is aware that, despite all efforts to improve accessibility, there may be cases where some functions or the interface will not be fully accessible. The use of the Application is at the User&apos;s sole responsibility.
               </p>
 
               <h3 className="text-xl font-semibold text-cyan-400 mb-3 mt-6">4.2. Express Waiver:</h3>

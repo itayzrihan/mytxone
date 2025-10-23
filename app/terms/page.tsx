@@ -113,7 +113,7 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">12. Updates and Changes to Terms</h2>
               <p className="leading-relaxed">
-                The Operator reserves the right to change, update, or improve the terms of use at any time, without prior notice. Any change will be published in the Application, and continued use of the service will constitute the User's agreement to these changes. The User is requested to review the terms from time to time to stay updated.
+                The Operator reserves the right to change, update, or improve the terms of use at any time, without prior notice. Any change will be published in the Application, and continued use of the service will constitute the User&apos;s agreement to these changes. The User is requested to review the terms from time to time to stay updated.
               </p>
             </section>
 
@@ -190,14 +190,14 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">23. Use of APIs and Additional Technological Services</h2>
               <p className="leading-relaxed">
-                The use of APIs, integration services, or any other technological means operated within the Application is subject to the instructions and procedures that will be published by the Operator. The User undertakes not to exceed these limitations or harm the system's security.
+                The use of APIs, integration services, or any other technological means operated within the Application is subject to the instructions and procedures that will be published by the Operator. The User undertakes not to exceed these limitations or harm the system&apos;s security.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">24. Upgrades, Updates, and Technological Improvements</h2>
               <p className="leading-relaxed">
-                The Operator reserves the right to perform updates, fixes, improvements, and technological changes to the Application at any time, in order to improve the service's performance, information security, and the system's adaptation to market demands. Any update will form an integral part of this terms agreement.
+                The Operator reserves the right to perform updates, fixes, improvements, and technological changes to the Application at any time, in order to improve the service&apos;s performance, information security, and the system&apos;s adaptation to market demands. Any update will form an integral part of this terms agreement.
               </p>
             </section>
 
@@ -225,7 +225,7 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">28. Rights to Change and Adapt to Legal Conditions</h2>
               <p className="leading-relaxed">
-                The Operator may update the terms of use agreement in accordance with legal, regulatory, or risk considerations. Any change or update will take effect upon its publication, and continued use of the service will constitute the User's agreement to these changes.
+                The Operator may update the terms of use agreement in accordance with legal, regulatory, or risk considerations. Any change or update will take effect upon its publication, and continued use of the service will constitute the User&apos;s agreement to these changes.
               </p>
             </section>
 
