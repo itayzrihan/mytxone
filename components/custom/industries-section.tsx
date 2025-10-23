@@ -42,7 +42,7 @@ export function IndustriesSection() {
 
         <div className="text-center mt-12">
           <p className="text-zinc-400">
-            Don't see your industry? We work with businesses of all types and sizes.
+            Don&apos;t see your industry? We work with businesses of all types and sizes.
           </p>
         </div>
       </div>

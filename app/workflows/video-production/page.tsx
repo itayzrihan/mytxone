@@ -887,7 +887,7 @@ export default function VideoProductionWorkflow() {
               <div className="p-4 bg-cyan-400/10 rounded-lg border border-cyan-400/30 text-center">
                 <h4 className="font-medium text-cyan-300 mb-3">🎉 Congratulations!</h4>
                 <p className="text-sm text-zinc-300 mb-3">
-                  You've completed the 50 Videos Production Workflow! Your content is ready for the world.
+                  You&apos;ve completed the 50 Videos Production Workflow! Your content is ready for the world.
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button 
@@ -915,7 +915,7 @@ export default function VideoProductionWorkflow() {
             <CardContent className="py-12 text-center">
               <h3 className="text-xl text-white mb-4">Workflow Complete!</h3>
               <p className="text-zinc-300">
-                You've finished all the steps in the 50 Videos Production Workflow.
+                You&apos;ve finished all the steps in the 50 Videos Production Workflow.
               </p>
             </CardContent>
           </Card>
