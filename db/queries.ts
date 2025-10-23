@@ -13,7 +13,7 @@ import type { User, Memory, ApiKey, Task, Meditation, Script } from "./schema"; 
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
 let client: ReturnType<typeof postgres> | null = null;
-let dbInstance: ReturnType<typeof drizzle> | null = null;
+let dbInstance: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
 export function getDb() {
   if (!dbInstance) {
@@ -61,7 +61,7 @@ export async function saveChat({
     const selectedChats = await getDb().select().from(chat).where(eq(chat.id, id));
 
     if (selectedChats.length > 0) {
-      return await db
+      return await getDb()
         .update(chat)
         .set({
           messages: JSON.stringify(messages),
@@ -92,7 +92,7 @@ export async function deleteChatById({ id }: { id: string }) {
 
 export async function getChatsByUserId({ id }: { id: string }) {
   try {
-    return await db
+    return await getDb()
       .select()
       .from(chat)
       .where(eq(chat.userId, id))
@@ -132,7 +132,7 @@ export async function createReservation({
 }
 
 export async function getReservationById({ id }: { id: string }) {
-  const [selectedReservation] = await db
+  const [selectedReservation] = await getDb()
     .select()
     .from(reservation)
     .where(eq(reservation.id, id));
@@ -147,7 +147,7 @@ export async function updateReservation({
   id: string;
   hasCompletedPayment: boolean;
 }) {
-  return await db
+  return await getDb()
     .update(reservation)
     .set({
       hasCompletedPayment,
@@ -165,7 +165,7 @@ export async function saveMemory({
   content: string;
 }): Promise<Array<Memory>> {
   try {
-    const newMemory = await db
+    const newMemory = await getDb()
       .insert(memories)
       .values({
         userId,
@@ -185,7 +185,7 @@ export async function getMemoriesByUserId({
   userId: string;
 }): Promise<Array<Memory>> {
   try {
-    return await db
+    return await getDb()
       .select()
       .from(memories)
       .where(eq(memories.userId, userId))
@@ -204,7 +204,7 @@ export async function findMemoriesByContent({
   contentQuery: string;
 }): Promise<Array<Memory>> {
   try {
-    return await db
+    return await getDb()
       .select()
       .from(memories)
       .where(
@@ -228,7 +228,7 @@ export async function deleteMemoryById({
   userId: string;
 }) {
   try {
-    return await db
+    return await getDb()
       .delete(memories)
       .where(and(eq(memories.id, id), eq(memories.userId, userId)));
   } catch (error) {
@@ -247,7 +247,7 @@ export async function addTask({
   description: string;
 }): Promise<Array<Task>> {
   try {
-    const newTask = await db
+    const newTask = await getDb()
       .insert(tasks)
       .values({
         userId,
@@ -268,7 +268,7 @@ export async function getTasksByUserId({
   userId: string;
 }): Promise<Array<Task>> {
   try {
-    return await db
+    return await getDb()
       .select()
       .from(tasks)
       .where(eq(tasks.userId, userId))
@@ -289,7 +289,7 @@ export async function updateTaskStatus({
   status: string;
 }): Promise<void> {
   try {
-    await db
+    await getDb()
       .update(tasks)
       .set({ status })
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
@@ -307,7 +307,7 @@ export async function deleteTaskById({
   userId: string;
 }): Promise<void> {
   try {
-    await db
+    await getDb()
       .delete(tasks)
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
   } catch (error) {
@@ -326,7 +326,7 @@ export async function updateTaskDescription({
   description: string;
 }): Promise<void> {
   try {
-    await db
+    await getDb()
       .update(tasks)
       .set({ description })
       .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
@@ -354,7 +354,7 @@ export async function createMeditation({
   duration?: string;
 }): Promise<Array<Meditation>> {
   try {
-    const newMeditation = await db
+    const newMeditation = await getDb()
       .insert(meditations)
       .values({
         userId,
@@ -377,7 +377,7 @@ export async function getMeditationsByUserId({
   userId: string;
 }): Promise<Array<Meditation>> {
   try {
-    return await db
+    return await getDb()
       .select()
       .from(meditations)
       .where(eq(meditations.userId, userId))
@@ -396,7 +396,7 @@ export async function getMeditationById({
   userId: string;
 }): Promise<Meditation | undefined> {
   try {
-    const result = await db
+    const result = await getDb()
       .select()
       .from(meditations)
       .where(and(eq(meditations.id, id), eq(meditations.userId, userId)));
@@ -415,7 +415,7 @@ export async function deleteMeditationById({
   userId: string;
 }): Promise<number> {
   try {
-    const result = await db
+    const result = await getDb()
       .delete(meditations)
       .where(and(eq(meditations.id, id), eq(meditations.userId, userId)));
     return 1; // Assuming successful deletion affects 1 row
@@ -463,7 +463,7 @@ export async function createApiKeyRecord(data: {
 
 export async function deleteApiKeyByIdAndUserId(keyId: string, userId: string): Promise<number> {
   try {
-    const result = await db
+    const result = await getDb()
       .delete(apiKey)
       .where(and(eq(apiKey.id, keyId), eq(apiKey.userId, userId)));
     // Return a count of affected rows or 0 if result doesn't have rowCount
@@ -502,7 +502,7 @@ export async function findValidApiKey(rawKey: string): Promise<(Omit<ApiKey, "ha
 
 export async function updateApiKeyLastUsed(keyId: string): Promise<void> {
   try {
-    await db
+    await getDb()
       .update(apiKey)
       .set({ lastUsedAt: new Date() })
       .where(eq(apiKey.id, keyId));

@@ -2,7 +2,7 @@ import "server-only";
 
 import { desc, eq, and } from "drizzle-orm";
 import { protocols } from "./protocols-schema";
-import { db } from "./queries";
+import { getDb } from "./queries";
 import type { Protocol } from "./protocols-schema";
 
 // --- Protocol Queries ---
@@ -19,7 +19,7 @@ export async function saveProtocol({
   parts: Array<{ content: string }>;
 }): Promise<Array<Protocol>> {
   try {
-    const newProtocol = await db
+    const newProtocol = await getDb()
       .insert(protocols)
       .values({
         userId,
@@ -41,7 +41,7 @@ export async function getProtocolsByUserId({
   userId: string;
 }): Promise<Array<Protocol>> {
   try {
-    return await db
+    return await getDb()
       .select()
       .from(protocols)
       .where(eq(protocols.userId, userId))
@@ -60,7 +60,7 @@ export async function getProtocolById({
   userId: string;
 }): Promise<Protocol | undefined> {
   try {
-    const [selectedProtocol] = await db
+    const [selectedProtocol] = await getDb()
       .select()
       .from(protocols)
       .where(and(eq(protocols.id, id), eq(protocols.userId, userId)));
@@ -79,7 +79,7 @@ export async function deleteProtocolById({
   userId: string;
 }): Promise<void> {
   try {
-    await db
+    await getDb()
       .delete(protocols)
       .where(and(eq(protocols.id, id), eq(protocols.userId, userId)));
   } catch (error) {
@@ -108,7 +108,7 @@ export async function updateProtocol({
     if (description !== undefined) updateData.description = description;
     if (parts !== undefined) updateData.parts = JSON.stringify(parts) as any;
     
-    await db
+    await getDb()
       .update(protocols)
       .set(updateData)
       .where(and(eq(protocols.id, id), eq(protocols.userId, userId)));

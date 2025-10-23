@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { db } from "@/db/queries";
+import { getDb } from "@/db/queries";
 import { scripts } from "@/db/schema";
 
 export async function POST(request: NextRequest) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newScript = await db.insert(scripts).values({
+    const newScript = await getDb().insert(scripts).values({
       userId: session.user.id,
       title: title,
       description: description || `Generated script for: ${topic}`,

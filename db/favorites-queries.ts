@@ -1,5 +1,5 @@
 import { eq, and } from "drizzle-orm";
-import { db } from "./queries";
+import { getDb } from "./queries";
 import { userFavorites, type UserFavorite } from "./schema";
 
 export type FavoriteType = 'content_type' | 'hook';
@@ -15,7 +15,7 @@ export async function getUserFavorites(userId: string, favoriteType?: FavoriteTy
       conditions.push(eq(userFavorites.favoriteType, favoriteType));
     }
 
-    const favorites = await db
+    const favorites = await getDb()
       .select()
       .from(userFavorites)
       .where(and(...conditions));
@@ -50,7 +50,7 @@ export async function addUserFavorite(
 ): Promise<UserFavorite> {
   try {
     // Check if favorite already exists
-    const existing = await db
+    const existing = await getDb()
       .select()
       .from(userFavorites)
       .where(and(
@@ -64,7 +64,7 @@ export async function addUserFavorite(
     }
 
     // Insert new favorite
-    const [newFavorite] = await db
+    const [newFavorite] = await getDb()
       .insert(userFavorites)
       .values({
         userId,
@@ -89,7 +89,7 @@ export async function removeUserFavorite(
   favoriteId: string
 ): Promise<boolean> {
   try {
-    const result = await db
+    const result = await getDb()
       .delete(userFavorites)
       .where(and(
         eq(userFavorites.userId, userId),
@@ -114,7 +114,7 @@ export async function toggleUserFavorite(
 ): Promise<{ isFavorite: boolean; favorite?: UserFavorite }> {
   try {
     // Check if favorite exists
-    const existing = await db
+    const existing = await getDb()
       .select()
       .from(userFavorites)
       .where(and(
@@ -147,7 +147,7 @@ export async function isUserFavorite(
   favoriteId: string
 ): Promise<boolean> {
   try {
-    const existing = await db
+    const existing = await getDb()
       .select()
       .from(userFavorites)
       .where(and(

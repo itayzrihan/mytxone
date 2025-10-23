@@ -2,7 +2,7 @@ import "server-only";
 
 import { desc, eq, and } from "drizzle-orm";
 import { definitions } from "./definitions-schema";
-import { db } from "./queries";
+import { getDb } from "./queries";
 import type { Definition } from "./definitions-schema";
 
 // --- Definition Queries ---
@@ -19,7 +19,7 @@ export async function saveDefinition({
   content: string;
 }): Promise<Array<Definition>> {
   try {
-    const newDefinition = await db
+    const newDefinition = await getDb()
       .insert(definitions)
       .values({
         userId,
@@ -41,7 +41,7 @@ export async function getDefinitionsByUserId({
   userId: string;
 }): Promise<Array<Definition>> {
   try {
-    return await db
+    return await getDb()
       .select()
       .from(definitions)
       .where(eq(definitions.userId, userId))
@@ -60,7 +60,7 @@ export async function getDefinitionById({
   userId: string;
 }): Promise<Definition | undefined> {
   try {
-    const [selectedDefinition] = await db
+    const [selectedDefinition] = await getDb()
       .select()
       .from(definitions)
       .where(and(eq(definitions.id, id), eq(definitions.userId, userId)));
@@ -79,7 +79,7 @@ export async function deleteDefinitionById({
   userId: string;
 }): Promise<void> {
   try {
-    await db
+    await getDb()
       .delete(definitions)
       .where(and(eq(definitions.id, id), eq(definitions.userId, userId)));
   } catch (error) {
@@ -109,7 +109,7 @@ export async function updateDefinition({
     if (content !== undefined) updateData.content = content;
     updateData.updatedAt = new Date();
     
-    await db
+    await getDb()
       .update(definitions)
       .set(updateData)
       .where(and(eq(definitions.id, id), eq(definitions.userId, userId)));
