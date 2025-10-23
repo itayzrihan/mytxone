@@ -11,7 +11,12 @@ config({
 });
 
 // Setup database connection
-const client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
+const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+if (!dbUrl) {
+  console.error('❌ DATABASE_URL or POSTGRES_URL environment variable is not set');
+  process.exit(1);
+}
+const client = postgres(`${dbUrl}?sslmode=require`);
 const db = drizzle(client, { schema });
 
 async function updateAdminSubscription() {

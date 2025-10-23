@@ -12,12 +12,24 @@ import type { User, Memory, ApiKey, Task, Meditation, Script } from "./schema"; 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
-let client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
-export let db = drizzle(client, { schema }); // Pass the schema to drizzle
+let client: ReturnType<typeof postgres> | null = null;
+let dbInstance: ReturnType<typeof drizzle> | null = null;
+
+export function getDb() {
+  if (!dbInstance) {
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (!dbUrl) {
+      throw new Error("DATABASE_URL or POSTGRES_URL environment variable is not set");
+    }
+    client = postgres(`${dbUrl}?sslmode=require`);
+    dbInstance = drizzle(client, { schema });
+  }
+  return dbInstance;
+}
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
-    return await db.select().from(user).where(eq(user.email, email));
+    return await getDb().select().from(user).where(eq(user.email, email));
   } catch (error) {
     console.error("Failed to get user from database");
     throw error;
@@ -29,7 +41,7 @@ export async function createUser(email: string, password: string) {
   let hash = hashSync(password, salt);
 
   try {
-    return await db.insert(user).values({ email, password: hash });
+    return await getDb().insert(user).values({ email, password: hash });
   } catch (error) {
     console.error("Failed to create user in database");
     throw error;
@@ -46,7 +58,7 @@ export async function saveChat({
   userId: string;
 }) {
   try {
-    const selectedChats = await db.select().from(chat).where(eq(chat.id, id));
+    const selectedChats = await getDb().select().from(chat).where(eq(chat.id, id));
 
     if (selectedChats.length > 0) {
       return await db
@@ -57,7 +69,7 @@ export async function saveChat({
         .where(eq(chat.id, id));
     }
 
-    return await db.insert(chat).values({
+    return await getDb().insert(chat).values({
       id,
       createdAt: new Date(),
       messages: JSON.stringify(messages),
@@ -71,7 +83,7 @@ export async function saveChat({
 
 export async function deleteChatById({ id }: { id: string }) {
   try {
-    return await db.delete(chat).where(eq(chat.id, id));
+    return await getDb().delete(chat).where(eq(chat.id, id));
   } catch (error) {
     console.error("Failed to delete chat by id from database");
     throw error;
@@ -93,7 +105,7 @@ export async function getChatsByUserId({ id }: { id: string }) {
 
 export async function getChatById({ id }: { id: string }) {
   try {
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
+    const [selectedChat] = await getDb().select().from(chat).where(eq(chat.id, id));
     return selectedChat;
   } catch (error) {
     console.error("Failed to get chat by id from database");
@@ -110,7 +122,7 @@ export async function createReservation({
   userId: string;
   details: any;
 }) {
-  return await db.insert(reservation).values({
+  return await getDb().insert(reservation).values({
     id,
     createdAt: new Date(),
     userId,
@@ -417,7 +429,7 @@ export async function deleteMeditationById({
 
 export async function getApiKeysByUserId(userId: string): Promise<Array<ApiKey>> {
   try {
-    return await db.query.apiKey.findMany({
+    return await getDb().query.apiKey.findMany({
       where: eq(apiKey.userId, userId),
       columns: {
         hashedKey: true,
@@ -442,7 +454,7 @@ export async function createApiKeyRecord(data: {
 }): Promise<ApiKey[]> {
   try {
     // Hashing is now done in the action, just insert the record
-    return await db.insert(apiKey).values(data).returning();
+    return await getDb().insert(apiKey).values(data).returning();
   } catch (error) {
     console.error("Failed to create API key record in database");
     throw error;
@@ -468,7 +480,7 @@ export async function findValidApiKey(rawKey: string): Promise<(Omit<ApiKey, "ha
   try {
     // In a real high-traffic scenario, optimize this lookup.
     // Fetching all keys is inefficient.
-    const potentialKeys = await db.query.apiKey.findMany({
+    const potentialKeys = await getDb().query.apiKey.findMany({
       columns: { id: true, hashedKey: true, userId: true, createdAt: true, lastUsedAt: true, name: true },
     });
 
@@ -502,7 +514,7 @@ export async function updateApiKeyLastUsed(keyId: string): Promise<void> {
 // Script-related functions
 export async function getUserScripts(userId: string) {
   try {
-    return await db.select().from(schema.scripts).where(eq(schema.scripts.userId, userId)).orderBy(desc(schema.scripts.updatedAt));
+    return await getDb().select().from(schema.scripts).where(eq(schema.scripts.userId, userId)).orderBy(desc(schema.scripts.updatedAt));
   } catch (error) {
     console.error("Failed to get user scripts from database");
     throw error;
@@ -511,7 +523,7 @@ export async function getUserScripts(userId: string) {
 
 export async function getScriptById(scriptId: string) {
   try {
-    const result = await db.select().from(schema.scripts).where(eq(schema.scripts.id, scriptId));
+    const result = await getDb().select().from(schema.scripts).where(eq(schema.scripts.id, scriptId));
     return result[0] || null;
   } catch (error) {
     console.error("Failed to get script by id from database");
@@ -521,7 +533,7 @@ export async function getScriptById(scriptId: string) {
 
 export async function getScriptsByUserId(userId: string) {
   try {
-    return await db.select({
+    return await getDb().select({
       id: schema.scripts.id,
       title: schema.scripts.title,
       description: schema.scripts.description,
@@ -555,7 +567,7 @@ export async function createScript(scriptData: {
   isPublic?: boolean;
 }) {
   try {
-    return await db.insert(schema.scripts).values({
+    return await getDb().insert(schema.scripts).values({
       ...scriptData,
       tags: scriptData.tags ? JSON.stringify(scriptData.tags) : null,
       uploadedVideoLinks: scriptData.uploadedVideoLinks ? JSON.stringify(scriptData.uploadedVideoLinks) : null,
@@ -588,7 +600,7 @@ export async function updateScript(scriptId: string, scriptData: {
       uploadedVideoLinks: scriptData.uploadedVideoLinks ? JSON.stringify(scriptData.uploadedVideoLinks) : undefined,
     };
     
-    return await db.update(schema.scripts)
+    return await getDb().update(schema.scripts)
       .set(updateData)
       .where(eq(schema.scripts.id, scriptId))
       .returning();
@@ -600,7 +612,7 @@ export async function updateScript(scriptId: string, scriptData: {
 
 export async function deleteScript(scriptId: string) {
   try {
-    return await db.delete(schema.scripts).where(eq(schema.scripts.id, scriptId));
+    return await getDb().delete(schema.scripts).where(eq(schema.scripts.id, scriptId));
   } catch (error) {
     console.error("Failed to delete script from database");
     throw error;
@@ -611,7 +623,7 @@ export async function deleteScript(scriptId: string) {
 
 export async function getUserSeries(userId: string) {
   try {
-    return await db.select()
+    return await getDb().select()
       .from(schema.scriptSeries)
       .where(eq(schema.scriptSeries.userId, userId))
       .orderBy(schema.scriptSeries.order, desc(schema.scriptSeries.createdAt));
@@ -623,7 +635,7 @@ export async function getUserSeries(userId: string) {
 
 export async function getSeriesById(seriesId: string) {
   try {
-    const result = await db.select()
+    const result = await getDb().select()
       .from(schema.scriptSeries)
       .where(eq(schema.scriptSeries.id, seriesId));
     return result[0] || null;
@@ -640,7 +652,7 @@ export async function createSeries(seriesData: {
   order?: number;
 }) {
   try {
-    return await db.insert(schema.scriptSeries)
+    return await getDb().insert(schema.scriptSeries)
       .values(seriesData)
       .returning();
   } catch (error) {
@@ -655,7 +667,7 @@ export async function updateSeries(seriesId: string, seriesData: {
   order?: number;
 }) {
   try {
-    return await db.update(schema.scriptSeries)
+    return await getDb().update(schema.scriptSeries)
       .set({
         ...seriesData,
         updatedAt: new Date(),
@@ -670,7 +682,7 @@ export async function updateSeries(seriesId: string, seriesData: {
 
 export async function deleteSeries(seriesId: string) {
   try {
-    return await db.delete(schema.scriptSeries)
+    return await getDb().delete(schema.scriptSeries)
       .where(eq(schema.scriptSeries.id, seriesId));
   } catch (error) {
     console.error("Failed to delete series from database");
@@ -680,7 +692,7 @@ export async function deleteSeries(seriesId: string) {
 
 export async function addScriptToSeries(scriptId: string, seriesId: string, orderInSeries?: number) {
   try {
-    return await db.insert(schema.scriptSeriesLinks)
+    return await getDb().insert(schema.scriptSeriesLinks)
       .values({
         scriptId,
         seriesId,
@@ -695,7 +707,7 @@ export async function addScriptToSeries(scriptId: string, seriesId: string, orde
 
 export async function removeScriptFromSeries(scriptId: string, seriesId: string) {
   try {
-    return await db.delete(schema.scriptSeriesLinks)
+    return await getDb().delete(schema.scriptSeriesLinks)
       .where(
         and(
           eq(schema.scriptSeriesLinks.scriptId, scriptId),
@@ -710,7 +722,7 @@ export async function removeScriptFromSeries(scriptId: string, seriesId: string)
 
 export async function getSeriesScripts(seriesId: string) {
   try {
-    const results = await db.select({
+    const results = await getDb().select({
       script: schema.scripts,
       link: schema.scriptSeriesLinks,
     })
@@ -728,7 +740,7 @@ export async function getSeriesScripts(seriesId: string) {
 
 export async function getScriptSeries(scriptId: string) {
   try {
-    const results = await db.select({
+    const results = await getDb().select({
       series: schema.scriptSeries,
       link: schema.scriptSeriesLinks,
     })
@@ -746,7 +758,7 @@ export async function getScriptSeries(scriptId: string) {
 
 export async function updateScriptOrderInSeries(scriptId: string, seriesId: string, newOrder: number) {
   try {
-    return await db.update(schema.scriptSeriesLinks)
+    return await getDb().update(schema.scriptSeriesLinks)
       .set({ orderInSeries: newOrder })
       .where(
         and(
@@ -765,7 +777,7 @@ export async function updateScriptOrderInSeries(scriptId: string, seriesId: stri
 
 export async function getUserPrompts(userId: string) {
   try {
-    return await db.select()
+    return await getDb().select()
       .from(schema.prompts)
       .where(eq(schema.prompts.userId, userId))
       .orderBy(desc(schema.prompts.updatedAt));
@@ -777,7 +789,7 @@ export async function getUserPrompts(userId: string) {
 
 export async function getPromptById(promptId: string) {
   try {
-    const result = await db.select()
+    const result = await getDb().select()
       .from(schema.prompts)
       .where(eq(schema.prompts.id, promptId));
     return result[0] || null;
@@ -798,7 +810,7 @@ export async function createPrompt(promptData: {
   isPublic?: boolean;
 }) {
   try {
-    return await db.insert(schema.prompts)
+    return await getDb().insert(schema.prompts)
       .values({
         ...promptData,
         tags: promptData.tags ? JSON.stringify(promptData.tags) : null,
@@ -826,7 +838,7 @@ export async function updatePrompt(promptId: string, promptData: {
       tags: promptData.tags ? JSON.stringify(promptData.tags) : undefined,
     };
     
-    return await db.update(schema.prompts)
+    return await getDb().update(schema.prompts)
       .set(updateData)
       .where(eq(schema.prompts.id, promptId))
       .returning();
@@ -838,7 +850,7 @@ export async function updatePrompt(promptId: string, promptData: {
 
 export async function deletePrompt(promptId: string) {
   try {
-    return await db.delete(schema.prompts)
+    return await getDb().delete(schema.prompts)
       .where(eq(schema.prompts.id, promptId));
   } catch (error) {
     console.error("Failed to delete prompt from database");
@@ -853,7 +865,7 @@ export async function incrementPromptUsage(promptId: string) {
       throw new Error("Prompt not found");
     }
     
-    return await db.update(schema.prompts)
+    return await getDb().update(schema.prompts)
       .set({ 
         usageCount: prompt.usageCount + 1,
         updatedAt: new Date(),
@@ -873,7 +885,7 @@ export type SafeUser = Omit<User, 'password'>;
 
 export async function getAllUsers(): Promise<Array<SafeUser>> {
   try {
-    return await db.select({
+    return await getDb().select({
       id: user.id,
       email: user.email,
       role: user.role,
@@ -890,7 +902,7 @@ export async function getAllUsers(): Promise<Array<SafeUser>> {
 
 export async function getUserById(userId: string): Promise<SafeUser | null> {
   try {
-    const users = await db.select({
+    const users = await getDb().select({
       id: user.id,
       email: user.email,
       role: user.role,
@@ -908,7 +920,7 @@ export async function getUserById(userId: string): Promise<SafeUser | null> {
 
 export async function updateUserRole(userId: string, role: 'user' | 'admin'): Promise<SafeUser | null> {
   try {
-    const [updatedUser] = await db.update(user)
+    const [updatedUser] = await getDb().update(user)
       .set({ 
         role,
         updatedAt: new Date()
@@ -931,7 +943,7 @@ export async function updateUserRole(userId: string, role: 'user' | 'admin'): Pr
 
 export async function updateUserSubscription(userId: string, subscription: 'free' | 'basic' | 'pro'): Promise<SafeUser | null> {
   try {
-    const [updatedUser] = await db.update(user)
+    const [updatedUser] = await getDb().update(user)
       .set({ 
         subscription,
         updatedAt: new Date()
@@ -954,7 +966,7 @@ export async function updateUserSubscription(userId: string, subscription: 'free
 
 export async function checkIfUserIsAdmin(userId: string): Promise<boolean> {
   try {
-    const users = await db.select({ role: user.role })
+    const users = await getDb().select({ role: user.role })
       .from(user)
       .where(eq(user.id, userId));
     return users[0]?.role === 'admin';
@@ -975,7 +987,7 @@ export async function getUsersCount(): Promise<{
   }
 }> {
   try {
-    const allUsers = await db.select({ 
+    const allUsers = await getDb().select({ 
       role: user.role, 
       subscription: user.subscription 
     }).from(user);

@@ -9,9 +9,9 @@ import { genSaltSync, hashSync } from "bcrypt-ts";
 config({ path: '.env.local' });
 
 // Initialize database connection for script
-const dbUrl = process.env.POSTGRES_URL;
+const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!dbUrl) {
-  console.error('❌ POSTGRES_URL environment variable is not set');
+  console.error('❌ DATABASE_URL or POSTGRES_URL environment variable is not set');
   console.log('Please check your .env.local file');
   process.exit(1);
 }
