@@ -14,6 +14,7 @@ export default async function Page() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
+      <div className="h-[20vh] md:hidden" />
       <HeroSection />
 
       {/* Services Section */}

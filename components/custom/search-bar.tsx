@@ -54,8 +54,8 @@ export function SearchBar({ variant = 'full', className = '' }: SearchBarProps) 
         <input
           type="text"
           placeholder={
-            variant === 'full' 
-              ? "Search for people or meetings..." 
+            variant === 'full'
+              ? "Search for services or info..."
               : variant === 'mobile'
               ? "Search..."
               : "Search..."
