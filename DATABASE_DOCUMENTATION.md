@@ -1,6 +1,6 @@
-# Database Documentation for mytx-ai Project
+# Database Documentation for mytxone Project
 
-This document provides comprehensive guidelines on how to interact with the database system used in the mytx-ai project, including how to update schemas and push changes to the production database.
+This document provides comprehensive guidelines on how to interact with the database system used in the mytxone project, including how to update schemas and push changes to the production database.
 
 ## Table of Contents
 

@@ -86,7 +86,7 @@ Fix quote response snapshot storage and deployment ESLint errors
 ## Deployment Status
 
 ✅ All ESLint errors resolved
-✅ Code pushed to GitHub (`itayzrihan/mytx-ai`)
+✅ Code pushed to GitHub (`itayzrihan/mytxone`)
 ✅ Ready for Dokploy to rebuild
 
 ## Next Steps

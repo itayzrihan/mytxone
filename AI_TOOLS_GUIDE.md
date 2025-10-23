@@ -32,7 +32,7 @@ User Input → Chat API → AI Model → Tool Selection → Action Execution →
 ### Key Files Structure
 
 ```
-mytx-ai/
+mytxone/
 ├── ai/
 │   ├── actions.ts              # Core tool logic & database interactions
 │   └── index.ts               # AI model configuration

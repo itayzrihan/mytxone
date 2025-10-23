@@ -5,4 +5,4 @@ export const ISDEV = 'development';
 
 export const BASE_URL = ISDEV
   ? 'http://localhost:3000'
-    : 'https://mytx-ai.vercel.app';
+    : 'https://mytx.one';

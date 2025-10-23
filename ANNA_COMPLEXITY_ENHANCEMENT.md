@@ -8,7 +8,7 @@ Enhanced Anna to intelligently detect request complexity and route them to appro
 ## Changes Made
 
 ### 1. Created StepsDesigningService
-**File**: `d:\Ordered\DEV\GeminiChat\mytx-ai\services\stepsDesigningService.ts`
+**File**: `d:\Ordered\DEV\mytx.one\services\stepsDesigningService.ts`
 
 - **Purpose**: Enhanced agent that can interact with crew of agents
 - **Current Function**: Structure steps for completing complex missions and stream them to user
@@ -20,7 +20,7 @@ Enhanced Anna to intelligently detect request complexity and route them to appro
   - Responds in user's language (Hebrew/English)
 
 ### 2. Enhanced Anna Agent Route
-**File**: `d:\Ordered\DEV\GeminiChat\mytx-ai\app\api\heybos\anna\route.ts`
+**File**: `d:\Ordered\DEV\mytx.one\app\api\heybos\anna\route.ts`
 
 #### Added Import
 ```typescript

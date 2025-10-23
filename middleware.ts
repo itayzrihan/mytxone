@@ -9,7 +9,7 @@ const { auth: nextAuthMiddleware } = NextAuth(authConfig);
 // List your allowed origins here
 const ALLOWED_ORIGINS = [
   "https://heybos.me",
-  "https://mytx-ai.vercel.app",
+  "https://mytx.one",
   // Allow localhost for development
   "http://localhost:8081",
   "http://localhost:3000",

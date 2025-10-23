@@ -1,6 +1,7 @@
-import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
 
 import { auth } from "@/app/(auth)/auth";
 
@@ -49,14 +50,21 @@ export async function POST(request: Request) {
     }
 
     const filename = file.name;
-    const fileBuffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     try {
-      const data = await put(`${filename}`, fileBuffer, {
-        access: "public",
-      });
+      // Ensure uploads directory exists
+      const uploadsDir = join(process.cwd(), 'public', 'uploads');
+      await mkdir(uploadsDir, { recursive: true });
 
-      return NextResponse.json(data);
+      // Save file locally
+      const filePath = join(uploadsDir, filename);
+      await writeFile(filePath, fileBuffer);
+
+      // Return local URL
+      const url = `/uploads/${filename}`;
+
+      return NextResponse.json({ url });
     } catch (error) {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }

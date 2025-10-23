@@ -28,7 +28,7 @@ The issue was in the backend's `callSingleToolService.ts`. While the backend act
 ## Files Modified
 
 ### Backend Changes:
-- **`d:\DEV\mytx\mytx-ai\services\callSingleToolService.ts`**:
+- **`d:\Ordered\DEV\mytx.one\services\callSingleToolService.ts`**:
   - Fixed `searchTasks` tool execution to return full result object instead of completion message
   - Fixed `enhancedSearchTasks` tool execution to return full result object instead of completion message
   - Added debug logging to track `searchAnalysis` data flow with keyword counts
@@ -98,8 +98,8 @@ The issue was in the backend's `callSingleToolService.ts`. While the backend act
 
 ### 1. Start Both Applications:
 ```bash
-# Backend (mytx-ai)
-cd d:\DEV\mytx\mytx-ai
+# Backend (mytxone)
+cd d:\Ordered\DEV\mytx.one
 npm run dev
 
 # Frontend (TheBaze)
