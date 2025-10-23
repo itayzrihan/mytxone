@@ -6,6 +6,7 @@ import { Navbar } from "@/components/custom/navbar-wrapper";
 import { ThemeProvider } from "@/components/custom/theme-provider";
 import { AuthWrapper } from "@/components/custom/auth-wrapper";
 import { Footer } from "@/components/custom/footer";
+import { GlassNav } from "@/components/custom/glass-nav";
 
 import "./globals.css";
 
@@ -15,10 +16,10 @@ export const metadata: Metadata = {
   description: "Professional AI-powered digital services platform for content creation, automation, and business solutions.",
   icons: {
     icon: [
-      { url: '/images/LOGO-APP-ORIGINAL.webp', type: 'image/webp' },
+      { url: '/images/LOGO-APP-ORIGINAL.png', type: 'image/png' },
     ],
     apple: [
-      { url: '/images/LOGO-APP-ORIGINAL.webp', type: 'image/webp' },
+      { url: '/images/LOGO-APP-ORIGINAL.png', type: 'image/png' },
     ],
   },
 };
@@ -47,6 +48,7 @@ export default async function RootLayout({
             </main>
             
             <Footer />
+            <GlassNav />
           </AuthWrapper>
         </ThemeProvider>
       </body>

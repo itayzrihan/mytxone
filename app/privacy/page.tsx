@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction and Declaration of Principles</h2>
               <p className="leading-relaxed">
-                This document ("the Privacy Policy") constitutes the basis for transparent, responsible, and secure conduct regarding the collection, processing, storage, and retention of the user's personal information ("the User"). MYTX.one ("the Operator") undertakes to act in accordance with all relevant legislation and regulations, including the Privacy Protection Law, data protection regulations, GDPR, and other international laws, while striving to implement best practices in the field of information security and privacy protection.
+                This document (&quot;the Privacy Policy&quot;) constitutes the basis for transparent, responsible, and secure conduct regarding the collection, processing, storage, and retention of the user&apos;s personal information (&quot;the User&quot;). MYTX.one (&quot;the Operator&quot;) undertakes to act in accordance with all relevant legislation and regulations, including the Privacy Protection Law, data protection regulations, GDPR, and other international laws, while striving to implement best practices in the field of information security and privacy protection.
               </p>
             </section>
 
@@ -63,10 +63,10 @@ export default function PrivacyPolicyPage() {
               <h2 className="text-2xl font-semibold text-white mb-4">3. Purposes of Information Processing</h2>
               <p className="leading-relaxed mb-3">The information is collected and processed to:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Provide, manage, and support the Application's services</li>
+                <li>Provide, manage, and support the Application&apos;s services</li>
                 <li>Verify, activate, and manage user accounts</li>
-                <li>Improve the user experience and adapt the service to the User's needs</li>
-                <li>Provide technical support, update, and send notices in accordance with the User's consent</li>
+                <li>Improve the user experience and adapt the service to the User&apos;s needs</li>
+                <li>Provide technical support, update, and send notices in accordance with the User&apos;s consent</li>
                 <li>Comply with strict legal and regulatory requirements</li>
               </ul>
             </section>
@@ -74,7 +74,7 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">4. Legal Basis for Processing Information</h2>
               <p className="leading-relaxed">
-                Information processing is carried out on the basis of: the User's consent, performance of contracts, compliance with legal obligations, and for the Operator's legitimate interest in continuously improving the services and ensuring information security.
+                Information processing is carried out on the basis of: the User&apos;s consent, performance of contracts, compliance with legal obligations, and for the Operator&apos;s legitimate interest in continuously improving the services and ensuring information security.
               </p>
             </section>
 
@@ -93,7 +93,7 @@ export default function PrivacyPolicyPage() {
 
               <h3 className="text-xl font-semibold text-cyan-400 mb-3 mt-6">5.3. Business Partnerships:</h3>
               <p className="leading-relaxed">
-                Transfer of information within the framework of business partnerships will be done only in accordance with binding legal agreements that ensure maximum protection of the User's privacy.
+                Transfer of information within the framework of business partnerships will be done only in accordance with binding legal agreements that ensure maximum protection of the User&apos;s privacy.
               </p>
             </section>
 

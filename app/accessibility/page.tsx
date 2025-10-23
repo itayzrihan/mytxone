@@ -27,7 +27,7 @@ export default function AccessibilityPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction and Declaration of Principles</h2>
               <p className="leading-relaxed">
-                This document ("the Accessibility Statement") constitutes a comprehensive legal statement describing the accessibility principles and the Operator's commitments regarding the application ("the Application"). The Application was designed with the aim of being accessible to a wide range of users, including users with disabilities, in accordance with most current standards and guidelines in the field. However, it must be emphasized that due to budgetary constraints and ongoing development processes, not all accessibility functions are fully implemented on all platforms.
+                This document (&quot;the Accessibility Statement&quot;) constitutes a comprehensive legal statement describing the accessibility principles and the Operator&apos;s commitments regarding the application (&quot;the Application&quot;). The Application was designed with the aim of being accessible to a wide range of users, including users with disabilities, in accordance with most current standards and guidelines in the field. However, it must be emphasized that due to budgetary constraints and ongoing development processes, not all accessibility functions are fully implemented on all platforms.
               </p>
             </section>
 

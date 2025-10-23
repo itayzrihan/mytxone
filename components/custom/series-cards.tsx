@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ScriptSeries, Script } from "@/db/schema";
@@ -20,11 +20,7 @@ export function SeriesCards({ userId }: SeriesCardsProps) {
   const [editingSeries, setEditingSeries] = useState<ScriptSeries | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchSeries();
-  }, [userId]);
-
-  const fetchSeries = async () => {
+  const fetchSeries = useCallback(async () => {
     try {
       const response = await fetch(`/api/series?userId=${userId}`);
       if (response.ok) {
@@ -36,7 +32,11 @@ export function SeriesCards({ userId }: SeriesCardsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    fetchSeries();
+  }, [fetchSeries]);
 
   const fetchSeriesScripts = async (seriesId: string) => {
     if (seriesScripts[seriesId]) {

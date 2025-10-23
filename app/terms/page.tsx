@@ -34,16 +34,16 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction and Statement of Purpose</h2>
               <p className="leading-relaxed">
-                This document ("the Terms Agreement") constitutes a binding legal agreement between the user ("the User," "you") and the application operator ("the Operator"). By accessing, installing, or using any part of the Application, you hereby confirm that you have read, understood, and agreed to all the terms set forth below. This agreement is intended to ensure the protection of the Operator's and the User's rights, to establish rules and conditions for proper use, and to ensure a safe and consistent environment while complying with all regulations and laws applicable in the State of Israel and in places where the services are provided.
+                This document (&quot;the Terms Agreement&quot;) constitutes a binding legal agreement between the user (&quot;the User,&quot; &quot;you&quot;) and the application operator (&quot;the Operator&quot;). By accessing, installing, or using any part of the Application, you hereby confirm that you have read, understood, and agreed to all the terms set forth below. This agreement is intended to ensure the protection of the Operator&apos;s and the User&apos;s rights, to establish rules and conditions for proper use, and to ensure a safe and consistent environment while complying with all regulations and laws applicable in the State of Israel and in places where the services are provided.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">2. Definitions and Terms</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong className="text-cyan-400">"The Application"</strong> – Includes all software, services, platforms, and content provided by the Operator, including future updates, changes, and upgrades.</li>
-                <li><strong className="text-cyan-400">"The Operator"</strong> – Refers to all entities, shareholders, developers, managers, and parties involved in the management, development, maintenance, and support of the Application.</li>
-                <li><strong className="text-cyan-400">"The User"</strong> – Any person, organization, or legal entity that has registered for or uses the Application's services, subject to their full agreement to the terms of use detailed in this document.</li>
+                <li><strong className="text-cyan-400">&quot;The Application&quot;</strong> – Includes all software, services, platforms, and content provided by the Operator, including future updates, changes, and upgrades.</li>
+                <li><strong className="text-cyan-400">&quot;The Operator&quot;</strong> – Refers to all entities, shareholders, developers, managers, and parties involved in the management, development, maintenance, and support of the Application.</li>
+                <li><strong className="text-cyan-400">&quot;The User&quot;</strong> – Any person, organization, or legal entity that has registered for or uses the Application&apos;s services, subject to their full agreement to the terms of use detailed in this document.</li>
               </ul>
             </section>
 
@@ -57,7 +57,7 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">4. Granting of Limited Use License</h2>
               <p className="leading-relaxed">
-                The Operator grants the User a non-exclusive, non-transferable, and limited license for personal or internal use of the Application only. You may not copy, reproduce, distribute, publish, modify, transmit, or create derivative works from any of the Application's content, except with prior written approval from the Operator. Any violation will be considered a serious offense and will result in legal action.
+                The Operator grants the User a non-exclusive, non-transferable, and limited license for personal or internal use of the Application only. You may not copy, reproduce, distribute, publish, modify, transmit, or create derivative works from any of the Application&apos;s content, except with prior written approval from the Operator. Any violation will be considered a serious offense and will result in legal action.
               </p>
             </section>
 
@@ -71,14 +71,14 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">6. Information Security and Privacy Protection</h2>
               <p className="leading-relaxed">
-                The Operator takes all reasonable measures to maintain the confidentiality and security of the information transmitted by the User. However, it cannot guarantee absolute protection against breaches, theft, leaks, or technical damage. The use of the Application is at the User's sole responsibility, and the Operator will not be liable for any direct or indirect damage resulting from improper use or security breaches.
+                The Operator takes all reasonable measures to maintain the confidentiality and security of the information transmitted by the User. However, it cannot guarantee absolute protection against breaches, theft, leaks, or technical damage. The use of the Application is at the User&apos;s sole responsibility, and the Operator will not be liable for any direct or indirect damage resulting from improper use or security breaches.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">7. Privacy Policy and Data Collection</h2>
               <p className="leading-relaxed">
-                The use of the Application is subject to the Operator's Privacy Policy, which includes all measures for collecting, processing, storing, and sharing personal information. The User declares that they have read, understood, and agree to all the provisions of the policy, and to the use of the information as detailed therein.
+                The use of the Application is subject to the Operator&apos;s Privacy Policy, which includes all measures for collecting, processing, storing, and sharing personal information. The User declares that they have read, understood, and agree to all the provisions of the policy, and to the use of the information as detailed therein.
               </p>
             </section>
 
@@ -99,7 +99,7 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">10. Limitation of Liability and Disclaimer of Warranty</h2>
               <p className="leading-relaxed">
-                The Application is provided "as is" and without any warranty or liability, whether express or implied, including but not limited to warranties regarding suitability, availability, accuracy, or reliability of the content. In any case, the Operator's liability is limited to the amount actually paid by the User for the service, and does not include damages for loss of profits, indirect, or consequential damages.
+                The Application is provided &quot;as is&quot; and without any warranty or liability, whether express or implied, including but not limited to warranties regarding suitability, availability, accuracy, or reliability of the content. In any case, the Operator&apos;s liability is limited to the amount actually paid by the User for the service, and does not include damages for loss of profits, indirect, or consequential damages.
               </p>
             </section>
 
@@ -120,7 +120,7 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">13. Service Termination and End of Permissions</h2>
               <p className="leading-relaxed">
-                The Operator may, at its sole discretion, terminate the service or the User's permissions in the event of a violation of the terms of use or misuse of the service. In the event of termination of permissions, the User is not entitled to sue or demand any compensation.
+                The Operator may, at its sole discretion, terminate the service or the User&apos;s permissions in the event of a violation of the terms of use or misuse of the service. In the event of termination of permissions, the User is not entitled to sue or demand any compensation.
               </p>
             </section>
 
@@ -141,7 +141,7 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">16. Dispute Resolution and Arbitration</h2>
               <p className="leading-relaxed">
-                Any dispute or conflict relating to this agreement will be clarified through binding arbitration, in accordance with the provisions of the law and procedures customary in the State of Israel. The arbitrator's decision will be final and binding on all parties, and there is no appeal against it in the courts.
+                Any dispute or conflict relating to this agreement will be clarified through binding arbitration, in accordance with the provisions of the law and procedures customary in the State of Israel. The arbitrator&apos;s decision will be final and binding on all parties, and there is no appeal against it in the courts.
               </p>
             </section>
 
@@ -255,7 +255,7 @@ export default function TermsOfUsePage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">32. Declaration of Reading, Understanding, and Agreement</h2>
               <p className="leading-relaxed">
-                By clicking "I agree" and continuing to use the Application, the User declares that they have read, understood, and agreed to all the clauses and conditions detailed in this document, and that the use is made out of conscious and full agreement to all its provisions.
+                By clicking &quot;I agree&quot; and continuing to use the Application, the User declares that they have read, understood, and agreed to all the clauses and conditions detailed in this document, and that the use is made out of conscious and full agreement to all its provisions.
               </p>
             </section>
 

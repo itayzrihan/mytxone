@@ -27,7 +27,7 @@ export default function RefundsPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction</h2>
               <p className="leading-relaxed">
-                Welcome to MYTX. These Terms and Conditions ("the Terms") govern your use of our website located at MYTX.ONE ("MYTX"). By accessing or using our site, you agree to be bound by these Terms. If you do not agree to any part of these Terms, please refrain from using the site.
+                Welcome to MYTX. These Terms and Conditions (&quot;the Terms&quot;) govern your use of our website located at MYTX.ONE (&quot;MYTX&quot;). By accessing or using our site, you agree to be bound by these Terms. If you do not agree to any part of these Terms, please refrain from using the site.
               </p>
             </section>
 
@@ -100,7 +100,7 @@ export default function RefundsPage() {
               <h2 className="text-2xl font-semibold text-white mb-4">7. User-Generated Content</h2>
               <ul className="list-disc pl-6 space-y-2">
                 <li>
-                  <strong className="text-cyan-400">Responsibility:</strong> You bear sole responsibility for any content you submit, post, or display on the site ("User Content").
+                  <strong className="text-cyan-400">Responsibility:</strong> You bear sole responsibility for any content you submit, post, or display on the site (&quot;User Content&quot;).
                 </li>
                 <li>
                   <strong className="text-cyan-400">License to Us:</strong> By submitting User Content, you grant us a non-exclusive, royalty-free, transferable, and sublicensable license to use, store, display, reproduce, modify, and distribute your User Content.
@@ -132,7 +132,7 @@ export default function RefundsPage() {
             <section>
               <h2 className="text-2xl font-semibold text-white mb-4">10. Disclaimer of Warranties</h2>
               <p className="leading-relaxed">
-                The site is provided "AS IS" and "AS AVAILABLE". We grant no warranty of any kind regarding the operation of the site or the content contained therein. To the extent permitted by law, we disclaim all warranties, including merchantability, fitness for a particular purpose, and non-infringement.
+                The site is provided &quot;AS IS&quot; and &quot;AS AVAILABLE&quot;. We grant no warranty of any kind regarding the operation of the site or the content contained therein. To the extent permitted by law, we disclaim all warranties, including merchantability, fitness for a particular purpose, and non-infringement.
               </p>
             </section>
 

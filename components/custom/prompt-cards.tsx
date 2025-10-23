@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Prompt } from "@/db/schema";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,7 @@ export function PromptCards({ userId }: PromptCardsProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchPrompts();
-  }, [userId]);
-
-  const fetchPrompts = async () => {
+  const fetchPrompts = useCallback(async () => {
     try {
       const response = await fetch(`/api/prompts?userId=${userId}`);
       if (response.ok) {
@@ -34,7 +30,11 @@ export function PromptCards({ userId }: PromptCardsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    fetchPrompts();
+  }, [fetchPrompts]);
 
   const handleCopyPrompt = async (prompt: Prompt, e: React.MouseEvent) => {
     e.preventDefault();
