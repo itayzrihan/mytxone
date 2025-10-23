@@ -258,7 +258,7 @@ export default function PrivacyPolicyPage() {
             {/* Closing Statement */}
             <div className="mt-12 p-6 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg backdrop-blur-sm">
               <p className="text-center text-zinc-300 leading-relaxed">
-                We are committed to protecting your privacy and ensuring the security of your personal information. If you have any questions or concerns, please don't hesitate to contact us.
+                We are committed to protecting your privacy and ensuring the security of your personal information. If you have any questions or concerns, please don&apos;t hesitate to contact us.
               </p>
             </div>
           </div>

@@ -117,7 +117,7 @@ export default function RefundsPage() {
               <ul className="list-disc pl-6 space-y-2">
                 <li><strong className="text-cyan-400">Harassment:</strong> Harassing, threatening, or intimidating other users.</li>
                 <li><strong className="text-cyan-400">Spam:</strong> Sending unsolicited publications or advertisements.</li>
-                <li><strong className="text-cyan-400">Hacking:</strong> Attempting to interfere with the site's security.</li>
+                <li><strong className="text-cyan-400">Hacking:</strong> Attempting to interfere with the site&apos;s security.</li>
                 <li><strong className="text-cyan-400">Data Collection:</strong> Collecting or mining data from the site without permission.</li>
               </ul>
             </section>
