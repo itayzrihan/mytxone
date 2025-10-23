@@ -10,9 +10,17 @@ import { Footer } from "@/components/custom/footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gemini.vercel.ai"),
-  title: "Next.js Gemini Chatbot",
-  description: "Next.js chatbot template using the AI SDK and Gemini.",
+  metadataBase: new URL("https://mytx.one"),
+  title: "MYTX.one - AI-Powered Digital Services",
+  description: "Professional AI-powered digital services platform for content creation, automation, and business solutions.",
+  icons: {
+    icon: [
+      { url: '/images/LOGO-APP-ORIGINAL.webp', type: 'image/webp' },
+    ],
+    apple: [
+      { url: '/images/LOGO-APP-ORIGINAL.webp', type: 'image/webp' },
+    ],
+  },
 };
 
 export default async function RootLayout({
