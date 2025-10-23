@@ -13,55 +13,13 @@ export function Footer() {
   if (shouldHideFooter) {
     return null;
   }
-  const footerLinks = [
-    { 
-      name: "Make Money", 
-      href: "/make-money"
-    },
-    { 
-      name: "Community", 
-      href: "/community"
-    },
-    { 
-      name: "Support", 
-      href: "/support"
-    },
-    { 
-      name: "Careers", 
-      href: "/careers"
-    },
-    { 
-      name: "Merch", 
-      href: "/merch"
-    },
-    { 
-      name: "Pricing", 
-      href: "/pricing"
-    },
-    { 
-      name: "Privacy", 
-      href: "/privacy"
-    },
-  ];
+  const footerLinks = [];
 
   return (
     <footer className="footer-container mt-auto border-t border-white/10 bg-black/80 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 mb-8">
-          {footerLinks.map((link) => (
-            <div key={link.name} className="group">
-              <Link
-                href={link.href}
-                className="block p-4 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10 text-center"
-              >
-                <div className="text-white font-medium text-sm group-hover:text-cyan-300 transition-colors duration-200">
-                  {link.name}
-                </div>
-              </Link>
-            </div>
-          ))}
-        </div>
+
 
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-white/10">
@@ -71,7 +29,7 @@ export function Footer() {
               <span className="text-white">X</span>
             </div>
             <span className="text-zinc-400 text-sm">
-              AI-powered conversations
+              AI-powered Digital Services
             </span>
           </div>
 
@@ -79,8 +37,9 @@ export function Footer() {
             <div className="text-zinc-400 text-sm">
               © 2025 MYTX. All rights reserved.
             </div>
-            
+       
             {/* Social Links */}
+                 {/*
             <div className="flex items-center gap-3">
               <Link
                 href="https://twitter.com"
@@ -115,6 +74,8 @@ export function Footer() {
                 </svg>
               </Link>
             </div>
+
+              */}
           </div>
         </div>
       </div>
