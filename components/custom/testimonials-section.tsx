@@ -3,48 +3,48 @@ import { Star, Quote } from "lucide-react";
 const testimonials = [
   {
     name: "Sarah Johnson",
-    position: "CTO, TechStart Inc.",
-    company: "SaaS Platform",
+    position: "CTO",
+    industry: "SaaS Platform",
     content: "mytx.one transformed our entire digital infrastructure. Their 360° approach covered everything from app development to cloud migration. The results exceeded our expectations.",
     rating: 5,
     avatar: "SJ"
   },
   {
     name: "Michael Chen",
-    position: "CEO, InnovateLabs",
-    company: "AI Startup",
+    position: "CEO",
+    industry: "AI Startup",
     content: "The cybersecurity and AI expertise at mytx.one is unmatched. They secured our platform and implemented cutting-edge ML features that tripled our user engagement.",
     rating: 5,
     avatar: "MC"
   },
   {
     name: "Emily Rodriguez",
-    position: "Director, GlobalTech Solutions",
-    company: "Enterprise Software",
+    position: "Director",
+    industry: "Enterprise Software",
     content: "From hardware prototyping to full-scale deployment, mytx.one handled our complex IoT project flawlessly. Their team's expertise across all domains is incredible.",
     rating: 5,
     avatar: "ER"
   },
   {
     name: "David Park",
-    position: "Founder, NextGen Retail",
-    company: "E-commerce Platform",
+    position: "Founder",
+    industry: "E-commerce Platform",
     content: "The video production and web development services created a stunning brand presence. mytx.one's comprehensive approach saved us time and delivered exceptional quality.",
     rating: 5,
     avatar: "DP"
   },
   {
     name: "Lisa Thompson",
-    position: "VP Engineering, DataFlow Corp",
-    company: "Big Data Analytics",
+    position: "VP Engineering",
+    industry: "Big Data Analytics",
     content: "Their cloud architecture and data management solutions scaled our platform to handle millions of users. The 24/7 support and optimization services are invaluable.",
     rating: 5,
     avatar: "LT"
   },
   {
     name: "James Wilson",
-    position: "Product Manager, HealthTech Pro",
-    company: "Healthcare Platform",
+    position: "Product Manager",
+    industry: "Healthcare Platform",
     content: "mytx.one delivered a HIPAA-compliant platform with telemedicine features, AI diagnostics, and secure cloud infrastructure. Their healthcare expertise is outstanding.",
     rating: 5,
     avatar: "JW"
@@ -87,7 +87,7 @@ export function TestimonialsSection() {
                 <div>
                   <div className="text-white font-semibold">{testimonial.name}</div>
                   <div className="text-zinc-400 text-sm">{testimonial.position}</div>
-                  <div className="text-cyan-400 text-xs">{testimonial.company}</div>
+                  <div className="text-cyan-400 text-xs">{testimonial.industry}</div>
                 </div>
               </div>
             </div>

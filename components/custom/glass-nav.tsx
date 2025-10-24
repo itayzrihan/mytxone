@@ -104,14 +104,10 @@ export function GlassNav() {
           </li>
 
           {/* Shop/Plus */}
-          <li className="pro-glass-nav-item">
-            <button
-              onClick={() => handleComingSoon("Shop")}
-              className="pro-glass-nav-link"
-              aria-label="Shop (coming soon)"
-            >
+          <li className={`pro-glass-nav-item ${isActive("/shop") ? "active" : ""}`}>
+            <Link href="/shop" className="pro-glass-nav-link">
               <PlusIcon className="pro-glass-nav-icon" />
-            </button>
+            </Link>
           </li>
 
           {/* Cart */}

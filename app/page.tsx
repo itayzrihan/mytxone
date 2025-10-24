@@ -1,37 +1,22 @@
 import { auth } from "@/app/(auth)/auth";
 import { ServiceCards } from "@/components/custom/service-cards";
-import { HeroSection } from "@/components/custom/hero-section";
+import Hero from "@/components/custom/hero";
 import { FeaturesGrid } from "@/components/custom/features-grid";
 import { ProcessSection } from "@/components/custom/process-section";
 import { TestimonialsSection } from "@/components/custom/testimonials-section";
 import { TechStackSection } from "@/components/custom/tech-stack-section";
 import { StatsSection } from "@/components/custom/stats-section";
 import { IndustriesSection } from "@/components/custom/industries-section";
-import Image from "next/image";
+import FeaturedProducts from "@/components/custom/featured-products";
+import Features from "@/components/custom/features";
 
 export default async function Page() {
   const session = await auth();
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Hero Image with Feathered Bottom */}
-      <div className="relative w-full h-[60vh] md:h-[70vh] lg:h-[80vh] -mt-24 md:-mt-20">
-        <Image
-          src="/images/hero.webp"
-          alt="Hero"
-          fill
-          priority
-          className="object-cover"
-          style={{
-            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.8) 70%, rgba(0,0,0,0) 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.8) 70%, rgba(0,0,0,0) 100%)',
-          }}
-        />
-      </div>
-
-      {/* Hero Section */}
-      <div className="h-[20vh] md:hidden" />
-      <HeroSection />
+      {/* Hero Section with Background Image */}
+      <Hero />
 
       {/* Services Section */}
       <div className="max-w-7xl mx-auto px-4 py-16">
@@ -47,6 +32,9 @@ export default async function Page() {
 
         <ServiceCards />
       </div>
+
+      {/* Featured Products Section */}
+      <FeaturedProducts />
 
       {/* Stats Section */}
       <StatsSection />
@@ -67,6 +55,9 @@ export default async function Page() {
 
       {/* Testimonials Section */}
       <TestimonialsSection />
+
+      {/* Features Section */}
+      <Features />
 
       {/* CTA Section */}
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
