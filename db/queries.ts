@@ -48,6 +48,29 @@ export async function createUser(email: string, password: string) {
   }
 }
 
+export async function updateUser(
+  userId: string,
+  updates: Partial<{
+    totpSecret: string | null;
+    totpEnabled: boolean;
+    totpSeedId: string | null;
+    totpSetupCompleted: Date | null;
+  }>
+) {
+  try {
+    return await getDb()
+      .update(user)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, userId));
+  } catch (error) {
+    console.error("Failed to update user in database");
+    throw error;
+  }
+}
+
 export async function saveChat({
   id,
   messages,

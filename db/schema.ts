@@ -19,6 +19,11 @@ export const user = pgTable("User", {
   password: varchar("password", { length: 64 }),
   role: varchar("role", { length: 20 }).notNull().default("user"), // 'user', 'admin'
   subscription: varchar("subscription", { length: 20 }).notNull().default("free"), // 'free', 'basic', 'pro'
+  // 2FA / TOTP fields
+  totpSecret: text("totp_secret"), // Encrypted TOTP secret
+  totpEnabled: boolean("totp_enabled").notNull().default(false), // Is 2FA enabled
+  totpSeedId: varchar("totp_seed_id", { length: 255 }), // Reference to seed ID from Legitate
+  totpSetupCompleted: timestamp("totp_setup_completed"), // When 2FA was completed
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
