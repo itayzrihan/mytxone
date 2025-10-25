@@ -39,8 +39,12 @@ export function TwoFAVerificationForm({
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
     
+    // Build the deep link with serviceName and accountIdentifier
+    // Using the same serviceName and email (accountIdentifier) as registration
+    const deepLink = `https://legit.app/dashboard/simple-totp?serviceName=mytx.one&accountIdentifier=${encodeURIComponent(email || "")}`;
+    
     popupRef.current = window.open(
-      'https://legitate.com/dashboard/simple-totp',
+      deepLink,
       'legitateTotp',
       `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
     );
