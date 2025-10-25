@@ -25,7 +25,8 @@ const authFormSchema = z.object({
 });
 
 export interface LoginActionState {
-  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data";
+  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data" | "2fa_required";
+  userEmail?: string;
 }
 
 export const login = async (
@@ -33,23 +34,59 @@ export const login = async (
   formData: FormData,
 ): Promise<LoginActionState> => {
   try {
+    console.log("[LOGIN] Starting login process");
+    
     const validatedData = authFormSchema.parse({
       email: formData.get("email"),
       password: formData.get("password"),
     });
+    console.log("[LOGIN] Form validated:", { email: validatedData.email });
 
+    // Check if user exists and has 2FA enabled BEFORE signing in
+    const [user] = await getUser(validatedData.email);
+    console.log("[LOGIN] User lookup result:", { 
+      userExists: !!user,
+      email: validatedData.email,
+      totpEnabled: user?.totpEnabled 
+    });
+
+    if (!user) {
+      console.log("[LOGIN] User not found");
+      // User doesn't exist - don't reveal this for security
+      return { status: "failed" };
+    }
+
+    // If user has 2FA enabled, return 2fa_required instead of signing in
+    if (user.totpEnabled) {
+      console.log("[LOGIN] User has 2FA enabled, returning 2fa_required");
+      return {
+        status: "2fa_required",
+        userEmail: validatedData.email,
+      };
+    }
+
+    console.log("[LOGIN] No 2FA enabled, proceeding with normal login");
+    // No 2FA - proceed with normal login
     await signIn("credentials", {
       email: validatedData.email,
       password: validatedData.password,
       redirect: false,
     });
+    console.log("[LOGIN] Sign in successful");
 
     return { status: "success" };
   } catch (error) {
+    console.error("[LOGIN] Error occurred:", error);
+    
     if (error instanceof z.ZodError) {
+      console.error("[LOGIN] Validation error:", error.errors);
       return { status: "invalid_data" };
     }
 
+    console.error("[LOGIN] Unknown error, full details:", {
+      message: error instanceof Error ? error.message : String(error),
+      error
+    });
     return { status: "failed" };
   }
 };
@@ -69,30 +106,51 @@ export const register = async (
   formData: FormData,
 ): Promise<RegisterActionState> => {
   try {
+    console.log("[REGISTER] Starting registration process");
+    
     const validatedData = authFormSchema.parse({
       email: formData.get("email"),
       password: formData.get("password"),
     });
+    console.log("[REGISTER] Form validated:", { email: validatedData.email });
 
     let [user] = await getUser(validatedData.email);
+    console.log("[REGISTER] User lookup result:", { 
+      userExists: !!user,
+      email: validatedData.email 
+    });
 
     if (user) {
+      console.log("[REGISTER] User already exists, returning user_exists");
       return { status: "user_exists" } as RegisterActionState;
     } else {
+      console.log("[REGISTER] Creating new user:", { email: validatedData.email });
       await createUser(validatedData.email, validatedData.password);
+      console.log("[REGISTER] User created successfully");
+
+      console.log("[REGISTER] Attempting to sign in user");
       await signIn("credentials", {
         email: validatedData.email,
         password: validatedData.password,
         redirect: false,
       });
+      console.log("[REGISTER] Sign in successful");
 
+      console.log("[REGISTER] Returning success status");
       return { status: "success" };
     }
   } catch (error) {
+    console.error("[REGISTER] Error occurred:", error);
+    
     if (error instanceof z.ZodError) {
+      console.error("[REGISTER] Validation error:", error.errors);
       return { status: "invalid_data" };
     }
 
+    console.error("[REGISTER] Unknown error, full details:", {
+      message: error instanceof Error ? error.message : String(error),
+      error
+    });
     return { status: "failed" };
   }
 };
