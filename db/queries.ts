@@ -21,7 +21,10 @@ export function getDb() {
     if (!dbUrl) {
       throw new Error("DATABASE_URL or POSTGRES_URL environment variable is not set");
     }
-    client = postgres(`${dbUrl}?sslmode=require`);
+    // Don't append sslmode if it's already in the URL
+    const connectionUrl = dbUrl.includes('sslmode') ? dbUrl : `${dbUrl}?sslmode=require`;
+    console.log("[DB] Connecting to database:", connectionUrl.replace(/:[^:]*@/, ':***@'));
+    client = postgres(connectionUrl);
     dbInstance = drizzle(client, { schema });
   }
   return dbInstance;
