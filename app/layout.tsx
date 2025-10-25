@@ -10,8 +10,10 @@ import { GlassNav } from "@/components/custom/glass-nav";
 
 import "./globals.css";
 
+const baseUrl = process.env.NEXTAUTH_URL || "https://mytx.one";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mytx.one"),
+  metadataBase: new URL(baseUrl),
   title: "MYTX.one - AI-Powered Digital Services",
   description: "Professional AI-powered digital services platform for content creation, automation, and business solutions.",
   icons: {

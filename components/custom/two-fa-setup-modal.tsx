@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -26,6 +26,20 @@ export function TwoFASetupModal({
   isMandatory = false,
 }: TwoFASetupModalProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const popupRef = useRef<Window | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup popup and poll on unmount
+  useEffect(() => {
+    return () => {
+      if (popupRef.current && !popupRef.current.closed) {
+        popupRef.current.close();
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleSetup2FA = async () => {
     setIsLoading(true);
@@ -49,10 +63,36 @@ export function TwoFASetupModal({
       } else if (response.status === 401) {
         toast.error("Authentication failed. Please try logging in again.");
       } else if (data.deepLink) {
-        // Redirect to Legitate for setup
-        toast.success("Redirecting to 2FA setup...");
-        // Open in new window so user can set up and come back
-        window.open(data.deepLink, "_blank");
+        // Open in popup window like PayPal or Google login
+        const width = 600;
+        const height = 700;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+        
+        popupRef.current = window.open(
+          data.deepLink,
+          "legitateSetup2FA",
+          `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+        );
+
+        if (!popupRef.current) {
+          toast.error("Failed to open 2FA setup window. Please check your popup blocker settings.");
+          setIsLoading(false);
+          return;
+        }
+
+        toast.info("Setting up 2FA in popup window...");
+
+        // Poll to check if popup closed (user completed setup or cancelled)
+        pollIntervalRef.current = setInterval(() => {
+          if (popupRef.current && popupRef.current.closed) {
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+            }
+            // User closed the popup - check if setup was completed by querying the backend
+            checkSetupStatus();
+          }
+        }, 500);
       } else {
         toast.error(data.error || "Failed to initialize 2FA setup");
       }
@@ -61,6 +101,30 @@ export function TwoFASetupModal({
       toast.error("Failed to set up 2FA");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkSetupStatus = async () => {
+    try {
+      // Query the backend to check if 2FA setup was completed
+      const response = await fetch("/api/auth/check-2fa-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      const data = await response.json();
+
+      if (data.setupComplete) {
+        toast.success("2FA setup completed successfully!");
+        onClose();
+      } else {
+        toast.info("2FA setup not completed yet");
+      }
+    } catch (error) {
+      console.error("Error checking 2FA status:", error);
     }
   };
 
@@ -91,9 +155,9 @@ export function TwoFASetupModal({
             <p className="text-sm font-medium">Steps to enable 2FA:</p>
             <ol className="list-decimal list-inside space-y-1 text-sm text-zinc-400">
               <li>Click the button below</li>
-              <li>You&apos;ll be redirected to our authentication provider</li>
+              <li>A secure popup window will open</li>
               <li>Scan the QR code with your authenticator app</li>
-              <li>Complete the setup and return to continue</li>
+              <li>Complete the setup and close the window to continue</li>
             </ol>
           </div>
 
@@ -113,7 +177,7 @@ export function TwoFASetupModal({
               disabled={isLoading}
               className={isMandatory ? "w-full" : "flex-1"}
             >
-              {isLoading ? "Setting up..." : "Enable 2FA"}
+              {isLoading ? "Opening setup..." : "Enable 2FA"}
             </Button>
           </div>
         </div>
