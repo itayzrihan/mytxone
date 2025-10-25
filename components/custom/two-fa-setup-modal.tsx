@@ -62,7 +62,7 @@ export function TwoFASetupModal({
 
         <div className="space-y-4 py-4">
           <p className="text-sm text-zinc-400">
-            Two-factor authentication adds an extra layer of security to your account. You'll need an authenticator app like Google Authenticator, Authy, or Microsoft Authenticator.
+            Two-factor authentication adds an extra layer of security to your account. You&apos;ll need an authenticator app like Google Authenticator, Authy, or Microsoft Authenticator.
           </p>
 
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-sm text-blue-300">
@@ -73,7 +73,7 @@ export function TwoFASetupModal({
             <p className="text-sm font-medium">Steps to enable 2FA:</p>
             <ol className="list-decimal list-inside space-y-1 text-sm text-zinc-400">
               <li>Click the button below</li>
-              <li>You'll be redirected to our authentication provider</li>
+              <li>You&apos;ll be redirected to our authentication provider</li>
               <li>Scan the QR code with your authenticator app</li>
               <li>Complete the setup and return to continue</li>
             </ol>

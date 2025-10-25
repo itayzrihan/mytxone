@@ -915,6 +915,10 @@ export async function getAllUsers(): Promise<Array<SafeUser>> {
       subscription: user.subscription,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      totpSecret: user.totpSecret,
+      totpEnabled: user.totpEnabled,
+      totpSeedId: user.totpSeedId,
+      totpSetupCompleted: user.totpSetupCompleted,
       // Exclude password field for security
     }).from(user).orderBy(desc(user.createdAt));
   } catch (error) {
@@ -932,6 +936,10 @@ export async function getUserById(userId: string): Promise<SafeUser | null> {
       subscription: user.subscription,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      totpSecret: user.totpSecret,
+      totpEnabled: user.totpEnabled,
+      totpSeedId: user.totpSeedId,
+      totpSetupCompleted: user.totpSetupCompleted,
       // Exclude password field for security
     }).from(user).where(eq(user.id, userId));
     return users[0] || null;
@@ -956,6 +964,10 @@ export async function updateUserRole(userId: string, role: 'user' | 'admin'): Pr
         subscription: user.subscription,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        totpSecret: user.totpSecret,
+        totpEnabled: user.totpEnabled,
+        totpSeedId: user.totpSeedId,
+        totpSetupCompleted: user.totpSetupCompleted,
       });
     return updatedUser || null;
   } catch (error) {
@@ -979,6 +991,10 @@ export async function updateUserSubscription(userId: string, subscription: 'free
         subscription: user.subscription,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        totpSecret: user.totpSecret,
+        totpEnabled: user.totpEnabled,
+        totpSeedId: user.totpSeedId,
+        totpSetupCompleted: user.totpSetupCompleted,
       });
     return updatedUser || null;
   } catch (error) {
