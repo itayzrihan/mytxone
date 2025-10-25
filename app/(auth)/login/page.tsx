@@ -15,6 +15,7 @@ export default function Page() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [show2FA, setShow2FA] = useState(false);
 
   const [state, formAction] = useActionState<LoginActionState, FormData>(
@@ -26,20 +27,23 @@ export default function Page() {
 
   useEffect(() => {
     if (state.status === "failed") {
-      toast.error("Invalid credentials!");
+      toast.error(state.error || "Invalid credentials!");
     } else if (state.status === "invalid_data") {
       toast.error("Failed validating your submission!");
     } else if (state.status === "2fa_required") {
       // Show 2FA verification form
       setShow2FA(true);
       toast.info("Enter your 2FA code from your authenticator app");
-    } else if (state.status === "success") {
+    } else if (state.status === "success" || state.status === "2fa_verified") {
       router.refresh();
     }
-  }, [state.status, router, email]);
+  }, [state, router]);
 
   const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get("email") as string);
+    const formEmail = formData.get("email") as string;
+    const formPassword = formData.get("password") as string;
+    setEmail(formEmail);
+    setPassword(formPassword);
     formAction(formData);
   };
 
@@ -55,7 +59,12 @@ export default function Page() {
               </p>
             </div>
             <TwoFAVerificationForm 
-              onSuccess={() => router.refresh()}
+              email={email}
+              password={password}
+              onSuccess={() => {
+                toast.success("Successfully logged in!");
+                router.push("/");
+              }}
             />
           </>
         ) : (

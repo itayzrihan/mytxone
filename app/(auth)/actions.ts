@@ -16,6 +16,7 @@ import {
   updateApiKeyLastUsed // Also needed for validation logic if kept here
   // Import the new API key query functions
 } from "@/db/queries";
+import { rateLimit } from "@/lib/redis-ratelimit";
 
 import { auth, signIn, signOut } from "./auth";
 
@@ -24,10 +25,66 @@ const authFormSchema = z.object({
   password: z.string().min(6),
 });
 
+// Rate limiting constants (10 attempts per 15 minutes)
+const RATE_LIMIT_ATTEMPTS = 10;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 export interface LoginActionState {
-  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data" | "2fa_required";
+  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data" | "2fa_required" | "2fa_verified";
   userEmail?: string;
+  error?: string;
 }
+
+/**
+ * Verify TOTP code and complete login
+ * This action is called after user enters 2FA code during login
+ */
+export const verifyTOTPAndLogin = async (
+  formData: FormData,
+): Promise<LoginActionState> => {
+  try {
+    console.log("[VERIFY_TOTP] Starting TOTP verification for login");
+    
+    const email = formData.get("email") as string;
+    const totpCode = formData.get("totpCode") as string;
+    const password = formData.get("password") as string;
+
+    if (!email || !totpCode || !password) {
+      console.log("[VERIFY_TOTP] Missing required fields");
+      return { status: "invalid_data" };
+    }
+
+    // Verify TOTP code first
+    const totpResponse = await fetch(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/verify-2fa-internal`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        email,
+        totpCode 
+      }),
+    });
+
+    if (!totpResponse.ok) {
+      console.log("[VERIFY_TOTP] TOTP verification failed");
+      return { status: "failed" };
+    }
+
+    console.log("[VERIFY_TOTP] TOTP verified successfully, now signing in");
+    
+    // TOTP verified, now sign in with credentials
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    console.log("[VERIFY_TOTP] Sign in successful");
+    return { status: "2fa_verified" };
+  } catch (error) {
+    console.error("[VERIFY_TOTP] Error occurred:", error);
+    return { status: "failed" };
+  }
+};
 
 export const login = async (
   _: LoginActionState,
@@ -41,6 +98,21 @@ export const login = async (
       password: formData.get("password"),
     });
     console.log("[LOGIN] Form validated:", { email: validatedData.email });
+
+    // Rate limiting: 10 attempts per 15 minutes per email
+    const { success, remaining } = await rateLimit(
+      `login:${validatedData.email}`,
+      RATE_LIMIT_ATTEMPTS,
+      RATE_LIMIT_WINDOW_MS
+    );
+    
+    if (!success) {
+      console.warn(`[LOGIN] Rate limit exceeded for ${validatedData.email}`);
+      return { 
+        status: "failed",
+        error: "Too many login attempts. Please try again in 15 minutes." 
+      };
+    }
 
     // Check if user exists and has 2FA enabled BEFORE signing in
     const [user] = await getUser(validatedData.email);
@@ -56,9 +128,10 @@ export const login = async (
       return { status: "failed" };
     }
 
-    // If user has 2FA enabled, return 2fa_required instead of signing in
+    // CRITICAL: If user has 2FA enabled, MUST verify before creating session
     if (user.totpEnabled) {
       console.log("[LOGIN] User has 2FA enabled, returning 2fa_required");
+      // Do NOT sign in yet - user must verify TOTP first
       return {
         status: "2fa_required",
         userEmail: validatedData.email,
@@ -99,6 +172,8 @@ export interface RegisterActionState {
     | "failed"
     | "user_exists"
     | "invalid_data";
+  error?: string;
+  data?: { email: string };
 }
 
 export const register = async (
@@ -114,6 +189,21 @@ export const register = async (
     });
     console.log("[REGISTER] Form validated:", { email: validatedData.email });
 
+    // Rate limiting: 10 attempts per 15 minutes per email
+    const { success } = await rateLimit(
+      `register:${validatedData.email}`,
+      RATE_LIMIT_ATTEMPTS,
+      RATE_LIMIT_WINDOW_MS
+    );
+    
+    if (!success) {
+      console.warn(`[REGISTER] Rate limit exceeded for ${validatedData.email}`);
+      return { 
+        status: "failed",
+        error: "Too many registration attempts. Please try again in 15 minutes."
+      };
+    }
+
     let [user] = await getUser(validatedData.email);
     console.log("[REGISTER] User lookup result:", { 
       userExists: !!user,
@@ -128,16 +218,14 @@ export const register = async (
       await createUser(validatedData.email, validatedData.password);
       console.log("[REGISTER] User created successfully");
 
-      console.log("[REGISTER] Attempting to sign in user");
-      await signIn("credentials", {
-        email: validatedData.email,
-        password: validatedData.password,
-        redirect: false,
-      });
-      console.log("[REGISTER] Sign in successful");
-
-      console.log("[REGISTER] Returning success status");
-      return { status: "success" };
+      // IMPORTANT: Do NOT sign in user yet
+      // User MUST complete 2FA setup before they can log in
+      // Return success to trigger 2FA setup modal
+      console.log("[REGISTER] Returning success status - user must complete 2FA setup");
+      return { 
+        status: "success",
+        data: { email: validatedData.email }
+      };
     }
   } catch (error) {
     console.error("[REGISTER] Error occurred:", error);
@@ -151,7 +239,10 @@ export const register = async (
       message: error instanceof Error ? error.message : String(error),
       error
     });
-    return { status: "failed" };
+    return { 
+      status: "failed",
+      error: error instanceof Error ? error.message : "An error occurred during registration"
+    };
   }
 };
 

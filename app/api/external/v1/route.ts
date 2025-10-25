@@ -1,5 +1,3 @@
-import { Ratelimit } from "@upstash/ratelimit"; // Add import
-import { Redis } from "@upstash/redis"; // Add import
 import { convertToCoreMessages, Message, streamText } from "ai"; // Import AI SDK components
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod'; // Import zod for basic validation
@@ -11,36 +9,11 @@ import {
   saveMemoryAction,
 } from "@/ai/actions";
 import { findValidApiKey, updateApiKeyLastUsed } from '@/db/queries'; // Import DB functions
+import { rateLimit } from "@/lib/redis-ratelimit";
 
-// Initialize Upstash Redis client and Ratelimit conditionally
-const REDIS_URL = process.env.KV_REST_API_URL || process.env.KV_URL;
-const REDIS_TOKEN = process.env.KV_REST_API_TOKEN;
-
-let redis: Redis | null = null;
-let ratelimit: Ratelimit | null = null;
-
-// Only initialize Redis if we have proper credentials
-if (REDIS_URL && REDIS_TOKEN) {
-  try {
-    redis = new Redis({
-      url: REDIS_URL,
-      token: REDIS_TOKEN
-    });
-    ratelimit = new Ratelimit({
-      redis: redis,
-      limiter: Ratelimit.slidingWindow(200, "1 d"), // 200 requests per 1 day per user (identified by userId)
-      analytics: true,
-      prefix: "@upstash/ratelimit_external_v1", // Use a distinct prefix for this endpoint
-    });
-    console.log('[External API] Redis rate limiting initialized');
-  } catch (error) {
-    console.warn('[External API] Failed to initialize Redis, rate limiting disabled:', error);
-    redis = null;
-    ratelimit = null;
-  }
-} else {
-  console.log('[External API] Redis credentials not found, rate limiting disabled');
-}
+// Rate limiting: 200 requests per day per user
+const EXTERNAL_API_RATE_LIMIT = 200;
+const EXTERNAL_API_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const MAX_INPUT_LENGTH = 10000; // Define max input length
 
@@ -103,30 +76,24 @@ export async function POST(req: NextRequest) {
   console.log(`API request authorized for user: ${userId}`);
 
   // --- Rate Limiting Logic ---
-  // Use the validated userId as the identifier for rate limiting
-  if (ratelimit) {
-    try {
-      const { success, limit, remaining, reset } = await ratelimit.limit(userId);
+  try {
+    const { success } = await rateLimit(userId, EXTERNAL_API_RATE_LIMIT, EXTERNAL_API_WINDOW_MS);
 
-      if (!success) {
-        console.log(`Rate limit exceeded for user: ${userId}`);
-        return new Response("Rate limit exceeded. Please try again later.", {
-          status: 429,
-          headers: {
-            "X-RateLimit-Limit": limit.toString(),
-            "X-RateLimit-Remaining": remaining.toString(),
-            "X-RateLimit-Reset": reset.toString(),
-          },
-        });
-      }
-      console.log(`Rate limit check passed for user: ${userId}. Remaining: ${remaining}`);
-    } catch (error) {
-      console.warn('[External API] Rate limiting check failed, proceeding without rate limit:', error);
-      // Continue without rate limiting if Redis fails
+    if (!success) {
+      console.log(`Rate limit exceeded for user: ${userId}`);
+      return new Response("Rate limit exceeded. Please try again later.", {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": EXTERNAL_API_RATE_LIMIT.toString(),
+        },
+      });
     }
-  } else {
-    console.log('[External API] Rate limiting disabled - no Redis configuration');
+    console.log(`Rate limit check passed for user: ${userId}`);
+  } catch (error) {
+    console.warn('[External API] Rate limiting check failed, proceeding without rate limit:', error);
+    // Continue without rate limiting if check fails
   }
+
   // --- End Rate Limiting Logic ---
 
   try {

@@ -6,19 +6,8 @@ import { authConfig } from "@/app/(auth)/auth.config";
 
 const { auth: nextAuthMiddleware } = NextAuth(authConfig);
 
-// List your allowed origins here
-const ALLOWED_ORIGINS = [
-  "https://heybos.me",
-  "https://mytx.one",
-  // Allow localhost for development
-  "http://localhost:8081",
-  "http://localhost:3000",
-  "http://localhost:3001", // Added for dev server
-  "http://127.0.0.1:8081",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:3001", // Added for dev server
-  // add more if needed
-];
+// List your allowed origins here - read from environment variable
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean).map((origin) => origin.trim());
 
 // Helper to set CORS headers on any NextResponse
 function applyCors(res: NextResponse, origin: string | null) {

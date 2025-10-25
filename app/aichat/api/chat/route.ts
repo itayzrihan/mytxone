@@ -1,5 +1,3 @@
-import { Ratelimit } from "@upstash/ratelimit"; // Add import
-import { Redis } from "@upstash/redis"; // Add import
 import { convertToCoreMessages, Message, streamText } from "ai";
 import { z } from "zod";
 
@@ -35,38 +33,11 @@ import {
   saveChat,
 } from "@/db/queries";
 import { generateUUID } from "@/lib/utils";
+import { rateLimit } from "@/lib/redis-ratelimit";
 
-// Initialize Upstash Redis client and Ratelimit conditionally
-// Use existing Vercel KV environment variables instead of UPSTASH_REDIS_REST_* variables
-const REDIS_URL = process.env.KV_REST_API_URL || process.env.KV_URL;
-const REDIS_TOKEN = process.env.KV_REST_API_TOKEN;
-const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
-
-let redis: Redis | null = null;
-let ratelimit: Ratelimit | null = null;
-
-// Only initialize Redis if we have proper credentials
-if (REDIS_URL && REDIS_TOKEN) {
-  try {
-    redis = new Redis({
-      url: REDIS_URL,
-      token: REDIS_TOKEN
-    });
-    ratelimit = new Ratelimit({
-      redis: redis,
-      limiter: Ratelimit.slidingWindow(200, "1 d"), // 200 requests per 1 day
-      analytics: true,
-      prefix: "@upstash/ratelimit",
-    });
-    console.log('[Chat API] Redis rate limiting initialized');
-  } catch (error) {
-    console.warn('[Chat API] Failed to initialize Redis, rate limiting disabled:', error);
-    redis = null;
-    ratelimit = null;
-  }
-} else {
-  console.log('[Chat API] Redis credentials not found, rate limiting disabled for development');
-}
+// Rate limiting constants
+const AICHAT_RATE_LIMIT = 200; // 200 requests per day
+const AICHAT_RATE_WINDOW_MS = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
 const MAX_INPUT_LENGTH = 10000; // Define max input length
 
@@ -83,31 +54,17 @@ export async function POST(request: Request) {
   const userId = session.user.id;
 
   // --- Rate Limiting Logic ---
-  let rateLimitHeaders = {};
-  
-  if (ratelimit) {
-    try {
-      const { success, limit, remaining, reset } = await ratelimit.limit(userId);
+  try {
+    const { success } = await rateLimit(userId, AICHAT_RATE_LIMIT, AICHAT_RATE_WINDOW_MS);
 
-      // Prepare headers for both success and failure cases
-      rateLimitHeaders = {
-        "X-RateLimit-Limit": limit.toString(),
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": reset.toString(),
-      };
-
-      if (!success) {
-        return new Response("Rate limit exceeded. Please try again later.", {
-          status: 429,
-          headers: rateLimitHeaders, // Include headers in error response
-        });
-      }
-    } catch (error) {
-      console.warn('[Chat API] Rate limiting check failed, proceeding without rate limit:', error);
-      // Continue without rate limiting if Redis fails
+    if (!success) {
+      return new Response("Rate limit exceeded. Please try again later.", {
+        status: 429,
+      });
     }
-  } else {
-    console.log('[Chat API] Rate limiting disabled - no Redis configuration');
+  } catch (error) {
+    console.warn('[Chat API] Rate limiting check failed, proceeding without rate limit:', error);
+    // Continue without rate limiting if there's an error
   }
   // --- End Rate Limiting Logic ---
 
@@ -553,8 +510,8 @@ export async function POST(request: Request) {
     },
   });
 
-  // Return the stream response, adding the rate limit headers
-  return result.toDataStreamResponse({ headers: rateLimitHeaders });
+  // Return the stream response
+  return result.toDataStreamResponse();
 }
 
 export async function DELETE(request: Request) {

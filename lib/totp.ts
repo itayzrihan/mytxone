@@ -164,20 +164,32 @@ export function generateTOTPSecret(): string {
 /**
  * Create deep link URL for Simple TOTP (Legitate)
  * Lets Simple TOTP generate the seed automatically (recommended)
+ * 
+ * @param email - User's email
+ * @param callbackUrl - URL to redirect after 2FA setup
+ * @param serviceName - Service name (defaults to mytx.one)
+ * @param regToken - Optional registration token to track this setup
  */
 export function createTOTPDeepLink(
   email: string,
   callbackUrl: string,
-  serviceName: string = "mytx.one"
+  serviceName: string = "mytx.one",
+  regToken?: string
 ): string {
-  const params = new URLSearchParams({
+  const params: Record<string, string> = {
     action: "add",
     service: serviceName,
     account: email,
     callback: callbackUrl,
-  });
+  };
 
-  return `https://legitate.com/dashboard/simple-totp?${params.toString()}`;
+  // Add registration token if provided
+  if (regToken) {
+    params.regToken = regToken;
+  }
+
+  const urlParams = new URLSearchParams(params);
+  return `https://legitate.com/dashboard/simple-totp?${urlParams.toString()}`;
 }
 
 /**
@@ -254,12 +266,20 @@ export function generateRecoveryCodes(count: number = 10): string[] {
 
 /**
  * Get setup URL with deep link format for verification
+ * 
+ * @param baseUrl - Base URL of your app
+ * @param email - User's email
+ * @param serviceName - Service name
+ * @param callbackUrl - Optional custom callback URL
+ * @param regToken - Optional registration token for tracking
  */
 export function getTOTPSetupURL(
   baseUrl: string,
   email: string,
-  serviceName: string = "mytx.one"
+  serviceName: string = "mytx.one",
+  callbackUrl?: string,
+  regToken?: string
 ): string {
-  const callbackUrl = `${baseUrl}/api/auth/totp-callback`;
-  return createTOTPDeepLink(email, callbackUrl, serviceName);
+  const actualCallbackUrl = callbackUrl || `${baseUrl}/api/auth/totp-callback`;
+  return createTOTPDeepLink(email, actualCallbackUrl, serviceName, regToken);
 }

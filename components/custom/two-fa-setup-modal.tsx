@@ -16,25 +16,39 @@ interface TwoFASetupModalProps {
   isOpen: boolean;
   onClose: () => void;
   userEmail: string;
+  isMandatory?: boolean; // If true, user cannot close modal
 }
 
 export function TwoFASetupModal({
   isOpen,
   onClose,
   userEmail,
+  isMandatory = false,
 }: TwoFASetupModalProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSetup2FA = async () => {
     setIsLoading(true);
     try {
+      // Send email as identifier + use email as token for registration flow
       const response = await fetch("/api/auth/setup-2fa", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          token: userEmail, // Simple token: just the email itself
+        }),
       });
 
       const data = await response.json();
 
-      if (data.deepLink) {
+      if (response.status === 429) {
+        toast.error("Too many 2FA setup attempts. Please try again later.");
+      } else if (response.status === 401) {
+        toast.error("Authentication failed. Please try logging in again.");
+      } else if (data.deepLink) {
         // Redirect to Legitate for setup
         toast.success("Redirecting to 2FA setup...");
         // Open in new window so user can set up and come back
@@ -51,12 +65,16 @@ export function TwoFASetupModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={isMandatory ? undefined : onClose}>
+      <DialogContent className="sm:max-w-md" onPointerDownOutside={isMandatory ? (e) => e.preventDefault() : undefined}>
         <DialogHeader>
-          <DialogTitle>Enable Two-Factor Authentication</DialogTitle>
+          <DialogTitle>
+            {isMandatory ? "Enable Two-Factor Authentication (Required)" : "Enable Two-Factor Authentication"}
+          </DialogTitle>
           <DialogDescription>
-            Secure your account with two-factor authentication (2FA)
+            {isMandatory 
+              ? "You must enable 2FA to complete registration and access your account"
+              : "Secure your account with two-factor authentication (2FA)"}
           </DialogDescription>
         </DialogHeader>
 
@@ -80,18 +98,20 @@ export function TwoFASetupModal({
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
+            {!isMandatory && (
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+            )}
             <Button
               onClick={handleSetup2FA}
               disabled={isLoading}
-              className="flex-1"
+              className={isMandatory ? "w-full" : "flex-1"}
             >
               {isLoading ? "Setting up..." : "Enable 2FA"}
             </Button>

@@ -487,3 +487,34 @@ export const quoteResponsesRelations = relations(quoteResponses, ({ one }) => ({
     references: [quoteTemplates.id],
   }),
 }));
+
+// Registration tokens for 2FA setup tracking
+export const registrationToken = pgTable("RegistrationToken", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  email: varchar("email", { length: 255 }).notNull(),
+  serviceName: varchar("service_name", { length: 255 }).notNull(),
+  callbackUrl: text("callback_url"),
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // 'pending', 'completed', 'rejected', 'expired'
+  seedId: varchar("seed_id", { length: 255 }),
+  totpSeed: text("totp_seed"), // Encrypted TOTP secret
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export type RegistrationToken = InferSelectModel<typeof registrationToken>;
+
+export const registrationTokenRelations = relations(
+  registrationToken,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [registrationToken.userId],
+      references: [user.id],
+    }),
+  })
+);
+

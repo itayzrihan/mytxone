@@ -9,11 +9,15 @@ import { Card } from "@/components/ui/card";
 interface TwoFAVerificationFormProps {
   onSuccess?: () => void;
   onVerificationComplete?: (verified: boolean) => void;
+  email?: string;
+  password?: string;
 }
 
 export function TwoFAVerificationForm({
   onSuccess,
   onVerificationComplete,
+  email,
+  password,
 }: TwoFAVerificationFormProps) {
   const [totpCode, setTotpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,12 +27,12 @@ export function TwoFAVerificationForm({
     e.preventDefault();
     setError(null);
 
-    if (!totpCode || totpCode.length !== 8) {
-      setError("TOTP code must be 8 digits");
+    if (!totpCode || totpCode.length < 6) {
+      setError("TOTP code must be at least 6 digits");
       return;
     }
 
-    if (!/^\d{8}$/.test(totpCode)) {
+    if (!/^\d+$/.test(totpCode)) {
       setError("TOTP code must contain only numbers");
       return;
     }
@@ -36,35 +40,90 @@ export function TwoFAVerificationForm({
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/verify-2fa", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ totpCode }),
-      });
+      // If email and password provided, use the login endpoint with verification
+      if (email && password) {
+        const response = await fetch("/api/auth/verify-2fa-internal", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, totpCode }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok && data.success) {
-        toast.success("Two-factor authentication verified!");
-        if (onVerificationComplete) {
-          onVerificationComplete(true);
+        if (!response.ok) {
+          const errorMsg = data.error || "Verification failed";
+          setError(errorMsg);
+          toast.error(errorMsg);
+          if (onVerificationComplete) {
+            onVerificationComplete(false);
+          }
+
+          // Special handling for rate limiting
+          if (response.status === 429) {
+            setError("Too many attempts. Please try again in 15 minutes.");
+          }
+          return;
         }
-        if (onSuccess) {
-          onSuccess();
+
+        // TOTP verified, now complete login
+        if (data.success) {
+          // Sign in with the verified 2FA
+          const loginResponse = await fetch("api/auth/signin-with-2fa", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (loginResponse.ok) {
+            toast.success("Two-factor authentication verified!");
+            if (onVerificationComplete) {
+              onVerificationComplete(true);
+            }
+            if (onSuccess) {
+              onSuccess();
+            }
+          } else {
+            const errorMsg = "Login failed after 2FA verification";
+            setError(errorMsg);
+            toast.error(errorMsg);
+          }
         }
       } else {
-        const errorMsg = data.error || "Verification failed";
-        setError(errorMsg);
-        toast.error(errorMsg);
-        if (onVerificationComplete) {
-          onVerificationComplete(false);
-        }
+        // Fallback: Use the regular verified endpoint for authenticated sessions
+        const response = await fetch("/api/auth/verify-2fa", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ totpCode }),
+        });
 
-        // Special handling for rate limiting
-        if (response.status === 429) {
-          setError("Too many attempts. Please try again in 15 minutes.");
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          toast.success("Two-factor authentication verified!");
+          if (onVerificationComplete) {
+            onVerificationComplete(true);
+          }
+          if (onSuccess) {
+            onSuccess();
+          }
+        } else {
+          const errorMsg = data.error || "Verification failed";
+          setError(errorMsg);
+          toast.error(errorMsg);
+          if (onVerificationComplete) {
+            onVerificationComplete(false);
+          }
+
+          // Special handling for rate limiting
+          if (response.status === 429) {
+            setError("Too many attempts. Please try again in 15 minutes.");
+          }
         }
       }
     } catch (err) {
@@ -83,7 +142,7 @@ export function TwoFAVerificationForm({
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-white">Verify 2FA</h2>
           <p className="text-sm text-zinc-400">
-            Enter the 6-digit code from your authenticator app
+            Enter the 8-digit code from your authenticator
           </p>
         </div>
 
@@ -118,7 +177,7 @@ export function TwoFAVerificationForm({
           <div className="flex gap-3 pt-2">
             <Button
               type="submit"
-              disabled={isLoading || totpCode.length !== 8}
+              disabled={isLoading || totpCode.length < 6}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isLoading ? "Verifying..." : "Verify"}
@@ -126,7 +185,24 @@ export function TwoFAVerificationForm({
           </div>
         </form>
 
-        <div className="pt-4 border-t border-white/10">
+        <div className="pt-4 border-t border-white/10 space-y-3">
+          <button
+            type="button"
+            onClick={() => {
+              const width = 600;
+              const height = 700;
+              const left = window.screen.width / 2 - width / 2;
+              const top = window.screen.height / 2 - height / 2;
+              window.open(
+                'https://legitate.com/dashboard/simple-totp',
+                'legitateTotp',
+                `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+              );
+            }}
+            className="w-full text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
+          >
+            Open Legitate TOTP Dashboard
+          </button>
           <p className="text-xs text-zinc-500 text-center">
             Code expires every 30 seconds
           </p>
