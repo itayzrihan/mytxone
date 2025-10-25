@@ -17,12 +17,20 @@ import {
   // Import the new API key query functions
 } from "@/db/queries";
 import { rateLimit } from "@/lib/redis-ratelimit";
+import { usernameToEmail, validateUsernameWithMessage } from "@/lib/username-utils";
 
 import { auth, signIn, signOut } from "./auth";
 
-const authFormSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+// Login schema: accepts username or email
+const loginFormSchema = z.object({
+  username: z.string().min(1, "Username or email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+// Registration schema: username only
+const registrationFormSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters").max(32, "Username must not exceed 32 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 // Rate limiting constants (10 attempts per 15 minutes)
@@ -99,21 +107,24 @@ export const login = async (
   try {
     console.log("[LOGIN] Starting login process");
     
-    const validatedData = authFormSchema.parse({
-      email: formData.get("email"),
+    const validatedData = loginFormSchema.parse({
+      username: formData.get("username"),
       password: formData.get("password"),
     });
-    console.log("[LOGIN] Form validated:", { email: validatedData.email });
+    
+    // Convert username to email for internal use
+    const email = usernameToEmail(validatedData.username);
+    console.log("[LOGIN] Form validated:", { username: validatedData.username, email });
 
     // Rate limiting: 10 attempts per 15 minutes per email
     const { success, remaining } = await rateLimit(
-      `login:${validatedData.email}`,
+      `login:${email}`,
       RATE_LIMIT_ATTEMPTS,
       RATE_LIMIT_WINDOW_MS
     );
     
     if (!success) {
-      console.warn(`[LOGIN] Rate limit exceeded for ${validatedData.email}`);
+      console.warn(`[LOGIN] Rate limit exceeded for ${email}`);
       return { 
         status: "failed",
         error: "Too many login attempts. Please try again in 15 minutes." 
@@ -121,10 +132,10 @@ export const login = async (
     }
 
     // Check if user exists and has 2FA enabled BEFORE signing in
-    const [user] = await getUser(validatedData.email);
+    const [user] = await getUser(email);
     console.log("[LOGIN] User lookup result:", { 
       userExists: !!user,
-      email: validatedData.email,
+      email: email,
       totpEnabled: user?.totpEnabled 
     });
 
@@ -140,14 +151,14 @@ export const login = async (
       // Do NOT sign in yet - user must verify TOTP first
       return {
         status: "2fa_required",
-        userEmail: validatedData.email,
+        userEmail: email,
       };
     }
 
     console.log("[LOGIN] No 2FA enabled, proceeding with normal login");
     // No 2FA - proceed with normal login
     await signIn("credentials", {
-      email: validatedData.email,
+      email: email,
       password: validatedData.password,
       redirect: false,
     });
@@ -189,39 +200,42 @@ export const register = async (
   try {
     console.log("[REGISTER] Starting registration process");
     
-    const validatedData = authFormSchema.parse({
-      email: formData.get("email"),
+    const validatedData = registrationFormSchema.parse({
+      username: formData.get("username"),
       password: formData.get("password"),
     });
-    console.log("[REGISTER] Form validated:", { email: validatedData.email });
+    
+    // Convert username to email for internal use
+    const email = usernameToEmail(validatedData.username);
+    console.log("[REGISTER] Form validated:", { username: validatedData.username, email });
 
     // Rate limiting: 10 attempts per 15 minutes per email
     const { success } = await rateLimit(
-      `register:${validatedData.email}`,
+      `register:${email}`,
       RATE_LIMIT_ATTEMPTS,
       RATE_LIMIT_WINDOW_MS
     );
     
     if (!success) {
-      console.warn(`[REGISTER] Rate limit exceeded for ${validatedData.email}`);
+      console.warn(`[REGISTER] Rate limit exceeded for ${email}`);
       return { 
         status: "failed",
         error: "Too many registration attempts. Please try again in 15 minutes."
       };
     }
 
-    let [user] = await getUser(validatedData.email);
+    let [user] = await getUser(email);
     console.log("[REGISTER] User lookup result:", { 
       userExists: !!user,
-      email: validatedData.email 
+      email: email
     });
 
     if (user) {
       console.log("[REGISTER] User already exists, returning user_exists");
       return { status: "user_exists" } as RegisterActionState;
     } else {
-      console.log("[REGISTER] Creating new user:", { email: validatedData.email });
-      await createUser(validatedData.email, validatedData.password);
+      console.log("[REGISTER] Creating new user:", { email });
+      await createUser(email, validatedData.password);
       console.log("[REGISTER] User created successfully");
 
       // IMPORTANT: Do NOT sign in user yet
@@ -230,7 +244,7 @@ export const register = async (
       console.log("[REGISTER] Returning success status - user must complete 2FA setup");
       return { 
         status: "success",
-        data: { email: validatedData.email }
+        data: { email }
       };
     }
   } catch (error) {

@@ -10,10 +10,12 @@ import { SubmitButton } from "@/components/custom/submit-button";
 import { TwoFASetupModal } from "@/components/custom/two-fa-setup-modal";
 
 import { register, RegisterActionState } from "../actions";
+import { usernameToEmail } from "@/lib/username-utils";
 
 export default function Page() {
   const router = useRouter();
 
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [hasPendingRegistration, setHasPendingRegistration] = useState(false);
@@ -42,7 +44,9 @@ export default function Page() {
   }, [state, router, email]);
 
   const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get("email") as string);
+    const formUsername = formData.get("username") as string;
+    setUsername(formUsername);
+    setEmail(usernameToEmail(formUsername));
     formAction(formData);
   };
 
@@ -83,10 +87,10 @@ export default function Page() {
             <div className="flex flex-col items-center justify-center gap-2 px-4 text-center sm:px-16">
               <h3 className="text-xl font-semibold dark:text-zinc-50">Sign Up</h3>
               <p className="text-sm text-gray-500 dark:text-zinc-400">
-                Create an account with your email and password
+                Create an account with your username and password
               </p>
             </div>
-            <AuthForm action={handleSubmit} defaultEmail={email}>
+            <AuthForm action={handleSubmit} defaultUsername={username}>
               <SubmitButton>Sign Up</SubmitButton>
               <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
                 {"Already have an account? "}

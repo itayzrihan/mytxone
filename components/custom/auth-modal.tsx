@@ -9,6 +9,7 @@ import { SubmitButton } from "./submit-button";
 import { TwoFAVerificationForm } from "./two-fa-verification-form";
 import { TwoFASetupModal } from "./two-fa-setup-modal";
 import { login, register, LoginActionState, RegisterActionState } from "@/app/(auth)/actions";
+import { usernameToEmail } from "@/lib/username-utils";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProps) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [show2FA, setShow2FA] = useState(false);
   const [show2FASetup, setShow2FASetup] = useState(false);
@@ -44,7 +45,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
       hasRefreshedRef.current = false;
       setShow2FA(false);
       setShow2FASetup(false);
-      setEmail("");
+      setUsername("");
       setPassword("");
     }
   }, [isOpen]);
@@ -92,9 +93,9 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
   }, [loginState.status, registerState.status, router, onClose, mode]);
 
   const handleSubmit = (formData: FormData) => {
-    const formEmail = formData.get("email") as string;
+    const formUsername = formData.get("username") as string;
     const formPassword = formData.get("password") as string;
-    setEmail(formEmail);
+    setUsername(formUsername);
     setPassword(formPassword);
     
     if (mode === "login") {
@@ -138,7 +139,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
                 Enter the code from your authenticator app
               </p>
               <TwoFAVerificationForm 
-                email={email}
+                email={usernameToEmail(username)}
                 password={password}
                 onSuccess={() => {
                   toast.success("Successfully logged in!");
@@ -153,12 +154,12 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
             <>
               <p className="text-center text-sm text-zinc-400">
                 {mode === "login" 
-                  ? "Use your email and password to sign in"
-                  : "Create an account with your email and password"
+                  ? "Use your username and password to sign in"
+                  : "Create an account with your username and password"
                 }
               </p>
 
-              <AuthForm action={handleSubmit} defaultEmail={email}>
+              <AuthForm action={handleSubmit} defaultUsername={username}>
                 <SubmitButton>
                   {mode === "login" ? "Sign in" : "Sign Up"}
                 </SubmitButton>
@@ -184,7 +185,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
       {show2FASetup && (
         <TwoFASetupModal 
           isOpen={show2FASetup}
-          userEmail={email}
+          userEmail={usernameToEmail(username)}
           isMandatory={true}
           onClose={handle2FAComplete}
         />

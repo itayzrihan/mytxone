@@ -10,11 +10,12 @@ import { SubmitButton } from "@/components/custom/submit-button";
 import { TwoFAVerificationForm } from "@/components/custom/two-fa-verification-form";
 
 import { login, LoginActionState } from "../actions";
+import { usernameToEmail } from "@/lib/username-utils";
 
 export default function Page() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [show2FA, setShow2FA] = useState(false);
 
@@ -40,9 +41,9 @@ export default function Page() {
   }, [state, router]);
 
   const handleSubmit = (formData: FormData) => {
-    const formEmail = formData.get("email") as string;
+    const formUsername = formData.get("username") as string;
     const formPassword = formData.get("password") as string;
-    setEmail(formEmail);
+    setUsername(formUsername);
     setPassword(formPassword);
     formAction(formData);
   };
@@ -59,7 +60,7 @@ export default function Page() {
               </p>
             </div>
             <TwoFAVerificationForm 
-              email={email}
+              email={usernameToEmail(username)}
               password={password}
               onSuccess={() => {
                 toast.success("Successfully logged in!");
@@ -72,10 +73,10 @@ export default function Page() {
             <div className="flex flex-col items-center justify-center gap-2 px-4 text-center sm:px-16">
               <h3 className="text-xl font-semibold dark:text-zinc-50">Sign In</h3>
               <p className="text-sm text-gray-500 dark:text-zinc-400">
-                Use your email and password to sign in
+                Use your username and password to sign in
               </p>
             </div>
-            <AuthForm action={handleSubmit} defaultEmail={email}>
+            <AuthForm action={handleSubmit} defaultUsername={username}>
               <SubmitButton>Sign in</SubmitButton>
               <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
                 {"Don't have an account? "}
