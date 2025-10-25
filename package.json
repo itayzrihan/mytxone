@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "node scripts/start-dev-with-tunnels.mjs",
+    "dev:no-tunnels": "next dev --turbo",
+    "tunnels:start": "powershell -ExecutionPolicy Bypass -File start-tunnels.ps1",
+    "tunnels:stop": "powershell -ExecutionPolicy Bypass -File stop-tunnels.ps1",
     "build": "tsx db/safe-migrate && next build && tsx scripts/fix-chat-manifests.ts",
     "build:production": "next build && tsx scripts/fix-chat-manifests.ts",
     "start": "next start",

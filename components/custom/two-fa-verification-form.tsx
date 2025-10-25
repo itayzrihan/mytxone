@@ -23,12 +23,12 @@ export function TwoFAVerificationForm({
     e.preventDefault();
     setError(null);
 
-    if (!totpCode || totpCode.length !== 6) {
-      setError("TOTP code must be 6 digits");
+    if (!totpCode || totpCode.length !== 8) {
+      setError("TOTP code must be 8 digits");
       return;
     }
 
-    if (!/^\d{6}$/.test(totpCode)) {
+    if (!/^\d{8}$/.test(totpCode)) {
       setError("TOTP code must contain only numbers");
       return;
     }
@@ -96,8 +96,8 @@ export function TwoFAVerificationForm({
               id="totp"
               type="text"
               inputMode="numeric"
-              maxLength={6}
-              placeholder="000000"
+              maxLength={8}
+              placeholder="00000000"
               value={totpCode}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, "");
@@ -118,7 +118,7 @@ export function TwoFAVerificationForm({
           <div className="flex gap-3 pt-2">
             <Button
               type="submit"
-              disabled={isLoading || totpCode.length !== 6}
+              disabled={isLoading || totpCode.length !== 8}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isLoading ? "Verifying..." : "Verify"}

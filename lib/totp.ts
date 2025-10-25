@@ -108,7 +108,7 @@ function generateHOTPCode(secretBuffer: Buffer, counter: number): string {
     (digest[offset + 2] & 0xff) << 8 |
     (digest[offset + 3] & 0xff);
 
-  return (code % 1000000).toString().padStart(6, "0");
+  return (code % 100000000).toString().padStart(8, "0");
 }
 
 /**

@@ -111,7 +111,7 @@ export function useInfographicState() {
 
 .platform {
   height: 15px;
-  background: linear-gradient(180deg, #8B4513, #654321);
+  background: linear-gradient(180deg, #8B4513, #6533321);
   position: absolute;
   border-radius: 3px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);

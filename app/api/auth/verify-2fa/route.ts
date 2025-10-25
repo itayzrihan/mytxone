@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     const { totpCode } = await request.json();
 
-    if (!totpCode || typeof totpCode !== "string" || totpCode.length !== 6) {
+    if (!totpCode || typeof totpCode !== "string" || totpCode.length !== 8) {
       return new Response(
         JSON.stringify({ error: "Invalid TOTP code format" }),
         { status: 400, headers: { "content-type": "application/json" } }
