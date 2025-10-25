@@ -55,7 +55,13 @@ export const verifyTOTPAndLogin = async (
     }
 
     // Verify TOTP code first
-    const totpResponse = await fetch(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/verify-2fa-internal`, {
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    if (!baseUrl) {
+      console.error("[VERIFY_TOTP] NEXTAUTH_URL not configured");
+      return { status: "failed", error: "Server configuration error" };
+    }
+    
+    const totpResponse = await fetch(`${baseUrl}/api/auth/verify-2fa-internal`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 

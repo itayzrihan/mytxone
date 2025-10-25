@@ -457,7 +457,8 @@ export async function POST(request: Request) {
         }),
         execute: async ({ content, meditationId, voiceName }) => {
           try {
-            const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/tts`, {
+            const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+            const response = await fetch(`${baseUrl}/api/tts`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
