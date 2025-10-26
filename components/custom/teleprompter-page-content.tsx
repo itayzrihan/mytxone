@@ -6,6 +6,7 @@ import { User } from "next-auth";
 import { Script } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CountdownRecorder } from "./countdown-recorder";
 import { 
   Play, 
   Pause, 
@@ -25,7 +26,10 @@ import {
   Trash2,
   Calendar,
   Eye,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Folder
 } from "lucide-react";
 
 interface TeleprompterPageContentProps {
@@ -42,6 +46,16 @@ interface Recording {
   type: 'video' | 'audio';
 }
 
+interface SeriesInfo {
+  id?: string;
+  name?: string;
+  description?: string;
+  previousScript?: Script | null;
+  nextScript?: Script | null;
+  currentIndex: number;
+  totalScripts: number;
+}
+
 export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageContentProps) {
   const [script, setScript] = useState<Script | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,6 +67,9 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
   const [position, setPosition] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   
+  // Series state
+  const [seriesInfo, setSeriesInfo] = useState<SeriesInfo | null>(null);
+  
   // Recording states
   const [isRecording, setIsRecording] = useState(false);
   const [recordingType, setRecordingType] = useState<'video' | 'audio'>('video');
@@ -61,6 +78,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordingStartTime, setRecordingStartTime] = useState<number>(0);
   const [previewRecording, setPreviewRecording] = useState<Recording | null>(null);
+  const [showCountdown, setShowCountdown] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -91,6 +109,27 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
 
     fetchScript();
   }, [scriptId, router]);
+
+  // Fetch series information if script is part of a series
+  useEffect(() => {
+    const fetchSeriesInfo = async () => {
+      try {
+        const response = await fetch(`/api/scripts/${scriptId}/series`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.series) {
+            setSeriesInfo(data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch series info:", error);
+      }
+    };
+
+    if (scriptId) {
+      fetchSeriesInfo();
+    }
+  }, [scriptId]);
 
   // Load recordings from localStorage
   useEffect(() => {
@@ -323,6 +362,12 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
     setFontSize(prev => Math.max(24, Math.min(96, prev + delta)));
   };
 
+  const navigateToScript = (nextScriptId: string | undefined) => {
+    if (nextScriptId) {
+      router.push(`/teleprompter/${nextScriptId}`);
+    }
+  };
+
   const skipPosition = useCallback((seconds: number) => {
     const pixelsPerSecond = 60; // Approximate based on reading speed
     const deltaPixels = seconds * pixelsPerSecond;
@@ -444,7 +489,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
   }, [isPlaying]);
 
   // Recording functions
-  const startRecording = async () => {
+  const startRecordingInternal = async () => {
     try {
       // Check if MediaDevices API is available
       if (!navigator.mediaDevices) {
@@ -618,6 +663,11 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
     }
   };
 
+  const startRecording = async () => {
+    // Show countdown first
+    setShowCountdown(true);
+  };
+
   const stopRecording = () => {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
@@ -729,6 +779,17 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
 
   return (
     <div className="fixed inset-0 bg-black text-white overflow-hidden">
+      {/* Countdown Recorder */}
+      <CountdownRecorder 
+        isActive={showCountdown} 
+        onCountdownComplete={() => {
+          setShowCountdown(false);
+          startRecordingInternal();
+          // Auto-play teleprompter after countdown
+          setIsPlaying(true);
+        }} 
+      />
+
       {/* Video Preview for Recording */}
       {isRecording && recordingType === 'video' && (
         <video
@@ -775,10 +836,11 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
         {/* Script Content */}
         <div 
           ref={contentRef}
-          className="px-8 py-16 leading-relaxed text-center max-w-4xl mx-auto"
+          className="px-8 leading-relaxed text-center max-w-4xl mx-auto"
           style={{ 
             fontSize: `${fontSize}px`,
             lineHeight: '1.6',
+            paddingTop: '100vh',  // Start content from bottom
             paddingBottom: '100vh' // Extra space at the end
           }}
         >
@@ -935,6 +997,41 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
                 <ArrowLeft size={20} />
                 <span className="ml-2 hidden sm:inline">Back</span>
               </Button>
+
+              {/* Series Navigation */}
+              {seriesInfo && seriesInfo.name && (
+                <div className="flex items-center gap-2 pl-2 border-l border-white/20">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigateToScript(seriesInfo.previousScript?.id)}
+                    disabled={!seriesInfo.previousScript}
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    size="sm"
+                    title="Previous script in series"
+                  >
+                    <ChevronLeft size={18} />
+                  </Button>
+
+                  <div className="hidden sm:flex items-center gap-1 text-xs text-white/70">
+                    <Folder size={14} />
+                    <span className="truncate max-w-[150px]">{seriesInfo.name}</span>
+                    <span className="text-white/50">
+                      {seriesInfo.currentIndex + 1} / {seriesInfo.totalScripts}
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => navigateToScript(seriesInfo.nextScript?.id)}
+                    disabled={!seriesInfo.nextScript}
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    size="sm"
+                    title="Next script in series"
+                  >
+                    <ChevronRight size={18} />
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Center: Playback Controls */}
