@@ -67,6 +67,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
   const animationRef = useRef<number>();
   const hideControlsTimeoutRef = useRef<NodeJS.Timeout>();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   
   const router = useRouter();
 
@@ -95,16 +96,9 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
   useEffect(() => {
     const loadRecordings = () => {
       try {
-        const savedRecordings = localStorage.getItem(`teleprompter-recordings-${scriptId}`);
-        if (savedRecordings) {
-          const parsed = JSON.parse(savedRecordings);
-          // Convert stored blob data back to Blob objects
-          const recordingsWithBlobs = parsed.map((recording: any) => ({
-            ...recording,
-            blob: new Blob([new Uint8Array(recording.blobData)], { type: recording.mimeType })
-          }));
-          setRecordings(recordingsWithBlobs);
-        }
+        // Note: We no longer persist large video files to localStorage
+        // Recordings are only kept in memory during the current session
+        console.log('Recordings stored in memory only (not persisted)');
       } catch (error) {
         console.error('Error loading recordings:', error);
       }
@@ -113,23 +107,35 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
     loadRecordings();
   }, [scriptId]);
 
+  // Handle video element mounting and stream setup
+  useEffect(() => {
+    if (isRecording && recordingType === 'video' && videoRef.current && mediaStreamRef.current) {
+      console.log('Video element mounted, setting up stream');
+      videoRef.current.srcObject = mediaStreamRef.current;
+      videoRef.current.muted = true;
+      
+      try {
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            console.log('Video preview started successfully after mount');
+          }).catch((playError: any) => {
+            console.log('Video play error after mount:', playError);
+          });
+        }
+      } catch (playError) {
+        console.log('Video play error:', playError);
+      }
+    }
+  }, [isRecording, recordingType, videoRef]);
+
   // Save recordings to localStorage
   const saveRecordings = async (newRecordings: Recording[]) => {
     try {
-      // Convert Blob objects to arrays for storage
-      const recordingsForStorage = await Promise.all(
-        newRecordings.map(async (recording) => {
-          const arrayBuffer = await recording.blob.arrayBuffer();
-          return {
-            ...recording,
-            blobData: Array.from(new Uint8Array(arrayBuffer)),
-            mimeType: recording.blob.type,
-            blob: undefined // Remove blob object for storage
-          };
-        })
-      );
-      
-      localStorage.setItem(`teleprompter-recordings-${scriptId}`, JSON.stringify(recordingsForStorage));
+      // Note: Large video files cannot be stored in localStorage (5-10MB limit)
+      // Recordings are kept in memory only during the session
+      // Users should download recordings immediately after recording
+      console.log('Recording stored in memory. Download it now or it will be lost when you refresh.');
     } catch (error) {
       console.error('Error saving recordings:', error);
     }
@@ -490,16 +496,15 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
       console.log('Media stream obtained:', stream);
       console.log('Video tracks:', stream.getVideoTracks());
       console.log('Audio tracks:', stream.getAudioTracks());
+      console.log('Video ref current:', videoRef.current);
       
-      if (recordingType === 'video' && videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Ensure video plays
-        try {
-          await videoRef.current.play();
-          console.log('Video preview started successfully');
-        } catch (playError) {
-          console.log('Video play error (this is normal on some browsers):', playError);
-        }
+      if (recordingType === 'video') {
+        console.log('Recording type is video, storing stream for later attachment');
+        mediaStreamRef.current = stream;
+        // Set isRecording first to trigger video element render
+        setIsRecording(true);
+        setRecordingStartTime(Date.now());
+        console.log('Set isRecording to true, video element should mount now');
       }
       
       // Check MediaRecorder support
@@ -581,9 +586,7 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
       };
       
       setMediaRecorder(recorder);
-      setRecordingStartTime(Date.now());
       recorder.start(1000); // Record in 1-second chunks for better mobile compatibility
-      setIsRecording(true);
       
       console.log('Recording started successfully');
     } catch (error) {
@@ -729,8 +732,21 @@ export function TeleprompterPageContent({ scriptId, user }: TeleprompterPageCont
       {/* Video Preview for Recording */}
       {isRecording && recordingType === 'video' && (
         <video
+          key="video-preview"
           ref={videoRef}
-          className="fixed top-4 right-4 w-48 h-36 rounded-lg border-2 border-red-500 bg-black z-20"
+          style={{ 
+            position: 'fixed',
+            top: '16px', 
+            right: '16px',
+            width: '192px', 
+            height: '144px',
+            display: 'block',
+            backgroundColor: '#000000',
+            objectFit: 'cover',
+            borderRadius: '8px',
+            border: '2px solid rgb(239, 68, 68)',
+            zIndex: 20
+          }}
           muted
           playsInline
           autoPlay
