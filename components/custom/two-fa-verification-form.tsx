@@ -41,7 +41,7 @@ export function TwoFAVerificationForm({
     
     // Build the deep link with serviceName and accountIdentifier
     // Using the same serviceName and email (accountIdentifier) as registration
-    const deepLink = `https://legit.app/dashboard/simple-totp?serviceName=mytx.one&accountIdentifier=${encodeURIComponent(email || "")}`;
+    const deepLink = `https://legitate.com/dashboard/simple-totp?serviceName=mytx.one&accountIdentifier=${encodeURIComponent(email || "")}`;
     
     popupRef.current = window.open(
       deepLink,
