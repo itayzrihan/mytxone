@@ -18,6 +18,7 @@ export default function Page() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [show2FA, setShow2FA] = useState(false);
+  const [totpSeedId, setTotpSeedId] = useState<string | null>(null);
 
   const [state, formAction] = useActionState<LoginActionState, FormData>(
     login,
@@ -33,6 +34,7 @@ export default function Page() {
       toast.error("Failed validating your submission!");
     } else if (state.status === "2fa_required") {
       // Show 2FA verification form
+      setTotpSeedId(state.totpSeedId || null);
       setShow2FA(true);
       toast.info("Enter your 2FA code from your authenticator app");
     } else if (state.status === "success" || state.status === "2fa_verified") {
@@ -62,6 +64,7 @@ export default function Page() {
             <TwoFAVerificationForm 
               email={usernameToEmail(username)}
               password={password}
+              totpSeedId={totpSeedId}
               onSuccess={() => {
                 toast.success("Successfully logged in!");
                 router.push("/");

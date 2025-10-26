@@ -11,6 +11,7 @@ interface TwoFAVerificationFormProps {
   onVerificationComplete?: (verified: boolean) => void;
   email?: string;
   password?: string;
+  totpSeedId?: string | null;
 }
 
 export function TwoFAVerificationForm({
@@ -18,6 +19,7 @@ export function TwoFAVerificationForm({
   onVerificationComplete,
   email,
   password,
+  totpSeedId,
 }: TwoFAVerificationFormProps) {
   const [totpCode, setTotpCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,9 +41,18 @@ export function TwoFAVerificationForm({
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
     
-    // Build the deep link with serviceName and accountIdentifier
-    // Using the same serviceName and email (accountIdentifier) as registration
-    const deepLink = `https://legitate.com/dashboard/simple-totp?serviceName=mytx.one&accountIdentifier=${encodeURIComponent(email || "")}`;
+    // Build the deep link
+    // If seedId is available, use it for simpler/faster flow
+    // Otherwise fall back to serviceName + accountIdentifier
+    let deepLink: string;
+    
+    if (totpSeedId) {
+      // Use seedId for direct account access
+      deepLink = `https://legitate.com/dashboard/simple-totp?seedId=${encodeURIComponent(totpSeedId)}`;
+    } else {
+      // Fallback to serviceName + accountIdentifier
+      deepLink = `https://legitate.com/dashboard/simple-totp?serviceName=mytx.one&accountIdentifier=${encodeURIComponent(email || "")}`;
+    }
     
     popupRef.current = window.open(
       deepLink,

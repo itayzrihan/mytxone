@@ -24,6 +24,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
   const [password, setPassword] = useState("");
   const [show2FA, setShow2FA] = useState(false);
   const [show2FASetup, setShow2FASetup] = useState(false);
+  const [totpSeedId, setTotpSeedId] = useState<string | null>(null);
   const hasRefreshedRef = useRef(false);
 
   const [loginState, loginAction] = useActionState<LoginActionState, FormData>(
@@ -47,6 +48,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
       setShow2FASetup(false);
       setUsername("");
       setPassword("");
+      setTotpSeedId(null);
     }
   }, [isOpen]);
 
@@ -65,6 +67,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
         toast.error("Failed validating your submission!");
       } else if (loginState.status === "2fa_required") {
         // Show 2FA verification form
+        setTotpSeedId(loginState.totpSeedId || null);
         setShow2FA(true);
         toast.info("Enter your 2FA code from your authenticator app");
       } else if ((loginState.status === "success" || loginState.status === "2fa_verified") && !hasRefreshedRef.current) {
@@ -141,6 +144,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
               <TwoFAVerificationForm 
                 email={usernameToEmail(username)}
                 password={password}
+                totpSeedId={totpSeedId}
                 onSuccess={() => {
                   toast.success("Successfully logged in!");
                   setShow2FA(false);

@@ -40,6 +40,7 @@ const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 export interface LoginActionState {
   status: "idle" | "in_progress" | "success" | "failed" | "invalid_data" | "2fa_required" | "2fa_verified";
   userEmail?: string;
+  totpSeedId?: string | null;
   error?: string;
 }
 
@@ -152,6 +153,7 @@ export const login = async (
       return {
         status: "2fa_required",
         userEmail: email,
+        totpSeedId: user.totpSeedId,
       };
     }
 
