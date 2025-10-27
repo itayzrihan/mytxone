@@ -3,6 +3,8 @@ import { generateUUID } from "@/lib/utils";
 import { GlassCapsules } from "@/components/custom/glass-capsules";
 import { MeetingCards } from "@/components/custom/meeting-cards";
 import { SearchBar } from "@/components/custom/search-bar";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function Page() {
   const session = await auth();
@@ -13,10 +15,19 @@ export default async function Page() {
         <h1 className="text-4xl font-bold text-white mb-2">
           Meet new people
         </h1>
-        <p className="text-lg mb-8">
+        <p className="text-lg mb-6">
           <span className="text-zinc-300">or </span>
           <span className="text-cyan-400">create a new meeting</span>
         </p>
+        
+        {/* Start Free Button */}
+        <div className="mb-6">
+          <Button asChild className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-cyan-500/30">
+            <Link href="/owned-meetings">
+              START FREE
+            </Link>
+          </Button>
+        </div>
         
         {/* Search Bar with Glass Morphism */}
         <div className="mb-8">

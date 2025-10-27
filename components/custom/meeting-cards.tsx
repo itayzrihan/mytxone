@@ -1,6 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAdmin } from "@/contexts/admin-context";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { CalendarIcon, Clock, Users, MapPin } from "lucide-react";
 
 interface MeetingCard {
   id: string;
@@ -13,11 +23,124 @@ interface MeetingCard {
   typeOfPage: 'Meeting' | 'Community';
 }
 
+interface RealMeeting {
+  id: string;
+  title: string;
+  description: string | null;
+  meetingType: string;
+  imageUrl: string | null;
+  startTime: string;
+  endTime: string;
+  meetingUrl: string | null;
+  maxAttendees: number | null;
+  attendeeCount: number;
+  status: string;
+}
+
 interface MeetingCardsProps {}
 
 export function MeetingCards() {
+  const { shouldShowAdminElements, viewMode } = useAdmin();
+  const { data: session } = useSession();
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [allMeetings, setAllMeetings] = useState<MeetingCard[]>([]);
+  const [realMeetings, setRealMeetings] = useState<RealMeeting[]>([]);
+  const [isLoadingReal, setIsLoadingReal] = useState(true);
+  const [selectedMeeting, setSelectedMeeting] = useState<RealMeeting | null>(null);
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
+  const [guestData, setGuestData] = useState({ name: "", email: "" });
+
+  // Fetch real meetings from API
+  useEffect(() => {
+    fetchRealMeetings();
+  }, []);
+
+  const fetchRealMeetings = async () => {
+    try {
+      const response = await fetch("/api/meetings?filter=public");
+      if (response.ok) {
+        const data = await response.json();
+        setRealMeetings(data);
+      }
+    } catch (error) {
+      console.error("Error fetching meetings:", error);
+    } finally {
+      setIsLoadingReal(false);
+    }
+  };
+
+  const handleRegister = async (meeting: RealMeeting) => {
+    if (!session) {
+      setSelectedMeeting(meeting);
+      setIsRegisterDialogOpen(true);
+      return;
+    }
+
+    // Direct registration for authenticated users
+    try {
+      const response = await fetch(`/api/meetings/${meeting.id}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to register");
+      }
+
+      toast.success(result.message || "Successfully registered!");
+      fetchRealMeetings();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleGuestRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMeeting) return;
+
+    try {
+      const response = await fetch(`/api/meetings/${selectedMeeting.id}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          guestName: guestData.name,
+          guestEmail: guestData.email,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to register");
+      }
+
+      toast.success(result.message || "Successfully registered!");
+      setIsRegisterDialogOpen(false);
+      setGuestData({ name: "", email: "" });
+      fetchRealMeetings();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   // Generate 37 sample meeting cards (30 for page 1, 7 for page 2)
   const generateMeetings = (): MeetingCard[] => {
@@ -66,11 +189,15 @@ export function MeetingCards() {
     setAllMeetings(generateMeetings());
   }, []);
   
+  // Only show mock cards if admin, otherwise show empty state
+  const shouldShowMockCards = shouldShowAdminElements && viewMode === "admin";
+  
   // Pagination logic - Fixed calculations
   const totalPages = allMeetings.length > 0 ? Math.ceil((allMeetings.length - 30) / 7) + 1 : 1; // Always 2 pages for 30 cards (30 + 7 = 37 total)
   
   const getCurrentPageMeetings = () => {
     if (allMeetings.length === 0) return [];
+    if (!shouldShowMockCards) return []; // Don't show mock cards for non-admins
     if (currentPage === 1) {
       return allMeetings.slice(0, 30);
     } else {
@@ -82,7 +209,7 @@ export function MeetingCards() {
   const currentMeetings = getCurrentPageMeetings();
 
   // Show loading state during hydration
-  if (allMeetings.length === 0) {
+  if (allMeetings.length === 0 && isLoadingReal) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 p-6">
         {Array.from({ length: 10 }, (_, i) => (
@@ -90,6 +217,141 @@ export function MeetingCards() {
             <div className="bg-gray-200 dark:bg-gray-700 h-48 rounded-lg"></div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  // If there are real meetings, show them
+  if (realMeetings.length > 0) {
+    return (
+      <div className="mt-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {realMeetings.map((meeting) => (
+            <div
+              key={meeting.id}
+              className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer group shadow-lg shadow-black/20"
+            >
+              {/* Thumbnail */}
+              <div className="relative aspect-video bg-gradient-to-br from-cyan-400/20 to-blue-600/20 flex items-center justify-center">
+                {meeting.imageUrl ? (
+                  <Image src={meeting.imageUrl} alt={meeting.title} fill className="object-cover" />
+                ) : (
+                  <>
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
+                    <div className="relative z-10 text-white/50 text-5xl group-hover:text-white/70 transition-colors duration-300">
+                      📅
+                    </div>
+                  </>
+                )}
+                {/* Meeting Type Badge */}
+                <div className="absolute top-3 right-3 bg-cyan-500/30 backdrop-blur-sm text-cyan-300 border border-cyan-400/20 rounded-lg px-2 py-1 text-xs font-medium capitalize">
+                  {meeting.meetingType}
+                </div>
+              </div>
+
+              {/* Card Content */}
+              <div className="p-4 space-y-3">
+                {/* Title */}
+                <h3 className="text-white font-semibold text-lg leading-tight group-hover:text-cyan-400 transition-colors duration-300">
+                  {meeting.title}
+                </h3>
+
+                {/* Description */}
+                {meeting.description && (
+                  <p className="text-zinc-300 text-sm leading-relaxed line-clamp-2">
+                    {meeting.description}
+                  </p>
+                )}
+
+                {/* Meeting Details */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <CalendarIcon className="w-4 h-4 text-cyan-400" />
+                    <span>{formatDate(meeting.startTime)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <Clock className="w-4 h-4 text-cyan-400" />
+                    <span>{formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <Users className="w-4 h-4 text-cyan-400" />
+                    <span>
+                      {meeting.attendeeCount} {meeting.attendeeCount === 1 ? 'attendee' : 'attendees'}
+                      {meeting.maxAttendees && ` / ${meeting.maxAttendees} max`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Register Button */}
+                <Button
+                  onClick={() => handleRegister(meeting)}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+                  disabled={meeting.maxAttendees !== null && meeting.attendeeCount >= meeting.maxAttendees}
+                >
+                  {meeting.maxAttendees !== null && meeting.attendeeCount >= meeting.maxAttendees
+                    ? "Full"
+                    : "Register"}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Guest Registration Dialog */}
+        <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
+          <DialogContent className="bg-black/90 border-white/20 text-white">
+            <DialogHeader>
+              <DialogTitle>Register for Meeting</DialogTitle>
+              <DialogDescription className="text-zinc-400">
+                {selectedMeeting?.title}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleGuestRegister}>
+              <div className="grid gap-4 py-4">
+                <div>
+                  <Label htmlFor="guestName">Name *</Label>
+                  <Input
+                    id="guestName"
+                    value={guestData.name}
+                    onChange={(e) => setGuestData({ ...guestData, name: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="guestEmail">Email *</Label>
+                  <Input
+                    id="guestEmail"
+                    type="email"
+                    value={guestData.email}
+                    onChange={(e) => setGuestData({ ...guestData, email: e.target.value })}
+                    required
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsRegisterDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-cyan-500 hover:bg-cyan-600">
+                  Register
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Show empty state for non-admins (since mock cards are only for admins)
+  if (!shouldShowMockCards) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="text-5xl mb-4">🎯</div>
+        <h3 className="text-xl font-semibold text-white mb-2">No meetings available yet</h3>
+        <p className="text-zinc-400">Check back soon for actual meetings and communities to join.</p>
       </div>
     );
   }

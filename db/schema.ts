@@ -43,6 +43,8 @@ export const userRelations = relations(user, ({ many }) => ({
   customContentTypes: many(customContentTypes),
   userFavorites: many(userFavorites),
   quoteTemplates: many(quoteTemplates),
+  meetings: many(meeting),
+  meetingAttendees: many(meetingAttendee),
 }));
 
 export const chat = pgTable("Chat", {
@@ -518,3 +520,68 @@ export const registrationTokenRelations = relations(
   })
 );
 
+// Meeting System Tables
+export const meeting = pgTable("Meeting", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  meetingType: text("meeting_type").notNull(), // "webinar", "consultation", "workshop", "demo", etc.
+  imageUrl: text("image_url"), // Cover image for the meeting
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  timezone: text("timezone").notNull().default("UTC"),
+  meetingUrl: text("meeting_url"), // Zoom/Meet link
+  maxAttendees: integer("max_attendees"), // null for unlimited
+  isPublic: boolean("is_public").notNull().default(true),
+  requiresApproval: boolean("requires_approval").notNull().default(false),
+  status: text("status").notNull().default("upcoming"), // "upcoming", "live", "completed", "cancelled"
+  tags: json("tags"), // Array of strings for categorization
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type Meeting = InferSelectModel<typeof meeting>;
+
+export const meetingRelations = relations(meeting, ({ one, many }) => ({
+  user: one(user, {
+    fields: [meeting.userId],
+    references: [user.id],
+  }),
+  attendees: many(meetingAttendee),
+}));
+
+export const meetingAttendee = pgTable("MeetingAttendee", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  meetingId: uuid("meeting_id")
+    .notNull()
+    .references(() => meeting.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => user.id, { onDelete: "cascade" }), // null for guest attendees
+  guestName: text("guest_name"), // For non-registered users
+  guestEmail: text("guest_email"), // For non-registered users
+  registrationStatus: text("registration_status").notNull().default("registered"), // "registered", "approved", "rejected", "cancelled"
+  attendanceStatus: text("attendance_status").notNull().default("pending"), // "pending", "attended", "no-show"
+  registeredAt: timestamp("registered_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type MeetingAttendee = InferSelectModel<typeof meetingAttendee>;
+
+export const meetingAttendeeRelations = relations(meetingAttendee, ({ one }) => ({
+  meeting: one(meeting, {
+    fields: [meetingAttendee.meetingId],
+    references: [meeting.id],
+  }),
+  user: one(user, {
+    fields: [meetingAttendee.userId],
+    references: [user.id],
+  }),
+}));

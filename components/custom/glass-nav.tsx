@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAdmin } from "@/contexts/admin-context";
 
 // SVG Icon Components
 const HomeIcon = ({ className }: { className?: string }) => (
@@ -37,6 +38,7 @@ const UserIcon = ({ className }: { className?: string }) => (
 
 export function GlassNav() {
   const pathname = usePathname();
+  const { shouldShowAdminElements, viewMode } = useAdmin();
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isClient, setIsClient] = useState(false);
@@ -87,7 +89,7 @@ export function GlassNav() {
   return (
     <>
       {/* Only render after client-side hydration to prevent flash */}
-      {isClient && (
+      {isClient && shouldShowAdminElements && viewMode === "admin" && (
         <>
           {/* Bottom Navigation Bar */}
           <nav className="pro-glass-nav">

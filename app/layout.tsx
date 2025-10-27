@@ -6,6 +6,7 @@ import { Navbar } from "@/components/custom/navbar-wrapper";
 import { ThemeProvider } from "@/components/custom/theme-provider";
 import { AuthWrapper } from "@/components/custom/auth-wrapper";
 import { AdminProvider } from "@/contexts/admin-context";
+import { SessionProvider } from "@/components/providers/session-provider";
 import { Footer } from "@/components/custom/footer";
 import { GlassNav } from "@/components/custom/glass-nav";
 
@@ -35,27 +36,29 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased relative min-h-screen flex flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AdminProvider>
-            <AuthWrapper>
-              <BackgroundGlow />
-              <Toaster position="top-center" />
-              <Navbar />
-              
-              <main className="flex-1">
-                {children}
-              </main>
-              
-              <Footer />
-              <GlassNav />
-            </AuthWrapper>
-          </AdminProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AdminProvider>
+              <AuthWrapper>
+                <BackgroundGlow />
+                <Toaster position="top-center" />
+                <Navbar />
+                
+                <main className="flex-1">
+                  {children}
+                </main>
+                
+                <Footer />
+                <GlassNav />
+              </AuthWrapper>
+            </AdminProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/custom/auth-context";
+import Link from "next/link";
 
 // Sample thumbnails for the carousel
 const carouselThumbnails = [
@@ -462,8 +463,10 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                         </div>
                       </div>
 
-                      <Button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
-                        START FREE
+                      <Button asChild className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+                        <Link href="/owned-meetings">
+                          START FREE
+                        </Link>
                       </Button>
                     </div>
                   </div>

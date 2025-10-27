@@ -12,6 +12,7 @@ import useSWR from "swr";
 import { Chat } from "@/db/schema";
 import { fetcher, getTitleFromChat } from "@/lib/utils";
 import { useAuth } from "./auth-context";
+import { useAdmin } from "@/contexts/admin-context";
 
 import {
   CalendarIcon,
@@ -54,6 +55,7 @@ export const History = ({ user }: { user: User | undefined }) => {
   const { id } = useParams();
   const pathname = usePathname();
   const { openAuthModal } = useAuth();
+  const { shouldShowAdminElements, viewMode } = useAdmin();
 
   // Check if the current path is in the aichat section
   const isInAiChatSection = pathname === '/aichat' || pathname.startsWith('/aichat/');
@@ -150,32 +152,101 @@ export const History = ({ user }: { user: User | undefined }) => {
           </div>
 
           <div className="mt-10 flex flex-col">
+            {/* Admin-only buttons */}
+            {shouldShowAdminElements && viewMode === "admin" && (
+              <>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/infographic">
+                    <div>Generate new infographic</div>
+                    <InfographicIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/workflows">
+                    <div>Marketing Workflows</div>
+                    <WorkflowIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/quotes">
+                    <div>Quote Proposals</div>
+                    <FileIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/mytx/create-community">
+                    <div>Create community</div>
+                    <UsersIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/scripts">
+                    <div>Scripts</div>
+                    <FileIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/prompts">
+                    <div>Prompt Engineering</div>
+                    <FileIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/hosting">
+                    <div>Hosting Plans</div>
+                    <InfoIcon size={14} />
+                  </Link>
+                </Button>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/shop">
+                    <div>Shop</div>
+                    <FileIcon size={14} />
+                  </Link>
+                </Button>
+              </>
+            )}
+
             {/* Always visible buttons */}
             <Button
               className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
               asChild
             >
-              <Link href="/infographic">
-                <div>Generate new infographic</div>
-                <InfographicIcon size={14} />
+              <Link href="/owned-meetings">
+                <div>My Meetings</div>
+                <CalendarIcon size={14} />
               </Link>
             </Button>
             <Button
               className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
               asChild
             >
-              <Link href="/workflows">
-                <div>Marketing Workflows</div>
-                <WorkflowIcon size={14} />
-              </Link>
-            </Button>
-            <Button
-              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-              asChild
-            >
-              <Link href="/quotes">
-                <div>Quote Proposals</div>
-                <FileIcon size={14} />
+              <Link href="/attending-meetings">
+                <div>Attending Meetings</div>
+                <CalendarIcon size={14} />
               </Link>
             </Button>
             <Button
@@ -191,59 +262,14 @@ export const History = ({ user }: { user: User | undefined }) => {
               className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
               asChild
             >
-              <Link href="/mytx/create-community">
-                <div>Create community</div>
-                <UsersIcon size={14} />
-              </Link>
-            </Button>
-            <Button
-              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-              asChild
-            >
-              <Link href="/scripts">
-                <div>Scripts</div>
-                <FileIcon size={14} />
-              </Link>
-            </Button>
-            <Button
-              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-              asChild
-            >
-              <Link href="/prompts">
-                <div>Prompt Engineering</div>
-                <FileIcon size={14} />
-              </Link>
-            </Button>
-            <Button
-              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-              asChild
-            >
-              <Link href="/hosting">
-                <div>Hosting Plans</div>
-                <InfoIcon size={14} />
-              </Link>
-            </Button>
-                        <Button
-              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-              asChild
-            >
               <Link href="/about">
                 <div>About us</div>
                 <InfoIcon size={14} />
               </Link>
             </Button>
-            <Button
-              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
-              asChild
-            >
-              <Link href="/shop">
-                <div>Shop</div>
-                <FileIcon size={14} />
-              </Link>
-            </Button>
             
-            {/* User-only buttons */}
-            {user && (
+            {/* Admin-only buttons */}
+            {user && shouldShowAdminElements && viewMode === "admin" && (
               <Button
                 className="font-normal text-sm flex flex-row justify-between text-white bg-cyan-500/20 backdrop-blur-md border border-cyan-400/30 hover:bg-cyan-500/30 transition-all duration-300"
                 asChild
