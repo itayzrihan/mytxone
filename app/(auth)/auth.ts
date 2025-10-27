@@ -8,6 +8,7 @@ import { authConfig } from "./auth.config";
 
 interface ExtendedSession extends Session {
   user: User;
+  viewMode?: 'admin' | 'user'; // Track if admin is viewing as regular user
 }
 
 export const {
@@ -47,6 +48,7 @@ export const {
         session.user.id = token.id as string;
       }
 
+      // viewMode is stored separately and managed by view-mode API
       return session;
     },
   },

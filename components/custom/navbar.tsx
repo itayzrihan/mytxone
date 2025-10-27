@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Shield } from "lucide-react";
+import { Shield, Eye } from "lucide-react";
 
 import { History } from "./history";
 import { SlashIcon } from "./icons";
@@ -14,6 +14,7 @@ import { NavbarSearch, MobileSearchOverlay } from "./navbar-search";
 import { SearchBar } from "./search-bar";
 import { useAuth } from "./auth-context";
 import { GlassBackground } from "./glass-background";
+import { useAdminStatus } from "@/hooks/use-admin-status";
 
 interface NavbarProps {
   session?: any;
@@ -22,10 +23,46 @@ interface NavbarProps {
 export const Navbar = ({ session }: NavbarProps) => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
   const { openAuthModal } = useAuth();
   const pathname = usePathname();
+
+  // Use the centralized admin status hook
+  const { shouldShowAdminElements, shouldShowViewModeToggle, viewMode, isLoading: isCheckingAdmin } = useAdminStatus(session?.user?.id);
+
+  // Handle view mode toggle events
+  useEffect(() => {
+    const handleToggleViewMode = async () => {
+      try {
+        const newMode = viewMode === 'admin' ? 'user' : 'admin';
+
+        const response = await fetch('/api/auth/view-mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: newMode }),
+        });
+
+        if (!response.ok) {
+          console.error('Failed to toggle view mode');
+          return;
+        }
+
+        // Parse response and dispatch an event so hooks/components can update immediately
+        try {
+          const data = await response.json();
+          const updatedMode = data.viewMode || newMode;
+          window.dispatchEvent(new CustomEvent('view-mode-updated', { detail: updatedMode }));
+        } catch (err) {
+          // Fallback: still notify listeners without detail
+          window.dispatchEvent(new CustomEvent('view-mode-updated'));
+        }
+      } catch (error) {
+        console.error('Error toggling view mode:', error);
+      }
+    };
+
+    window.addEventListener('toggle-view-mode', handleToggleViewMode);
+    return () => window.removeEventListener('toggle-view-mode', handleToggleViewMode);
+  }, [viewMode]);
 
   // Hide navbar on specific routes
   const shouldHideNavbar = pathname.includes("/teleprompter");
@@ -34,30 +71,6 @@ export const Navbar = ({ session }: NavbarProps) => {
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  // Check if user is admin
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (session?.user?.id && isClient) {
-        setIsCheckingAdmin(true);
-        try {
-          const response = await fetch('/api/auth/admin-status');
-          if (response.ok) {
-            const data = await response.json();
-            setIsAdmin(data.isAdmin);
-          } else {
-            setIsAdmin(false);
-          }
-        } catch (error) {
-          console.error('Error checking admin status:', error);
-          setIsAdmin(false);
-        }
-        setIsCheckingAdmin(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [session?.user?.id, isClient]);
 
   const handleMobileSearchToggle = (isOpen: boolean) => {
     setIsMobileSearchOpen(isOpen);
@@ -163,26 +176,40 @@ export const Navbar = ({ session }: NavbarProps) => {
                       />
                     </div>
                     
-                    {/* Admin Dashboard Button - Only show for admin users */}
-                    {isClient && session && !isCheckingAdmin && isAdmin && (
-                      <Link href="/admin">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="
-                            bg-red-500/20 backdrop-blur-md 
-                            text-red-300 border border-red-400/30
-                            hover:bg-red-500/30 hover:border-red-400/50
-                            shadow-lg shadow-black/20
-                            transition-all duration-300
-                            hover:shadow-xl hover:shadow-red-500/20
-                            flex items-center gap-2
-                          "
-                        >
-                          <Shield className="w-4 h-4" />
-                          <span className="hidden sm:inline">Admin</span>
-                        </Button>
-                      </Link>
+                    {/* Admin Dashboard Button - Only show for admin users in admin view mode */}
+                    {isClient && session && !isCheckingAdmin && shouldShowAdminElements && (
+                      <Button
+                        className={`
+                          backdrop-blur-md 
+                          border
+                          shadow-lg shadow-black/20
+                          transition-all duration-300
+                          hover:shadow-xl
+                          flex items-center gap-2
+                          ${viewMode === 'admin' 
+                            ? 'bg-red-500/20 text-red-300 border-red-400/30 hover:bg-red-500/30 hover:border-red-400/50 hover:shadow-red-500/20'
+                            : 'bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 hover:shadow-blue-500/20'
+                          }
+                        `}
+                        size="sm"
+                        onClick={() => {
+                          // Trigger view mode toggle via custom event
+                          const event = new CustomEvent('toggle-view-mode');
+                          window.dispatchEvent(event);
+                        }}
+                      >
+                        {viewMode === 'admin' ? (
+                          <>
+                            <Shield className="w-4 h-4" />
+                            <span className="hidden sm:inline">Admin</span>
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-4 h-4" />
+                            <span className="hidden sm:inline">User View</span>
+                          </>
+                        )}
+                      </Button>
                     )}
                     
                     {isClient ? (

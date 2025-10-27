@@ -223,6 +223,15 @@ export const History = ({ user }: { user: User | undefined }) => {
                 <InfoIcon size={14} />
               </Link>
             </Button>
+                        <Button
+              className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+              asChild
+            >
+              <Link href="/about">
+                <div>About us</div>
+                <InfoIcon size={14} />
+              </Link>
+            </Button>
             <Button
               className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
               asChild

@@ -5,6 +5,7 @@ import BackgroundGlow from "@/components/custom/BackgroundGlow";
 import { Navbar } from "@/components/custom/navbar-wrapper";
 import { ThemeProvider } from "@/components/custom/theme-provider";
 import { AuthWrapper } from "@/components/custom/auth-wrapper";
+import { AdminProvider } from "@/contexts/admin-context";
 import { Footer } from "@/components/custom/footer";
 import { GlassNav } from "@/components/custom/glass-nav";
 
@@ -40,18 +41,20 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthWrapper>
-            <BackgroundGlow />
-            <Toaster position="top-center" />
-            <Navbar />
-            
-            <main className="flex-1">
-              {children}
-            </main>
-            
-            <Footer />
-            <GlassNav />
-          </AuthWrapper>
+          <AdminProvider>
+            <AuthWrapper>
+              <BackgroundGlow />
+              <Toaster position="top-center" />
+              <Navbar />
+              
+              <main className="flex-1">
+                {children}
+              </main>
+              
+              <Footer />
+              <GlassNav />
+            </AuthWrapper>
+          </AdminProvider>
         </ThemeProvider>
       </body>
     </html>

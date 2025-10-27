@@ -39,6 +39,12 @@ export function GlassNav() {
   const pathname = usePathname();
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after client-side mount
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Close modal on escape key
   useEffect(() => {
@@ -80,8 +86,11 @@ export function GlassNav() {
 
   return (
     <>
-      {/* Bottom Navigation Bar */}
-      <nav className="pro-glass-nav">
+      {/* Only render after client-side hydration to prevent flash */}
+      {isClient && (
+        <>
+          {/* Bottom Navigation Bar */}
+          <nav className="pro-glass-nav">
         <ul className="pro-glass-nav-list">
           {/* Home */}
           <li className={`pro-glass-nav-item ${isActive("/") ? "active" : ""}`}>
@@ -385,6 +394,8 @@ export function GlassNav() {
           }
         }
       `}</style>
+        </>
+      )}
     </>
   );
 }

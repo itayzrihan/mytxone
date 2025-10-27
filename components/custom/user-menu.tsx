@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Trash2, Copy, Shield } from "lucide-react";
+import { Loader2, Trash2, Copy, Shield, Eye, EyeOff } from "lucide-react";
 import { Session } from "next-auth";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { ThemeToggle } from "./theme-toggle";
+import { useAdminStatus } from "@/hooks/use-admin-status";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -54,31 +55,45 @@ export function UserMenu({ session }: UserMenuProps) {
   const [newKeyInfo, setNewKeyInfo] = useState<{ key: string; name: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState(""); // State for the new key name input
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
 
-  // Check if user is admin
+  // Use the centralized admin status hook
+  const { shouldShowViewModeToggle, viewMode, isLoading: isCheckingAdmin } = useAdminStatus(session.user?.id);
+
+  // Handle view mode toggle events
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (session.user?.id) {
-        try {
-          const response = await fetch('/api/auth/admin-status');
-          if (response.ok) {
-            const data = await response.json();
-            setIsAdmin(data.isAdmin);
-          } else {
-            setIsAdmin(false);
-          }
-        } catch (error) {
-          console.error('Error checking admin status:', error);
-          setIsAdmin(false);
+    const handleToggleViewMode = async () => {
+      try {
+        const newMode = viewMode === 'admin' ? 'user' : 'admin';
+
+        const response = await fetch('/api/auth/view-mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: newMode }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          setError(errorData.error || 'Failed to toggle view mode');
+          return;
         }
+
+        // The hook will automatically update the viewMode state
+        setError(null);
+      } catch (error) {
+        console.error('Error toggling view mode:', error);
+        setError('Failed to toggle view mode');
       }
-      setIsCheckingAdmin(false);
     };
 
-    checkAdminStatus();
-  }, [session.user?.id]);
+    window.addEventListener('toggle-view-mode', handleToggleViewMode);
+    return () => window.removeEventListener('toggle-view-mode', handleToggleViewMode);
+  }, [viewMode]);
+
+  // Extract username from email (part before @)
+  const getUsername = (email: string | null | undefined) => {
+    if (!email) return '';
+    return email.split('@')[0];
+  };
 
   // Fetch keys when dialog opens
   useEffect(() => {
@@ -151,9 +166,7 @@ export function UserMenu({ session }: UserMenuProps) {
       console.error("Failed to copy:", err);
       setError("Failed to copy key to clipboard.");
     });
-  };
-
-  return (
+  };  return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -161,7 +174,7 @@ export function UserMenu({ session }: UserMenuProps) {
             className="py-1.5 px-2 h-fit font-normal bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 hover:border-white/30 transition-all duration-300"
             variant="ghost"
           >
-            {session.user?.email}
+            {getUsername(session.user?.email)}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56"> {/* Increased width */}
@@ -170,17 +183,27 @@ export function UserMenu({ session }: UserMenuProps) {
           </DropdownMenuItem>
           <DropdownMenuSeparator /> {/* Separator */}
           
-          {/* Admin Dashboard - Only show for admin users */}
-          {!isCheckingAdmin && isAdmin && (
+          {/* View Mode Toggle - Only show for admin users */}
+          {!isCheckingAdmin && shouldShowViewModeToggle && (
             <>
-              <DropdownMenuItem asChild>
-                <Link 
-                  href="/admin" 
-                  className="cursor-pointer flex items-center gap-2 text-red-400 hover:text-red-300"
-                >
-                  <Shield className="w-4 h-4" />
-                  Admin Dashboard
-                </Link>
+              <DropdownMenuItem 
+                className="cursor-pointer flex items-center gap-2 text-cyan-400 hover:text-cyan-300"
+                onClick={() => {
+                  // Dispatch the toggle event handled by the navbar (which validates and toggles)
+                  window.dispatchEvent(new CustomEvent('toggle-view-mode'));
+                }}
+              >
+                {viewMode === 'admin' ? (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    <span>Switch to User View</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-4 h-4" />
+                    <span>Back to Admin View</span>
+                  </>
+                )}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
