@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Trash2, Copy, Shield, Eye, EyeOff } from "lucide-react";
+import { Loader2, Trash2, Copy, Shield, Eye, EyeOff, Crown } from "lucide-react";
 import { Session } from "next-auth";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -24,6 +24,7 @@ import {
 
 import { ThemeToggle } from "./theme-toggle";
 import { useAdminStatus } from "@/hooks/use-admin-status";
+import { useUserPlan } from "./user-plan-context";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -55,9 +56,27 @@ export function UserMenu({ session }: UserMenuProps) {
   const [newKeyInfo, setNewKeyInfo] = useState<{ key: string; name: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState(""); // State for the new key name input
+  const [isTogglingPlan, setIsTogglingPlan] = useState(false); // State for plan toggle loading
 
   // Use the centralized admin status hook
   const { shouldShowViewModeToggle, viewMode, isLoading: isCheckingAdmin } = useAdminStatus(session.user?.id);
+  const { userPlan, refreshPlan, isLoading: isPlanLoading } = useUserPlan();
+
+  // Initialize display plan state - will be set once context loads
+  const [displayPlan, setDisplayPlan] = useState<"free" | "basic" | "pro">("free");
+
+  // Update display plan whenever userPlan changes from context
+  useEffect(() => {
+    if (userPlan && !isPlanLoading) {
+      console.log('Syncing display plan with context:', userPlan);
+      setDisplayPlan(userPlan);
+    }
+  }, [userPlan, isPlanLoading]);
+
+  // Monitor userPlan changes
+  useEffect(() => {
+    console.log('userPlan updated in useUserPlan hook:', userPlan);
+  }, [userPlan]);
 
   // Handle view mode toggle events
   useEffect(() => {
@@ -166,6 +185,63 @@ export function UserMenu({ session }: UserMenuProps) {
       console.error("Failed to copy:", err);
       setError("Failed to copy key to clipboard.");
     });
+  };
+
+  const handleTogglePlan = async () => {
+    const plans = ['free', 'basic', 'pro'] as const;
+    const currentIndex = plans.indexOf(displayPlan);
+    const nextPlan = plans[(currentIndex + 1) % plans.length];
+
+    console.log('=== PLAN TOGGLE STARTED ===');
+    console.log('Current plan from display state:', displayPlan);
+    console.log('Next plan to set:', nextPlan);
+
+    setIsTogglingPlan(true);
+    setError(null);
+
+    try {
+      // Step 1: Update the plan on the server
+      console.log('Step 1: Sending PUT request to update plan to:', nextPlan);
+      const updateResponse = await fetch('/api/user/plan', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: nextPlan }),
+      });
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        console.error('PUT request failed:', errorData);
+        setError(errorData.error || 'Failed to update plan');
+        setIsTogglingPlan(false);
+        return;
+      }
+
+      const updateData = await updateResponse.json();
+      console.log('Step 1 SUCCESS: API response:', updateData);
+
+      // Step 2: Immediately update the display state
+      console.log('Step 2: Updating display plan to:', nextPlan);
+      setDisplayPlan(nextPlan);
+
+      // Step 3: Wait a moment for database to ensure the update is written
+      console.log('Step 3: Waiting 300ms for database write...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Step 4: Refresh the plan context to fetch the updated plan
+      console.log('Step 4: Calling refreshPlan()...');
+      await refreshPlan();
+      
+      console.log('Step 4 SUCCESS: Plan refresh complete');
+      console.log('=== PLAN TOGGLE COMPLETED ===');
+      setError(null);
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      setError('Failed to update plan');
+      // Revert display plan on error
+      setDisplayPlan(displayPlan);
+    } finally {
+      setIsTogglingPlan(false);
+    }
   };  return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DropdownMenu>
@@ -204,6 +280,33 @@ export function UserMenu({ session }: UserMenuProps) {
                     <span>Back to Admin View</span>
                   </>
                 )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+
+          {/* Plan Toggle - Only show for admin users */}
+          {!isCheckingAdmin && shouldShowViewModeToggle && (
+            <>
+              <DropdownMenuItem 
+                className={`cursor-pointer flex items-center gap-2 ${
+                  isTogglingPlan 
+                    ? 'text-purple-300/50 pointer-events-none' 
+                    : 'text-purple-400 hover:text-purple-300'
+                }`}
+                onClick={() => !isTogglingPlan && handleTogglePlan()}
+              >
+                <Crown className="w-4 h-4" />
+                <span>
+                  {isTogglingPlan ? (
+                    <>
+                      <Loader2 className="w-3 h-3 inline mr-1 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>Plan: {displayPlan.toUpperCase()}</>
+                  )}
+                </span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>

@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/custom/theme-provider";
 import { AuthWrapper } from "@/components/custom/auth-wrapper";
 import { AdminProvider } from "@/contexts/admin-context";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { UserPlanProvider } from "@/components/custom/user-plan-context";
+import { CategoryFilterProvider } from "@/contexts/category-filter-context";
 import { Footer } from "@/components/custom/footer";
 import { GlassNav } from "@/components/custom/glass-nav";
 
@@ -44,18 +46,22 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <AdminProvider>
-              <AuthWrapper>
-                <BackgroundGlow />
-                <Toaster position="top-center" />
-                <Navbar />
-                
-                <main className="flex-1">
-                  {children}
-                </main>
-                
-                <Footer />
-                <GlassNav />
-              </AuthWrapper>
+              <UserPlanProvider>
+                <CategoryFilterProvider>
+                  <AuthWrapper>
+                    <BackgroundGlow />
+                    <Toaster position="top-center" />
+                    <Navbar />
+                    
+                    <main className="flex-1">
+                      {children}
+                    </main>
+                    
+                    <Footer />
+                    <GlassNav />
+                  </AuthWrapper>
+                </CategoryFilterProvider>
+              </UserPlanProvider>
             </AdminProvider>
           </ThemeProvider>
         </SessionProvider>

@@ -2,52 +2,35 @@
 
 import { useState, useRef, useEffect } from "react";
 import { HorizontalScrollGallery } from "./horizontal-scroll-gallery";
+import { useCategoryFilter } from "@/contexts/category-filter-context";
+import { CATEGORIES, splitCategoriesIntoRows } from "@/lib/categories";
 
 interface GlassCapsuleProps {}
 
 export function GlassCapsules() {
-  const [selectedCategories, setSelectedCategories] = useState(['all']);
+  const { selectedCategories, setSelectedCategories } = useCategoryFilter();
   const [showLanguages, setShowLanguages] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [languageSearch, setLanguageSearch] = useState('');
 
-  const categories = [
-    { name: 'Business', emoji: '💼' },
-    { name: 'Technology', emoji: '💻' },
-    { name: 'Health', emoji: '🏥' },
-    { name: 'Education', emoji: '📚' },
-    { name: 'Entertainment', emoji: '🎬' },
-    { name: 'Sports', emoji: '⚽' },
-    { name: 'Travel', emoji: '✈️' },
-    { name: 'Food', emoji: '🍕' },
-    { name: 'Music', emoji: '🎵' },
-    { name: 'Art', emoji: '🎨' },
-    { name: 'Science', emoji: '🔬' },
-    { name: 'Finance', emoji: '💰' },
-    { name: 'Fashion', emoji: '👗' },
-    { name: 'Gaming', emoji: '🎮' },
-    { name: 'Nature', emoji: '🌿' }
-  ];
-
-  // Split categories into two rows
-  const firstRowCategories = categories.slice(0, Math.ceil(categories.length / 2));
-  const secondRowCategories = categories.slice(Math.ceil(categories.length / 2));
+  // Use reusable categories from utility
+  const [firstRowCategories, secondRowCategories] = splitCategoriesIntoRows();
   const languages = ['English', 'German', 'Spanish', 'French', 'Chinese', 'Italian', 'Dutch', 'Vietnamese', 'Arabic'];
 
   const filteredLanguages = languages.filter(language =>
     language.toLowerCase().includes(languageSearch.toLowerCase())
   );
 
-  const handleCategoryClick = (categoryName: string) => {
-    if (categoryName === 'all') {
+  const handleCategoryClick = (categoryValue: string) => {
+    if (categoryValue === 'all') {
       setSelectedCategories(['all']);
     } else {
       const newCategories = selectedCategories.filter(cat => cat !== 'all');
-      if (selectedCategories.includes(categoryName)) {
-        const filtered = newCategories.filter(cat => cat !== categoryName);
+      if (selectedCategories.includes(categoryValue)) {
+        const filtered = newCategories.filter(cat => cat !== categoryValue);
         setSelectedCategories(filtered.length === 0 ? ['all'] : filtered);
       } else {
-        setSelectedCategories([...newCategories, categoryName]);
+        setSelectedCategories([...newCategories, categoryValue]);
       }
     }
   };
@@ -123,16 +106,16 @@ export function GlassCapsules() {
             {/* First Row Categories with glass effect */}
             {firstRowCategories.map((category) => (
               <button
-                key={category.name}
-                onClick={() => handleCategoryClick(category.name)}
+                key={category.value}
+                onClick={() => handleCategoryClick(category.value)}
                 className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 overflow-hidden cursor-pointer group shadow-lg shadow-black/20 ${
-                  selectedCategories.includes(category.name)
+                  selectedCategories.includes(category.value)
                     ? 'text-black'
                     : 'text-white'
                 }`}
               >
                 {/* Glass layers for selected state */}
-                {selectedCategories.includes(category.name) ? (
+                {selectedCategories.includes(category.value) ? (
                   <>
                     <div className="absolute inset-0 bg-cyan-400 rounded-full"></div>
                     <div className="absolute inset-0 shadow-lg shadow-cyan-400/30"></div>
@@ -175,16 +158,16 @@ export function GlassCapsules() {
             {/* Second Row Categories with glass effect */}
             {secondRowCategories.map((category) => (
               <button
-                key={category.name}
-                onClick={() => handleCategoryClick(category.name)}
+                key={category.value}
+                onClick={() => handleCategoryClick(category.value)}
                 className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 overflow-hidden cursor-pointer group shadow-lg shadow-black/20 ${
-                  selectedCategories.includes(category.name)
+                  selectedCategories.includes(category.value)
                     ? 'text-black'
                     : 'text-white'
                 }`}
               >
                 {/* Glass layers for selected state */}
-                {selectedCategories.includes(category.name) ? (
+                {selectedCategories.includes(category.value) ? (
                   <>
                     <div className="absolute inset-0 bg-cyan-400 rounded-full"></div>
                     <div className="absolute inset-0 shadow-lg shadow-cyan-400/30"></div>

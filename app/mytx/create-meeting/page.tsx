@@ -140,13 +140,6 @@ export default function CreateMeetingPage() {
     );
   }
 
-  // Show upgrade plan wall for free users, direct access for paid users
-  if (!subscription || !isUserPaidSubscriber(subscription)) {
-    // Create a minimal user object for the upgrade wall
-    const userForWall = isAuthenticated ? { subscription } : null;
-    return <UpgradePlanWall type="meeting" user={userForWall} />;
-  }
-
-  // Show actual meeting creation form for paid users
-  return <CreateMeetingForm />;
+  // Always show upgrade plan wall for meeting creation
+  return <UpgradePlanWall type="meeting" user={isAuthenticated ? { subscription } : null} />;
 }

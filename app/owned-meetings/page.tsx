@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { PlusIcon, Trash2Icon, Edit2Icon, CalendarIcon, UsersIcon, ClockIcon } from "lucide-react";
+import { CreateMeetingDialog } from "@/components/custom/create-meeting-dialog";
+import { MeetingLimitModal } from "@/components/custom/meeting-limit-modal";
+import { useUserPlan } from "@/components/custom/user-plan-context";
 
 interface Meeting {
   id: string;
@@ -35,9 +38,11 @@ interface Meeting {
 export default function OwnedMeetingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { userPlan, meetingCount, isLoading: isPlanLoading, refreshPlan } = useUserPlan();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [formData, setFormData] = useState({
@@ -70,37 +75,13 @@ export default function OwnedMeetingsPage() {
       if (!response.ok) throw new Error("Failed to fetch meetings");
       const data = await response.json();
       setMeetings(data);
+      // Refresh plan to update meeting count
+      await refreshPlan();
     } catch (error) {
       console.error("Error fetching meetings:", error);
       toast.error("Failed to load meetings");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleCreateMeeting = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("/api/meetings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          maxAttendees: formData.maxAttendees ? parseInt(formData.maxAttendees) : null,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create meeting");
-      }
-
-      toast.success("Meeting created successfully!");
-      setIsCreateDialogOpen(false);
-      resetForm();
-      fetchMeetings();
-    } catch (error: any) {
-      toast.error(error.message);
     }
   };
 
@@ -179,6 +160,35 @@ export default function OwnedMeetingsPage() {
     });
   };
 
+  const handleCreateClick = () => {
+    // Define meeting limits
+    const meetingLimits = {
+      free: 1,
+      basic: 3,
+      pro: Infinity,
+    };
+
+    const limit = meetingLimits[userPlan as keyof typeof meetingLimits] || 1;
+
+    // If user is on free plan, redirect to create-meeting page
+    if (userPlan === "free") {
+      // Check if free user has reached their limit
+      if (meetingCount >= limit) {
+        setIsLimitModalOpen(true);
+        return;
+      }
+      router.push("/mytx/create-meeting");
+    } else {
+      // For basic and pro users, check limit before opening modal
+      if (userPlan === "basic" && meetingCount >= limit) {
+        setIsLimitModalOpen(true);
+        return;
+      }
+      // Pro users or users under limit can create
+      setIsCreateDialogOpen(true);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
       month: 'short',
@@ -189,7 +199,7 @@ export default function OwnedMeetingsPage() {
     });
   };
 
-  if (status === "loading" || isLoading) {
+  if (status === "loading" || isLoading || isPlanLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-white">Loading...</p>
@@ -199,142 +209,43 @@ export default function OwnedMeetingsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="h-20"></div>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">My Meetings</h1>
           <p className="text-zinc-400">Manage your created meetings</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Create Meeting
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-black/90 border-white/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Meeting</DialogTitle>
-              <DialogDescription className="text-zinc-400">
-                Fill in the details for your new meeting
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleCreateMeeting}>
-              <div className="grid gap-4 py-4">
-                <div>
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                    className="bg-white/10 border-white/20 text-white"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="meetingType">Meeting Type *</Label>
-                  <Select value={formData.meetingType} onValueChange={(value) => setFormData({ ...formData, meetingType: value })}>
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="webinar">Webinar</SelectItem>
-                      <SelectItem value="consultation">Consultation</SelectItem>
-                      <SelectItem value="workshop">Workshop</SelectItem>
-                      <SelectItem value="demo">Demo</SelectItem>
-                      <SelectItem value="training">Training</SelectItem>
-                      <SelectItem value="meeting">General Meeting</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="startTime">Start Time *</Label>
-                    <Input
-                      id="startTime"
-                      type="datetime-local"
-                      value={formData.startTime}
-                      onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      required
-                      className="bg-white/10 border-white/20 text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="endTime">End Time *</Label>
-                    <Input
-                      id="endTime"
-                      type="datetime-local"
-                      value={formData.endTime}
-                      onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                      required
-                      className="bg-white/10 border-white/20 text-white"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="meetingUrl">Meeting URL (Zoom/Meet link)</Label>
-                  <Input
-                    id="meetingUrl"
-                    type="url"
-                    value={formData.meetingUrl}
-                    onChange={(e) => setFormData({ ...formData, meetingUrl: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white"
-                    placeholder="https://zoom.us/j/..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maxAttendees">Max Attendees (leave empty for unlimited)</Label>
-                  <Input
-                    id="maxAttendees"
-                    type="number"
-                    min="1"
-                    value={formData.maxAttendees}
-                    onChange={(e) => setFormData({ ...formData, maxAttendees: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white"
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isPublic"
-                    checked={formData.isPublic}
-                    onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
-                    className="rounded"
-                  />
-                  <Label htmlFor="isPublic">Make meeting public</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="requiresApproval"
-                    checked={formData.requiresApproval}
-                    onChange={(e) => setFormData({ ...formData, requiresApproval: e.target.checked })}
-                    className="rounded"
-                  />
-                  <Label htmlFor="requiresApproval">Require approval for registration</Label>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-cyan-500 hover:bg-cyan-600">
-                  Create Meeting
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          className="bg-cyan-500 hover:bg-cyan-600 text-white"
+          onClick={handleCreateClick}
+        >
+          <PlusIcon className="mr-2 h-4 w-4" />
+          Create Meeting
+        </Button>
       </div>
+
+      {/* Create Meeting Dialog - Only for Basic/Pro users */}
+      {userPlan !== "free" && (
+        <CreateMeetingDialog 
+          open={isCreateDialogOpen} 
+          onOpenChange={setIsCreateDialogOpen}
+          onSuccess={fetchMeetings}
+        />
+      )}
+
+      {/* Meeting Limit Modal */}
+      <MeetingLimitModal
+        open={isLimitModalOpen}
+        onOpenChange={setIsLimitModalOpen}
+        currentCount={meetingCount}
+        limit={userPlan === "free" ? 1 : userPlan === "basic" ? 3 : Infinity}
+        plan={userPlan || "free"}
+        mode="reached"
+        onRemoveMeeting={() => {
+          // Close the modal and let user delete from the list
+          setIsLimitModalOpen(false);
+        }}
+      />
 
       {meetings.length === 0 ? (
         <Card className="bg-white/5 border-white/10 text-center py-12">
@@ -343,7 +254,7 @@ export default function OwnedMeetingsPage() {
             <h3 className="text-xl font-semibold text-white mb-2">No meetings yet</h3>
             <p className="text-zinc-400 mb-4">Create your first meeting to get started</p>
             <Button
-              onClick={() => setIsCreateDialogOpen(true)}
+              onClick={handleCreateClick}
               className="bg-cyan-500 hover:bg-cyan-600 text-white"
             >
               <PlusIcon className="mr-2 h-4 w-4" />

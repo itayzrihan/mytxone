@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { HorizontalScrollGallery } from "./horizontal-scroll-gallery";
+import { CATEGORIES, splitCategoriesIntoRows } from "@/lib/categories";
 
 interface CategoryCapsuleProps {}
 
@@ -11,43 +12,24 @@ export function CategoryCapsules() {
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [languageSearch, setLanguageSearch] = useState('');
 
-  const categories = [
-    { name: 'Business', emoji: '💼' },
-    { name: 'Technology', emoji: '💻' },
-    { name: 'Health', emoji: '🏥' },
-    { name: 'Education', emoji: '📚' },
-    { name: 'Entertainment', emoji: '🎬' },
-    { name: 'Sports', emoji: '⚽' },
-    { name: 'Travel', emoji: '✈️' },
-    { name: 'Food', emoji: '🍕' },
-    { name: 'Music', emoji: '🎵' },
-    { name: 'Art', emoji: '🎨' },
-    { name: 'Science', emoji: '🔬' },
-    { name: 'Finance', emoji: '💰' },
-    { name: 'Fashion', emoji: '👗' },
-    { name: 'Gaming', emoji: '🎮' },
-    { name: 'Nature', emoji: '🌿' }
-  ];
-
-  // Split categories into two rows
-  const firstRowCategories = categories.slice(0, Math.ceil(categories.length / 2));
-  const secondRowCategories = categories.slice(Math.ceil(categories.length / 2));
+  // Use reusable categories from utility
+  const [firstRowCategories, secondRowCategories] = splitCategoriesIntoRows();
   const languages = ['English', 'German', 'Spanish', 'French', 'Chinese', 'Italian', 'Dutch', 'Vietnamese', 'Arabic'];
 
   const filteredLanguages = languages.filter(language =>
     language.toLowerCase().includes(languageSearch.toLowerCase())
   );
 
-  const handleCategoryClick = (categoryName: string) => {
-    if (categoryName === 'all') {
+  const handleCategoryClick = (categoryValue: string) => {
+    if (categoryValue === 'all') {
       setSelectedCategories(['all']);
     } else {
       const newCategories = selectedCategories.filter(cat => cat !== 'all');
-      if (selectedCategories.includes(categoryName)) {
-        const filtered = newCategories.filter(cat => cat !== categoryName);
+      if (selectedCategories.includes(categoryValue)) {
+        const filtered = newCategories.filter(cat => cat !== categoryValue);
         setSelectedCategories(filtered.length === 0 ? ['all'] : filtered);
       } else {
-        setSelectedCategories([...newCategories, categoryName]);
+        setSelectedCategories([...newCategories, categoryValue]);
       }
     }
   };
@@ -92,10 +74,10 @@ export function CategoryCapsules() {
           {/* First Row Categories */}
           {firstRowCategories.map((category) => (
             <button
-              key={category.name}
-              onClick={() => handleCategoryClick(category.name)}
+              key={category.value}
+              onClick={() => handleCategoryClick(category.value)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 ${
-                selectedCategories.includes(category.name)
+                selectedCategories.includes(category.value)
                   ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/30'
                   : 'bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10'
               }`}
@@ -122,10 +104,10 @@ export function CategoryCapsules() {
           {/* Second Row Categories */}
           {secondRowCategories.map((category) => (
             <button
-              key={category.name}
-              onClick={() => handleCategoryClick(category.name)}
+              key={category.value}
+              onClick={() => handleCategoryClick(category.value)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-1 ${
-                selectedCategories.includes(category.name)
+                selectedCategories.includes(category.value)
                   ? 'bg-cyan-400 text-black shadow-lg shadow-cyan-400/30'
                   : 'bg-white/10 text-zinc-300 hover:bg-white/20 border border-white/10'
               }`}

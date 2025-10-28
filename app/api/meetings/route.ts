@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { getDb } from "@/db/queries";
 import { meeting, meetingAttendee, user } from "@/db/schema";
-import { eq, and, desc, gte, sql } from "drizzle-orm";
+import { eq, and, desc, gte, sql, inArray } from "drizzle-orm";
 
 // GET /api/meetings - Fetch all public meetings or user's own meetings
 export async function GET(request: NextRequest) {
@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
           title: meeting.title,
           description: meeting.description,
           meetingType: meeting.meetingType,
+          category: meeting.category,
           imageUrl: meeting.imageUrl,
           startTime: meeting.startTime,
           endTime: meeting.endTime,
@@ -54,6 +55,12 @@ export async function GET(request: NextRequest) {
         .where(eq(meeting.userId, currentUser[0].id))
         .groupBy(meeting.id)
         .orderBy(desc(meeting.createdAt));
+
+      console.log('GET /api/meetings?filter=owned:', {
+        userEmail: session.user.email,
+        userId: currentUser[0].id,
+        ownedMeetingsCount: ownedMeetings.length,
+      });
 
       return NextResponse.json(ownedMeetings);
     }
@@ -81,6 +88,7 @@ export async function GET(request: NextRequest) {
           title: meeting.title,
           description: meeting.description,
           meetingType: meeting.meetingType,
+          category: meeting.category,
           imageUrl: meeting.imageUrl,
           startTime: meeting.startTime,
           endTime: meeting.endTime,
@@ -106,6 +114,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Default: return all public upcoming meetings
+    const categories = searchParams.get("categories")?.split(",").filter(Boolean) || [];
+    
+    const whereConditions: any[] = [
+      eq(meeting.isPublic, true),
+      gte(meeting.startTime, new Date())
+    ];
+    
+    if (categories.length > 0) {
+      whereConditions.push(inArray(meeting.category, categories));
+    }
+    
     const publicMeetings = await db
       .select({
         id: meeting.id,
@@ -113,6 +132,7 @@ export async function GET(request: NextRequest) {
         title: meeting.title,
         description: meeting.description,
         meetingType: meeting.meetingType,
+        category: meeting.category,
         imageUrl: meeting.imageUrl,
         startTime: meeting.startTime,
         endTime: meeting.endTime,
@@ -129,12 +149,7 @@ export async function GET(request: NextRequest) {
       })
       .from(meeting)
       .leftJoin(meetingAttendee, eq(meeting.id, meetingAttendee.meetingId))
-      .where(
-        and(
-          eq(meeting.isPublic, true),
-          gte(meeting.startTime, new Date())
-        )
-      )
+      .where(and(...whereConditions))
       .groupBy(meeting.id)
       .orderBy(meeting.startTime);
 
@@ -181,6 +196,12 @@ export async function POST(request: NextRequest) {
         )
       );
 
+    console.log('=== CREATE MEETING - EXISTING COUNT CHECK ===');
+    console.log('User:', userData.email, 'ID:', userData.id);
+    console.log('Plan:', userData.subscription);
+    console.log('Existing active meetings:', existingMeetings.length);
+    console.log('=== END CHECK ===');
+
     const meetingLimits = {
       free: 1,
       basic: 3,
@@ -190,6 +211,7 @@ export async function POST(request: NextRequest) {
     const limit = meetingLimits[userData.subscription as keyof typeof meetingLimits] || 1;
 
     if (existingMeetings.length >= limit) {
+      console.log('❌ LIMIT REACHED:', userData.email, 'has', existingMeetings.length, 'of', limit, 'meetings');
       return NextResponse.json(
         {
           error: `Meeting limit reached. ${userData.subscription} plan allows ${limit === Infinity ? "unlimited" : limit} active meeting${limit > 1 ? "s" : ""}. Please delete an old meeting or upgrade your plan.`,
@@ -205,6 +227,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       meetingType,
+      category,
       imageUrl,
       startTime,
       endTime,
@@ -216,7 +239,7 @@ export async function POST(request: NextRequest) {
       tags,
     } = body;
 
-    if (!title || !startTime || !endTime || !meetingType) {
+    if (!title || !startTime || !endTime || !meetingType || !category) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -230,6 +253,7 @@ export async function POST(request: NextRequest) {
         title,
         description: description || null,
         meetingType,
+        category,
         imageUrl: imageUrl || null,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
@@ -242,6 +266,14 @@ export async function POST(request: NextRequest) {
         tags: tags || null,
       })
       .returning();
+
+    console.log('✅ MEETING CREATED:', {
+      meetingId: newMeeting[0]?.id,
+      title: newMeeting[0]?.title,
+      userId: newMeeting[0]?.userId,
+      startTime: newMeeting[0]?.startTime,
+      endTime: newMeeting[0]?.endTime,
+    });
 
     return NextResponse.json(newMeeting[0], { status: 201 });
   } catch (error) {

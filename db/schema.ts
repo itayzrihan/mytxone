@@ -529,6 +529,7 @@ export const meeting = pgTable("Meeting", {
   title: text("title").notNull(),
   description: text("description"),
   meetingType: text("meeting_type").notNull(), // "webinar", "consultation", "workshop", "demo", etc.
+  category: text("category").notNull().default("business"), // "business", "technology", "health", etc.
   imageUrl: text("image_url"), // Cover image for the meeting
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),

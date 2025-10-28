@@ -155,6 +155,20 @@
       "when": 1761427224069,
       "tag": "0021_hard_black_crow",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1761600930254,
+      "tag": "0022_messy_moon_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1761606532530,
+      "tag": "0023_rare_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,7 @@ import { Chat } from "@/db/schema";
 import { fetcher, getTitleFromChat } from "@/lib/utils";
 import { useAuth } from "./auth-context";
 import { useAdmin } from "@/contexts/admin-context";
+import { useUserPlan } from "./user-plan-context";
 
 import {
   CalendarIcon,
@@ -56,6 +57,7 @@ export const History = ({ user }: { user: User | undefined }) => {
   const pathname = usePathname();
   const { openAuthModal } = useAuth();
   const { shouldShowAdminElements, viewMode } = useAdmin();
+  const { userPlan } = useUserPlan();
 
   // Check if the current path is in the aichat section
   const isInAiChatSection = pathname === '/aichat' || pathname.startsWith('/aichat/');
@@ -253,7 +255,7 @@ export const History = ({ user }: { user: User | undefined }) => {
               className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
               asChild
             >
-              <Link href="/mytx/create-meeting">
+              <Link href={userPlan === "basic" || userPlan === "pro" ? "/owned-meetings" : "/mytx/create-meeting"}>
                 <div>Create new meeting</div>
                 <CalendarIcon size={14} />
               </Link>

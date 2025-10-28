@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Shield, Eye } from "lucide-react";
 
 import { History } from "./history";
@@ -25,6 +25,7 @@ export const Navbar = ({ session }: NavbarProps) => {
   const [isClient, setIsClient] = useState(false);
   const { openAuthModal } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   // Use the centralized admin status hook
   const { shouldShowAdminElements, shouldShowViewModeToggle, viewMode, isLoading: isCheckingAdmin } = useAdminStatus(session?.user?.id);
@@ -192,11 +193,7 @@ export const Navbar = ({ session }: NavbarProps) => {
                           }
                         `}
                         size="sm"
-                        onClick={() => {
-                          // Trigger view mode toggle via custom event
-                          const event = new CustomEvent('toggle-view-mode');
-                          window.dispatchEvent(event);
-                        }}
+                        onClick={() => router.push('/admin')}
                       >
                         {viewMode === 'admin' ? (
                           <>

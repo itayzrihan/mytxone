@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/custom/auth-context";
 import Link from "next/link";
+import { CreateMeetingDialog } from "@/components/custom/create-meeting-dialog";
+import { MeetingLimitModal } from "@/components/custom/meeting-limit-modal";
+import { useRouter } from "next/navigation";
+import { useUserPlan } from "@/components/custom/user-plan-context";
 
 // Sample thumbnails for the carousel
 const carouselThumbnails = [
@@ -59,6 +63,10 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
   const [modalPlan, setModalPlan] = useState('basic');
   const [isLoading, setIsLoading] = useState(false);
   const { openAuthModal, isAuthModalOpen } = useAuth();
+  const [showCreateMeetingDialog, setShowCreateMeetingDialog] = useState(false);
+  const [showMeetingLimitModal, setShowMeetingLimitModal] = useState(false);
+  const router = useRouter();
+  const { userPlan, meetingCount, isLoading: isPlanLoading, refreshPlan } = useUserPlan();
   const [formData, setFormData] = useState({
     communityName: '',
     cardNumber: '',
@@ -69,12 +77,62 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
   const buttonText = type === 'meeting' ? 'CREATE A MEETING' : 'CREATE A COMMUNITY';
   const modalTitle = type === 'meeting' ? 'Create a Meeting' : 'Create a Community';
 
-  // Handle create button click
+  // Handle "START FREE" button click for free users
+  const handleStartFreeClick = async () => {
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+
+    // For meeting type, check if user has reached their plan limit
+    if (type === 'meeting' && userPlan) {
+      // Determine the meeting limit based on user's plan
+      const meetingLimit = userPlan === 'free' ? 1 : userPlan === 'basic' ? 3 : Infinity;
+      
+      // If user has reached their limit, show the limit modal
+      if (meetingCount >= meetingLimit) {
+        setShowMeetingLimitModal(true);
+        return;
+      }
+    }
+
+    // If under limit or not applicable, open the create meeting dialog
+    setShowCreateMeetingDialog(true);
+  };
+
+  // Fetch user's current meeting count
+  const fetchUserMeetingCount = async () => {
+    try {
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/user/plan?t=${timestamp}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Plan data is already in context, no need to set state here
+      }
+    } catch (error) {
+      console.error('Error fetching user meeting count:', error);
+    }
+  };
+
+  // Handle "CREATE A MEETING" button click
   const handleCreateClick = () => {
     if (!user) {
       openAuthModal('login');
     } else {
       setShowPricing(true);
+      // If user is basic/pro, default to their current plan or next tier
+      if (userPlan === 'basic' || userPlan === 'pro') {
+        setSelectedPlan('basic');
+      }
     }
   };
 
@@ -230,11 +288,13 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
       <div className="min-h-screen flex flex-col items-center justify-center px-4 pt-8 pb-20">
       <div className="max-w-4xl mx-auto text-center space-y-3">
         
-        {/* MYTX Logo */}
-        <div className="text-4xl font-bold">
-          <span className="text-cyan-400">MYT</span>
-          <span className="text-white">X</span>
-        </div>
+        {/* MYTX Logo - Links to root */}
+        <Link href="/" className="inline-block hover:opacity-80 transition-opacity duration-200">
+          <div className="text-4xl font-bold">
+            <span className="text-cyan-400">MYT</span>
+            <span className="text-white">X</span>
+          </div>
+        </Link>
 
         {/* Inspirational Statement or What's best for you */}
         {!showPricing ? (
@@ -369,7 +429,7 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
             {/* Mobile Tabs */}
             <div className="md:hidden mb-6">
               <div className="flex bg-white/10 backdrop-blur-md rounded-2xl p-1 border border-white/20">
-                {type === 'meeting' && (
+                {type === 'meeting' && (!userPlan || userPlan === 'free') && (
                   <button
                     onClick={() => setSelectedPlan('free')}
                     className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
@@ -407,8 +467,8 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
             {/* Desktop Side by Side / Mobile Single Card */}
             <div className={`${type === 'meeting' ? 'md:grid md:grid-cols-3 md:gap-6' : 'md:grid md:grid-cols-2 md:gap-6'}`}>
               
-              {/* Free Plan - Only for meetings */}
-              {type === 'meeting' && (
+              {/* Free Plan - Only for meetings AND only show if user is free or not logged in */}
+              {type === 'meeting' && (!userPlan || userPlan === 'free') && (
                 <div className={`${selectedPlan === 'free' ? 'block' : 'hidden'} md:block`}>
                   <div className="relative">
                     <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl shadow-black/20"></div>
@@ -427,23 +487,15 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
+                          <span className="text-white">1 meeting</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
                           <span className="text-white">Basic features</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <span className="text-white">Up to 10 participants</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <span className="text-white">1 hour meetings</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="w-5 h-5 rounded-full bg-gray-500 flex items-center justify-center">
@@ -463,10 +515,11 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                         </div>
                       </div>
 
-                      <Button asChild className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
-                        <Link href="/owned-meetings">
-                          START FREE
-                        </Link>
+                      <Button 
+                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl"
+                        onClick={handleStartFreeClick}
+                      >
+                        START FREE
                       </Button>
                     </div>
                   </div>
@@ -492,7 +545,23 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
+                        <span className="text-white">Up to 3 meetings</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                         <span className="text-white">All features</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-white">Basic features</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
@@ -561,6 +630,14 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                     </div>
                     
                     <div className="space-y-4 text-left">
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-white">Unlimited meetings</span>
+                      </div>
                       <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -729,6 +806,29 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
           </div>
         </div>
       )}
+
+      {/* Create Meeting Dialog */}
+      <CreateMeetingDialog 
+        open={showCreateMeetingDialog} 
+        onOpenChange={setShowCreateMeetingDialog}
+        onSuccess={() => {
+          router.push('/owned-meetings');
+        }}
+      />
+
+      {/* Meeting Limit Modal - For Free Users */}
+      <MeetingLimitModal
+        open={showMeetingLimitModal}
+        onOpenChange={setShowMeetingLimitModal}
+        currentCount={meetingCount}
+        limit={userPlan === 'free' ? 1 : userPlan === 'basic' ? 3 : Infinity}
+        plan={userPlan || 'free'}
+        onRemoveMeeting={() => {
+          setShowMeetingLimitModal(false);
+          // User can go to owned-meetings to delete a meeting
+          router.push('/owned-meetings');
+        }}
+      />
       </div>
     </>
   );

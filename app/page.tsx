@@ -1,3 +1,5 @@
+"use client";
+
 import { auth } from "@/app/(auth)/auth";
 import { generateUUID } from "@/lib/utils";
 import { GlassCapsules } from "@/components/custom/glass-capsules";
@@ -5,29 +7,25 @@ import { MeetingCards } from "@/components/custom/meeting-cards";
 import { SearchBar } from "@/components/custom/search-bar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useUserPlan } from "@/components/custom/user-plan-context";
 
-export default async function Page() {
-  const session = await auth();
+export default function Page() {
+  const { userPlan } = useUserPlan();
 
   return (
-    <div className="flex flex-col min-h-screen p-4 pt-16">
+    <div className="flex flex-col min-h-screen p-4 pt-32">
       <div className="max-w-2xl mx-auto text-center">
+
         <h1 className="text-4xl font-bold text-white mb-2">
           Meet new people
         </h1>
         <p className="text-lg mb-6">
           <span className="text-zinc-300">or </span>
-          <span className="text-cyan-400">create a new meeting</span>
+          <Link href={userPlan === "basic" || userPlan === "pro" ? "/owned-meetings" : "/mytx/create-meeting"}>
+            <span className="text-cyan-400">create a new meeting</span>
+          </Link>
         </p>
-        
-        {/* Start Free Button */}
-        <div className="mb-6">
-          <Button asChild className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-cyan-500/30">
-            <Link href="/owned-meetings">
-              START FREE
-            </Link>
-          </Button>
-        </div>
+
         
         {/* Search Bar with Glass Morphism */}
         <div className="mb-8">
