@@ -75,8 +75,8 @@ export function MeetingCards() {
     try {
       const response = await fetch("/api/meetings?filter=attending");
       if (response.ok) {
-        const data = await response.json();
-        const registeredIds = new Set(data.map((m: RealMeeting) => m.id));
+        const data = await response.json() as RealMeeting[];
+        const registeredIds = new Set<string>(data.map((m: RealMeeting) => m.id));
         setRegisteredMeetingIds(registeredIds);
       }
     } catch (error) {

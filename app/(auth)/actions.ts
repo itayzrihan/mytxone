@@ -31,6 +31,10 @@ const loginFormSchema = z.object({
 const registrationFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(32, "Username must not exceed 32 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  notMytxEmail: z.string().email("Invalid email address"),
+  phoneNumber: z.string().min(5, "Phone number must be valid"),
+  profileImageUrl: z.string().url("Invalid URL").optional(),
 });
 
 // Rate limiting constants (10 attempts per 15 minutes)
@@ -205,6 +209,10 @@ export const register = async (
     const validatedData = registrationFormSchema.parse({
       username: formData.get("username"),
       password: formData.get("password"),
+      fullName: formData.get("fullName"),
+      notMytxEmail: formData.get("notMytxEmail"),
+      phoneNumber: formData.get("phoneNumber"),
+      profileImageUrl: formData.get("profileImageUrl"),
     });
     
     // Convert username to email for internal use
@@ -237,7 +245,12 @@ export const register = async (
       return { status: "user_exists" } as RegisterActionState;
     } else {
       console.log("[REGISTER] Creating new user:", { email });
-      await createUser(email, validatedData.password);
+      await createUser(email, validatedData.password, {
+        fullName: validatedData.fullName,
+        notMytxEmail: validatedData.notMytxEmail,
+        phoneNumber: validatedData.phoneNumber,
+        profileImageUrl: validatedData.profileImageUrl,
+      });
       console.log("[REGISTER] User created successfully");
 
       // IMPORTANT: Do NOT sign in user yet

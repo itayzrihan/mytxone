@@ -19,6 +19,11 @@ export const user = pgTable("User", {
   password: varchar("password", { length: 64 }),
   role: varchar("role", { length: 20 }).notNull().default("user"), // 'user', 'admin'
   subscription: varchar("subscription", { length: 20 }).notNull().default("free"), // 'free', 'basic', 'pro'
+  // Profile information
+  fullName: varchar("full_name", { length: 255 }),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  notMytxEmail: varchar("not_mytx_email", { length: 255 }), // User's external email
+  profileImageUrl: text("profile_image_url"), // URL to user's profile image
   // 2FA / TOTP fields
   totpSecret: text("totp_secret"), // Encrypted TOTP secret
   totpEnabled: boolean("totp_enabled").notNull().default(false), // Is 2FA enabled

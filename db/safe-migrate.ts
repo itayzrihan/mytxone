@@ -13,18 +13,23 @@ async function runMigrations() {
     return;
   }
 
+  let migrationClient: any = null;
+
   try {
     console.log('⏳ Running migrations...');
     
     const start = Date.now();
-    const migrationClient = postgres(process.env.POSTGRES_URL, { max: 1 });
+    migrationClient = postgres(process.env.POSTGRES_URL, { 
+      max: 1,
+      idle_timeout: 5,
+      connect_timeout: 10,
+    });
     const db = drizzle(migrationClient);
     
     await migrate(db, { migrationsFolder: './lib/drizzle' });
     
     const end = Date.now();
     console.log('✅ Migrations completed in', end - start, 'ms');
-    await migrationClient.end();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.log('⚠️  Migration completed with notices:', errorMessage);
@@ -35,6 +40,18 @@ async function runMigrations() {
       console.error('❌ Migration failed:', error);
       process.exit(1);
     }
+  } finally {
+    // Ensure connection is closed
+    if (migrationClient) {
+      try {
+        await migrationClient.end({ timeout: 5 });
+        console.log('✅ Database connection closed');
+      } catch (err) {
+        console.log('⚠️  Error closing connection:', err);
+      }
+    }
+    // Exit the process to ensure no hanging connections
+    process.exit(0);
   }
 }
 

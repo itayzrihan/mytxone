@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { PlusIcon, Trash2Icon, Edit2Icon, CalendarIcon, UsersIcon, ClockIcon } from "lucide-react";
 import { CreateMeetingDialog } from "@/components/custom/create-meeting-dialog";
 import { MeetingLimitModal } from "@/components/custom/meeting-limit-modal";
+import { AttendeesModal } from "@/components/custom/attendees-modal";
 import { useUserPlan } from "@/components/custom/user-plan-context";
 
 interface Meeting {
@@ -45,6 +46,8 @@ export default function OwnedMeetingsPage() {
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [isAttendeesModalOpen, setIsAttendeesModalOpen] = useState(false);
+  const [selectedMeetingForAttendees, setSelectedMeetingForAttendees] = useState<Meeting | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -143,6 +146,11 @@ export default function OwnedMeetingsPage() {
       requiresApproval: meeting.requiresApproval,
     });
     setIsEditDialogOpen(true);
+  };
+
+  const openAttendeesModal = (meeting: Meeting) => {
+    setSelectedMeetingForAttendees(meeting);
+    setIsAttendeesModalOpen(true);
   };
 
   const resetForm = () => {
@@ -324,12 +332,20 @@ export default function OwnedMeetingsPage() {
                   </span>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => openAttendeesModal(meeting)}
+                  className="flex-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-400/30"
+                  variant="outline"
+                >
+                  View Attendees ({meeting.attendeeCount})
+                </Button>
                 {meeting.meetingUrl && (
                   <Button
                     asChild
                     size="sm"
-                    className="w-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-400/30"
+                    className="flex-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-400/30"
                   >
                     <a href={meeting.meetingUrl} target="_blank" rel="noopener noreferrer">
                       Join Meeting
@@ -466,6 +482,14 @@ export default function OwnedMeetingsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Attendees Modal */}
+      <AttendeesModal
+        isOpen={isAttendeesModalOpen}
+        onOpenChange={setIsAttendeesModalOpen}
+        meetingId={selectedMeetingForAttendees?.id || ""}
+        meetingTitle={selectedMeetingForAttendees?.title}
+      />
     </div>
   );
 }

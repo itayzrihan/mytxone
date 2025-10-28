@@ -312,6 +312,14 @@ export function UserMenu({ session }: UserMenuProps) {
             </>
           )}
           
+          {/* Profile Link */}
+          <Link href={`/user/${session.user?.email?.split('@')[0]}`}>
+            <DropdownMenuItem className="cursor-pointer">
+              My Profile
+            </DropdownMenuItem>
+          </Link>
+          <DropdownMenuSeparator /> {/* Separator */}
+          
           {/* Use DialogTrigger for the API Keys item */}
           <DialogTrigger asChild>
             <DropdownMenuItem className="cursor-pointer">

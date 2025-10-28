@@ -53,7 +53,26 @@ export async function GET(request: NextRequest) {
         .from(meeting)
         .leftJoin(meetingAttendee, eq(meeting.id, meetingAttendee.meetingId))
         .where(eq(meeting.userId, currentUser[0].id))
-        .groupBy(meeting.id)
+        .groupBy(
+          meeting.id,
+          meeting.userId,
+          meeting.title,
+          meeting.description,
+          meeting.meetingType,
+          meeting.category,
+          meeting.imageUrl,
+          meeting.startTime,
+          meeting.endTime,
+          meeting.timezone,
+          meeting.meetingUrl,
+          meeting.maxAttendees,
+          meeting.isPublic,
+          meeting.requiresApproval,
+          meeting.status,
+          sql`${meeting.tags}::text`,
+          meeting.createdAt,
+          meeting.updatedAt
+        )
         .orderBy(desc(meeting.createdAt));
 
       console.log('GET /api/meetings?filter=owned:', {
@@ -150,7 +169,26 @@ export async function GET(request: NextRequest) {
       .from(meeting)
       .leftJoin(meetingAttendee, eq(meeting.id, meetingAttendee.meetingId))
       .where(and(...whereConditions))
-      .groupBy(meeting.id)
+      .groupBy(
+        meeting.id,
+        meeting.userId,
+        meeting.title,
+        meeting.description,
+        meeting.meetingType,
+        meeting.category,
+        meeting.imageUrl,
+        meeting.startTime,
+        meeting.endTime,
+        meeting.timezone,
+        meeting.meetingUrl,
+        meeting.maxAttendees,
+        meeting.isPublic,
+        meeting.requiresApproval,
+        meeting.status,
+        sql`${meeting.tags}::text`,
+        meeting.createdAt,
+        meeting.updatedAt
+      )
       .orderBy(meeting.startTime);
 
     return NextResponse.json(publicMeetings);

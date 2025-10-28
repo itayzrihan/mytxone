@@ -169,6 +169,13 @@
       "when": 1761606532530,
       "tag": "0023_rare_major_mapleleaf",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1761610126150,
+      "tag": "0024_add_user_profile_fields",
+      "breakpoints": true
     }
   ]
 }

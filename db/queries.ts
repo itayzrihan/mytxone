@@ -39,12 +39,28 @@ export async function getUser(email: string): Promise<Array<User>> {
   }
 }
 
-export async function createUser(email: string, password: string) {
+export async function createUser(
+  email: string,
+  password: string,
+  profileData?: {
+    fullName?: string;
+    notMytxEmail?: string;
+    phoneNumber?: string;
+    profileImageUrl?: string;
+  }
+) {
   let salt = genSaltSync(10);
   let hash = hashSync(password, salt);
 
   try {
-    return await getDb().insert(user).values({ email, password: hash });
+    return await getDb().insert(user).values({
+      email,
+      password: hash,
+      fullName: profileData?.fullName,
+      notMytxEmail: profileData?.notMytxEmail,
+      phoneNumber: profileData?.phoneNumber,
+      profileImageUrl: profileData?.profileImageUrl,
+    });
   } catch (error) {
     console.error("Failed to create user in database");
     throw error;
@@ -916,6 +932,10 @@ export async function getAllUsers(): Promise<Array<SafeUser>> {
       email: user.email,
       role: user.role,
       subscription: user.subscription,
+      fullName: user.fullName,
+      phoneNumber: user.phoneNumber,
+      notMytxEmail: user.notMytxEmail,
+      profileImageUrl: user.profileImageUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       totpSecret: user.totpSecret,
@@ -937,6 +957,10 @@ export async function getUserById(userId: string): Promise<SafeUser | null> {
       email: user.email,
       role: user.role,
       subscription: user.subscription,
+      fullName: user.fullName,
+      phoneNumber: user.phoneNumber,
+      notMytxEmail: user.notMytxEmail,
+      profileImageUrl: user.profileImageUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       totpSecret: user.totpSecret,
@@ -965,6 +989,10 @@ export async function updateUserRole(userId: string, role: 'user' | 'admin'): Pr
         email: user.email,
         role: user.role,
         subscription: user.subscription,
+        fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        notMytxEmail: user.notMytxEmail,
+        profileImageUrl: user.profileImageUrl,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         totpSecret: user.totpSecret,
@@ -992,6 +1020,10 @@ export async function updateUserSubscription(userId: string, subscription: 'free
         email: user.email,
         role: user.role,
         subscription: user.subscription,
+        fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        notMytxEmail: user.notMytxEmail,
+        profileImageUrl: user.profileImageUrl,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         totpSecret: user.totpSecret,
