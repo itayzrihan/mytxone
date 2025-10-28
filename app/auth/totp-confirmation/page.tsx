@@ -53,7 +53,7 @@ export default function TOTPConfirmationPage() {
         setMessage("2FA setup successful! Redirecting...");
         toast.success("2FA enabled successfully!");
 
-        // Auto-login and redirect
+        // Auto-redirect to home page
         setTimeout(() => {
           router.push("/");
         }, 1500);

@@ -25,6 +25,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
   const [show2FA, setShow2FA] = useState(false);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [totpSeedId, setTotpSeedId] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
   const hasRefreshedRef = useRef(false);
 
   const [loginState, loginAction] = useActionState<LoginActionState, FormData>(
@@ -49,13 +50,15 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
       setUsername("");
       setPassword("");
       setTotpSeedId(null);
+      setCurrentStep(0);
     }
   }, [isOpen]);
 
-  // Reset 2FA states when switching between login/register
+  // Reset 2FA states and step when switching between login/register
   useEffect(() => {
     setShow2FA(false);
     setShow2FASetup(false);
+    setCurrentStep(0);
   }, [mode]);
 
   useEffect(() => {
@@ -81,7 +84,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
     } else {
       // Handle register states
       if (registerState.status === "user_exists") {
-        toast.error("Account already exists");
+        toast.error("Username already exists");
       } else if (registerState.status === "failed") {
         toast.error(registerState.error || "Failed to create account");
       } else if (registerState.status === "invalid_data") {
@@ -121,6 +124,13 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
     setShow2FASetup(false);
     hasRefreshedRef.current = false;
     onClose();
+    
+    // Navigate back or to root
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
   };
 
   return (
@@ -163,22 +173,62 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
                 }
               </p>
 
-              <AuthForm action={handleSubmit} defaultUsername={username}>
-                <SubmitButton>
-                  {mode === "login" ? "Sign in" : "Sign Up"}
-                </SubmitButton>
-                
-                <p className="text-center text-sm text-zinc-400 mt-4">
-                  {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-                  <button
-                    type="button"
-                    onClick={() => onSwitchMode(mode === "login" ? "register" : "login")}
-                    className="font-semibold text-cyan-300 hover:text-cyan-200 underline"
-                  >
-                    {mode === "login" ? "Sign up" : "Sign in"}
-                  </button>
-                  {mode === "login" ? " for free." : " instead."}
-                </p>
+              <AuthForm 
+                action={handleSubmit} 
+                defaultUsername={username} 
+                includeProfileFields={mode === "register"} 
+                isModal={true}
+                onStepChange={setCurrentStep}
+              >
+                {mode === "login" || (mode === "register" && currentStep === 2) ? (
+                  <>
+                    <SubmitButton>
+                      {mode === "login" ? "Sign in" : "Sign Up"}
+                    </SubmitButton>
+                    
+                    <p className="text-center text-sm text-zinc-400 mt-4">
+                      {mode === "login" 
+                        ? "Don't have an account? " 
+                        : "Already have an account? "
+                      }
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (mode === "login") {
+                            onSwitchMode("register");
+                          } else {
+                            onSwitchMode("login");
+                          }
+                        }}
+                        className="font-semibold text-cyan-300 hover:text-cyan-200 underline"
+                      >
+                        {mode === "login" ? "Sign up" : "Sign in"}
+                      </button>
+                      {mode === "login" ? " for free." : " instead."}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-center text-sm text-zinc-400 mt-4">
+                    {mode === "login" 
+                      ? "Don't have an account? " 
+                      : "Already have an account? "
+                    }
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (mode === "login") {
+                          onSwitchMode("register");
+                        } else {
+                          onSwitchMode("login");
+                        }
+                      }}
+                      className="font-semibold text-cyan-300 hover:text-cyan-200 underline"
+                    >
+                      {mode === "login" ? "Sign up" : "Sign in"}
+                    </button>
+                    {mode === "login" ? " for free." : " instead."}
+                  </p>
+                )}
               </AuthForm>
             </>
           )}

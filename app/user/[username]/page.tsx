@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ImageCropModal } from "@/components/custom/image-crop-modal";
+import { MeetingCard, MeetingCardData } from "@/components/custom/meeting-card";
+import { MeetingCardModal } from "@/components/custom/meeting-card-modal";
+import { convertFromUTC, getUserDeviceTimezone } from "@/lib/timezones";
 
 interface UserProfile {
   id: string;
@@ -39,6 +42,12 @@ export default function ProfilePage({ params }: PageProps) {
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+  const [userMeetings, setUserMeetings] = useState<MeetingCardData[]>([]);
+  const [isLoadingMeetings, setIsLoadingMeetings] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<MeetingCardData | null>(null);
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [userTimezone, setUserTimezone] = useState<string>("");
+  const [registeredMeetingIds, setRegisteredMeetingIds] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -54,6 +63,31 @@ export default function ProfilePage({ params }: PageProps) {
     }
   }, [status, router]);
 
+  // Initialize user timezone
+  useEffect(() => {
+    setUserTimezone(getUserDeviceTimezone());
+  }, []);
+
+  // Fetch user's registered meetings if logged in
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetchUserRegisteredMeetings();
+    }
+  }, [session?.user?.email]);
+
+  const fetchUserRegisteredMeetings = async () => {
+    try {
+      const response = await fetch("/api/meetings?filter=attending");
+      if (response.ok) {
+        const data = await response.json() as MeetingCardData[];
+        const registeredIds = new Set<string>(data.map((m: MeetingCardData) => m.id));
+        setRegisteredMeetingIds(registeredIds);
+      }
+    } catch (error) {
+      console.error("Error fetching registered meetings:", error);
+    }
+  };
+
   // Fetch user profile
   useEffect(() => {
     const fetchProfile = async () => {
@@ -64,6 +98,8 @@ export default function ProfilePage({ params }: PageProps) {
         }
         const data: UserProfile = await response.json();
         setProfile(data);
+        
+        console.log('Fetched profile:', { id: data.id, email: data.email, username: params.username });
         
         // Check if this is the current user's profile
         if (session?.user?.email === data.email) {
@@ -90,6 +126,125 @@ export default function ProfilePage({ params }: PageProps) {
       fetchProfile();
     }
   }, [status, params.username, session?.user?.email]);
+
+  // Fetch user's public meetings
+  useEffect(() => {
+    const fetchUserMeetings = async () => {
+      if (!profile?.id) return;
+      
+      console.log('Fetching meetings for user:', { userId: profile.id, email: profile.email });
+      
+      setIsLoadingMeetings(true);
+      try {
+        const response = await fetch(`/api/meetings?filter=user&userId=${profile.id}&publicOnly=true`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Received meetings:', data);
+          setUserMeetings(data);
+        }
+      } catch (error) {
+        console.error("Error fetching user meetings:", error);
+      } finally {
+        setIsLoadingMeetings(false);
+      }
+    };
+
+    fetchUserMeetings();
+  }, [profile?.id]);
+
+  const formatDate = (dateString: string) => {
+    const localDateTime = convertFromUTC(dateString, userTimezone);
+    const [date] = localDateTime.split("T");
+    const [year, month, day] = date.split("-");
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const localDateTime = convertFromUTC(dateString, userTimezone);
+    const [, time] = localDateTime.split("T");
+    const [hour, minute] = time.split(":");
+    return `${hour}:${minute}`;
+  };
+
+  const handleMeetingClick = (meeting: MeetingCardData) => {
+    setSelectedMeeting(meeting);
+    setIsMeetingModalOpen(true);
+  };
+
+  const handleRegister = async () => {
+    if (!selectedMeeting) return;
+
+    try {
+      const response = await fetch(`/api/meetings/${selectedMeeting.id}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to register");
+      }
+
+      toast.success(result.message || "Successfully registered!");
+      // Add to registered meetings set
+      setRegisteredMeetingIds(prev => new Set([...prev, selectedMeeting.id]));
+      // Refresh meetings to update attendee count
+      if (profile?.id) {
+        const response = await fetch(`/api/meetings?filter=user&userId=${profile.id}&publicOnly=true`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserMeetings(data);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleUnregister = async () => {
+    if (!selectedMeeting) return;
+
+    if (!confirm("Are you sure you want to unregister from this meeting?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/meetings/${selectedMeeting.id}/register`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to unregister");
+      }
+
+      toast.success("Successfully unregistered from meeting");
+      // Remove from registered meetings set
+      setRegisteredMeetingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(selectedMeeting.id);
+        return newSet;
+      });
+      // Refresh meetings to update attendee count
+      if (profile?.id) {
+        const response = await fetch(`/api/meetings?filter=user&userId=${profile.id}&publicOnly=true`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserMeetings(data);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -395,6 +550,9 @@ export default function ProfilePage({ params }: PageProps) {
                       )}
                     </div>
                   </div>
+                  <div className="text-center">
+                    <p className="text-xl font-semibold text-cyan-400">@{params.username}</p>
+                  </div>
                 </div>
 
                 {/* Full Name */}
@@ -430,12 +588,6 @@ export default function ProfilePage({ params }: PageProps) {
                   </div>
                 )}
 
-                {/* Plan Display */}
-                <div className="space-y-2 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                  <p className="text-xs text-gray-400">Plan</p>
-                  <p className="text-lg font-bold text-purple-400">{profile.subscription.toUpperCase()}</p>
-                </div>
-
                 {/* Back Button */}
                 <div className="pt-4 border-t border-cyan-500/10">
                   <Button
@@ -450,7 +602,52 @@ export default function ProfilePage({ params }: PageProps) {
             )}
           </div>
         </div>
+
+        {/* Public Meetings Section - Only show if there are meetings */}
+        {userMeetings.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 mb-6">
+              Public Meetings by {isOwnProfile ? "You" : `@${params.username}`}
+            </h2>
+            
+            {isLoadingMeetings ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-gray-700 h-64 rounded-xl"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userMeetings.map((meeting) => (
+                  <MeetingCard
+                    key={meeting.id}
+                    meeting={meeting}
+                    formatDate={formatDate}
+                    formatTime={formatTime}
+                    showActions={false}
+                    onClick={() => handleMeetingClick(meeting)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Meeting Detail Modal */}
+      <MeetingCardModal
+        isOpen={isMeetingModalOpen}
+        onClose={() => setIsMeetingModalOpen(false)}
+        meeting={selectedMeeting}
+        formatDate={formatDate}
+        formatTime={formatTime}
+        showActions={!!session}
+        isRegistered={selectedMeeting ? registeredMeetingIds.has(selectedMeeting.id) : false}
+        onRegister={handleRegister}
+        onUnregister={handleUnregister}
+      />
 
       {/* Image Crop Modal */}
       {tempImageUrl && (

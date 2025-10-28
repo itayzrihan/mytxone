@@ -10,7 +10,10 @@ export function Footer() {
   const pathname = usePathname();
 
   // Hide footer on specific routes
-  const shouldHideFooter = pathname.includes("/teleprompter");
+  const shouldHideFooter = pathname.includes("/teleprompter") || 
+                           pathname.includes("/create-meeting") || 
+                           pathname.includes("/create-community") || 
+                           pathname.includes("/resume");
 
   // Admin context - provides centralized admin state for the entire app
   const { shouldShowAdminElements, viewMode } = useAdmin();

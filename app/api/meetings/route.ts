@@ -132,6 +132,81 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(attendingMeetings);
     }
 
+    if (filter === "user") {
+      // Fetch meetings for a specific user (public only)
+      const userId = searchParams.get("userId");
+      const publicOnly = searchParams.get("publicOnly") === "true";
+
+      if (!userId) {
+        return NextResponse.json({ error: "userId is required" }, { status: 400 });
+      }
+
+      console.log('GET /api/meetings?filter=user:', {
+        userId,
+        publicOnly,
+      });
+
+      const whereConditions: any[] = [eq(meeting.userId, userId)];
+      
+      if (publicOnly) {
+        whereConditions.push(eq(meeting.isPublic, true));
+      }
+
+      const userMeetings = await db
+        .select({
+          id: meeting.id,
+          userId: meeting.userId,
+          title: meeting.title,
+          description: meeting.description,
+          meetingType: meeting.meetingType,
+          category: meeting.category,
+          imageUrl: meeting.imageUrl,
+          startTime: meeting.startTime,
+          endTime: meeting.endTime,
+          timezone: meeting.timezone,
+          meetingUrl: meeting.meetingUrl,
+          maxAttendees: meeting.maxAttendees,
+          isPublic: meeting.isPublic,
+          requiresApproval: meeting.requiresApproval,
+          status: meeting.status,
+          tags: meeting.tags,
+          createdAt: meeting.createdAt,
+          updatedAt: meeting.updatedAt,
+          attendeeCount: sql<number>`cast(count(${meetingAttendee.id}) as int)`,
+        })
+        .from(meeting)
+        .leftJoin(meetingAttendee, eq(meeting.id, meetingAttendee.meetingId))
+        .where(and(...whereConditions))
+        .groupBy(
+          meeting.id,
+          meeting.userId,
+          meeting.title,
+          meeting.description,
+          meeting.meetingType,
+          meeting.category,
+          meeting.imageUrl,
+          meeting.startTime,
+          meeting.endTime,
+          meeting.timezone,
+          meeting.meetingUrl,
+          meeting.maxAttendees,
+          meeting.isPublic,
+          meeting.requiresApproval,
+          meeting.status,
+          sql`${meeting.tags}::text`,
+          meeting.createdAt,
+          meeting.updatedAt
+        )
+        .orderBy(desc(meeting.startTime));
+
+      console.log('User meetings found:', {
+        count: userMeetings.length,
+        meetings: userMeetings.map(m => ({ id: m.id, title: m.title, userId: m.userId })),
+      });
+
+      return NextResponse.json(userMeetings);
+    }
+
     // Default: return all public upcoming meetings
     const categories = searchParams.get("categories")?.split(",").filter(Boolean) || [];
     

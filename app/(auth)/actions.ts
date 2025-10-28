@@ -32,9 +32,9 @@ const registrationFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(32, "Username must not exceed 32 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  notMytxEmail: z.string().email("Invalid email address"),
-  phoneNumber: z.string().min(5, "Phone number must be valid"),
-  profileImageUrl: z.string().url("Invalid URL").optional(),
+  notMytxEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
+  phoneNumber: z.string().min(5, "Phone number must be valid").optional().or(z.literal("")),
+  profileImageData: z.string().optional(),
 });
 
 // Rate limiting constants (10 attempts per 15 minutes)
@@ -42,7 +42,7 @@ const RATE_LIMIT_ATTEMPTS = 10;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 export interface LoginActionState {
-  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data" | "2fa_required" | "2fa_verified";
+  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data" | "2fa_required" | "2fa_verified" | "2fa_setup_required";
   userEmail?: string;
   totpSeedId?: string | null;
   error?: string;
@@ -150,27 +150,30 @@ export const login = async (
       return { status: "failed" };
     }
 
-    // CRITICAL: If user has 2FA enabled, MUST verify before creating session
-    if (user.totpEnabled) {
-      console.log("[LOGIN] User has 2FA enabled, returning 2fa_required");
-      // Do NOT sign in yet - user must verify TOTP first
+    // CRITICAL: If user has NOT set up 2FA yet, force them to set it up
+    if (!user.totpEnabled) {
+      console.log("[LOGIN] User has not set up 2FA, forcing setup");
+      // Sign in the user first so they can access the enable-2fa page
+      await signIn("credentials", {
+        email: email,
+        password: validatedData.password,
+        redirect: false,
+      });
+      
       return {
-        status: "2fa_required",
+        status: "2fa_setup_required",
         userEmail: email,
-        totpSeedId: user.totpSeedId,
       };
     }
 
-    console.log("[LOGIN] No 2FA enabled, proceeding with normal login");
-    // No 2FA - proceed with normal login
-    await signIn("credentials", {
-      email: email,
-      password: validatedData.password,
-      redirect: false,
-    });
-    console.log("[LOGIN] Sign in successful");
-
-    return { status: "success" };
+    // User has 2FA enabled - require verification before creating session
+    console.log("[LOGIN] User has 2FA enabled, returning 2fa_required");
+    // Do NOT sign in yet - user must verify TOTP first
+    return {
+      status: "2fa_required",
+      userEmail: email,
+      totpSeedId: user.totpSeedId,
+    };
   } catch (error) {
     console.error("[LOGIN] Error occurred:", error);
     
@@ -205,15 +208,22 @@ export const register = async (
 ): Promise<RegisterActionState> => {
   try {
     console.log("[REGISTER] Starting registration process");
+    console.log("[REGISTER] FormData entries:", Array.from(formData.entries()).map(([k, v]) => [k, typeof v === 'string' ? v.substring(0, 50) : v]));
     
-    const validatedData = registrationFormSchema.parse({
+    const rawData = {
       username: formData.get("username"),
       password: formData.get("password"),
       fullName: formData.get("fullName"),
       notMytxEmail: formData.get("notMytxEmail"),
       phoneNumber: formData.get("phoneNumber"),
-      profileImageUrl: formData.get("profileImageUrl"),
-    });
+      profileImageData: formData.get("profileImageData"),
+    };
+    
+    console.log("[REGISTER] Raw form data:", rawData);
+    
+    const validatedData = registrationFormSchema.parse(rawData);
+    
+    console.log("[REGISTER] Validated data:", validatedData);
     
     // Convert username to email for internal use
     const email = usernameToEmail(validatedData.username);
@@ -245,12 +255,25 @@ export const register = async (
       return { status: "user_exists" } as RegisterActionState;
     } else {
       console.log("[REGISTER] Creating new user:", { email });
-      await createUser(email, validatedData.password, {
+      
+      // Prepare profile data - only include non-empty optional fields
+      const profileData: Record<string, string> = {
         fullName: validatedData.fullName,
-        notMytxEmail: validatedData.notMytxEmail,
-        phoneNumber: validatedData.phoneNumber,
-        profileImageUrl: validatedData.profileImageUrl,
-      });
+      };
+      
+      if (validatedData.notMytxEmail && validatedData.notMytxEmail.trim()) {
+        profileData.notMytxEmail = validatedData.notMytxEmail;
+      }
+      
+      if (validatedData.phoneNumber && validatedData.phoneNumber.trim()) {
+        profileData.phoneNumber = validatedData.phoneNumber;
+      }
+      
+      if (validatedData.profileImageData && validatedData.profileImageData.trim()) {
+        profileData.profileImageUrl = validatedData.profileImageData;
+      }
+      
+      await createUser(email, validatedData.password, profileData);
       console.log("[REGISTER] User created successfully");
 
       // IMPORTANT: Do NOT sign in user yet

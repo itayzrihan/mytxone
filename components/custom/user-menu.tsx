@@ -254,9 +254,11 @@ export function UserMenu({ session }: UserMenuProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56"> {/* Increased width */}
-          <DropdownMenuItem className="p-0"> {/* Remove padding */}
-            <ThemeToggle />
-          </DropdownMenuItem>
+            {!isCheckingAdmin && shouldShowViewModeToggle && (
+            <DropdownMenuItem className="p-0"> {/* Remove padding */}
+              <ThemeToggle />
+            </DropdownMenuItem>
+            )}
           <DropdownMenuSeparator /> {/* Separator */}
           
           {/* View Mode Toggle - Only show for admin users */}
@@ -321,11 +323,15 @@ export function UserMenu({ session }: UserMenuProps) {
           <DropdownMenuSeparator /> {/* Separator */}
           
           {/* Use DialogTrigger for the API Keys item */}
+                      {!isCheckingAdmin && shouldShowViewModeToggle && (
+ 
           <DialogTrigger asChild>
             <DropdownMenuItem className="cursor-pointer">
               Manage API Keys
             </DropdownMenuItem>
           </DialogTrigger>
+
+            )}
           <DropdownMenuSeparator /> {/* Separator */}
           <DropdownMenuItem className="p-0 text-red-500 focus:text-red-600 focus:bg-red-50"> {/* Remove padding & style */}
             <form
@@ -343,7 +349,10 @@ export function UserMenu({ session }: UserMenuProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
+ 
       {/* Dialog Content */}
+
+      
       <DialogContent className="sm:max-w-[625px]"> {/* Wider dialog */}
         <DialogHeader>
           <DialogTitle>Manage API Keys</DialogTitle>

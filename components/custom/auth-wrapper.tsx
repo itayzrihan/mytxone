@@ -2,6 +2,7 @@
 
 import { AuthProvider, useAuth } from "./auth-context";
 import { AuthModal } from "./auth-modal";
+import { TwoFAGuard } from "./two-fa-guard";
 
 function AuthModalRenderer() {
   const { isAuthModalOpen, authMode, closeAuthModal, switchAuthMode } = useAuth();
@@ -19,8 +20,10 @@ function AuthModalRenderer() {
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      {children}
-      <AuthModalRenderer />
+      <TwoFAGuard>
+        {children}
+        <AuthModalRenderer />
+      </TwoFAGuard>
     </AuthProvider>
   );
 }
