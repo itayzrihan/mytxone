@@ -7,7 +7,7 @@ import { Mail, Phone, MapPin, ExternalLink, Download, Github, Linkedin } from 'l
 export default function ResumePage() {
   const [scrollY, setScrollY] = useState(0);
   const [activeTab, setActiveTab] = useState('profile');
-
+  
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);

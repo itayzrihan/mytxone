@@ -207,28 +207,7 @@ export function AuthModal({ isOpen, onClose, mode, onSwitchMode }: AuthModalProp
                       {mode === "login" ? " for free." : " instead."}
                     </p>
                   </>
-                ) : (
-                  <p className="text-center text-sm text-zinc-400 mt-4">
-                    {mode === "login" 
-                      ? "Don't have an account? " 
-                      : "Already have an account? "
-                    }
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (mode === "login") {
-                          onSwitchMode("register");
-                        } else {
-                          onSwitchMode("login");
-                        }
-                      }}
-                      className="font-semibold text-cyan-300 hover:text-cyan-200 underline"
-                    >
-                      {mode === "login" ? "Sign up" : "Sign in"}
-                    </button>
-                    {mode === "login" ? " for free." : " instead."}
-                  </p>
-                )}
+                ) : null}
               </AuthForm>
             </>
           )}
