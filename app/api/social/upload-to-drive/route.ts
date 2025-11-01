@@ -96,7 +96,8 @@ export async function POST(request: Request) {
       // Generate accessible URLs
       const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
       const host = request.headers.get("host") || "localhost:3000";
-      const driveLink = `${protocol}://${host}/tempfiles/${uniqueFileName}`;
+      // Use the serve-temp-video endpoint which provides proper metadata headers
+      const driveLink = `${protocol}://${host}/api/social/serve-temp-video?filename=${uniqueFileName}`;
       const downloadLink = driveLink; // Same link for temporary files
 
       return NextResponse.json({
