@@ -199,8 +199,8 @@ export default function ODHPage() {
                 </p>
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-xl font-semibold text-cyan-600 mb-2">למה "יום אחד"?</h3>
-                    <p className="text-gray-700">כי כל החיים הם אוסף של "ימים אחדים". וכשאנחנו חיים כל יום במלואו – בכוונה, נוכחות ואהבה – אנחנו בונים חיים שלמים בלי לרדוף אחריהם.</p>
+                    <h3 className="text-xl font-semibold text-cyan-600 mb-2">למה &quot;יום אחד&quot;?</h3>
+                    <p className="text-gray-700">כי כל החיים הם אוסף של &quot;ימים אחדים&quot;. וכשאנחנו חיים כל יום במלואו – בכוונה, נוכחות ואהבה – אנחנו בונים חיים שלמים בלי לרדוף אחריהם.</p>
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-cyan-600 mb-2">עקרון ההתחלה מחדש</h3>
@@ -211,7 +211,7 @@ export default function ODHPage() {
                     <p className="text-gray-700">זה לא ספר לקרוא — זה ספר לחיות. בחר פרק אחד בכל יום, או קרא לפי הסדר של היום: בוקר – תנועה – תודעה – יחסים – ערב.</p>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-cyan-600 mb-2">מה זה אומר "לחיות את היום"</h3>
+                    <h3 className="text-xl font-semibold text-cyan-600 mb-2">מה זה אומר &quot;לחיות את היום&quot;</h3>
                     <p className="text-gray-700">לחיות את היום פירושו להיות בתוך הרגע עם לב פתוח. לא לתכנן את כל הדרך — רק את הצעד הבא. להקשיב לגוף, לנפש, ולרוח, ולתת לכל רגע להיות מה שהוא. כשאתה באמת כאן, אפילו הדברים הפשוטים — נשימה, חיוך, מבט — הופכים לקדושים.</p>
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export default function ODHPage() {
                   <p className="text-gray-800 mb-4">שלושה סוגי מדיטציה בוקרית – נשימה, התבוננות ושחרור</p>
                   <div className="space-y-4">
                     <div>
-                      <h4 className="text-lg font-semibold text-purple-600 mb-2">"חמש דקות של נוכחות" – תרגול יומי</h4>
+                      <h4 className="text-lg font-semibold text-purple-600 mb-2">&quot;חמש דקות של נוכחות&quot; – תרגול יומי</h4>
                       <p className="text-gray-700">שב בשקט, סגור עיניים, התמקד בנשימה. בכל שאיפה – אור נכנס. בכל נשיפה – כל מה שמיותר יוצא. היום נולד. ואני נולד איתו.</p>
                     </div>
                   </div>
@@ -329,7 +329,7 @@ export default function ODHPage() {
                       </ul>
                     </div>
                     <ul className="space-y-2 text-sm">
-                      <li>• טאי צ'י של בוקר – 15 דקות</li>
+                      <li>• טאי צ&apos;י של בוקר – 15 דקות</li>
                       <li>• הליכה יומית – 4000 צעדים</li>
                       <li>• תרגילי כוח פשוטים – 5 דקות</li>
                     </ul>
@@ -373,7 +373,7 @@ export default function ODHPage() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000" />
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">תזונה בריאה לנפש</h3>
-                  <p className="text-gray-700 text-sm">"מה אני צורך?" – בחירה במידע, אנשים ותדרים</p>
+                  <p className="text-gray-700 text-sm">&quot;מה אני צורך?&quot; – בחירה במידע, אנשים ותדרים</p>
                   <div className="space-y-3">
                     <div>
                       <h4 className="text-sm font-semibold text-blue-600 mb-1">ניקוי רעשים תודעתיים</h4>
@@ -398,7 +398,7 @@ export default function ODHPage() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000" />
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">דברים שחשוב לשנן</h3>
-                  <p className="text-gray-700 text-sm">מנטרות ומשפטי חיים – כתיבת "ספר האמיתות האישיות"</p>
+                  <p className="text-gray-700 text-sm">מנטרות ומשפטי חיים – כתיבת &quot;ספר האמיתות האישיות&quot;</p>
                   <div className="space-y-3">
                     <div>
                       <h4 className="text-sm font-semibold text-blue-600 mb-1">כרטיס כיס</h4>
@@ -534,7 +534,7 @@ export default function ODHPage() {
                   <p className="text-gray-700 text-sm">ניתוח עצמי ופרופילאות – מבנה ניתוח יומי</p>
                   <div className="space-y-3">
                     <div>
-                      <h4 className="text-sm font-semibold text-indigo-600 mb-1">מבנה ניתוח יומי: "מה קרה בי היום?"</h4>
+                      <h4 className="text-sm font-semibold text-indigo-600 mb-1">מבנה ניתוח יומי: &quot;מה קרה בי היום?&quot;</h4>
                       <ul className="space-y-1 text-sm text-gray-600">
                         <li>• מה הרגשתי באמת?</li>
                         <li>• מתי איבדתי מיקוד או שלווה?</li>
@@ -543,11 +543,11 @@ export default function ODHPage() {
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold text-indigo-600 mb-1">ניתוח תגובה ורגש</h4>
-                      <p className="text-gray-600 text-sm">לפני שאתה מגיב – עצור. שאל: "מה אני מרגיש עכשיו, ומה אני באמת רוצה להשיג?"</p>
+                      <p className="text-gray-600 text-sm">לפני שאתה מגיב – עצור. שאל: &quot;מה אני מרגיש עכשיו, ומה אני באמת רוצה להשיג?&quot;</p>
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold text-indigo-600 mb-1">קריאת סיטואציות ואנשים</h4>
-                      <p className="text-gray-600 text-sm">התבונן במבטים, בקול, בקצב הדיבור ובשפת הגוף. שאל את עצמך: "מה האדם הזה באמת מרגיש?"</p>
+                      <p className="text-gray-600 text-sm">התבונן במבטים, בקול, בקצב הדיבור ובשפת הגוף. שאל את עצמך: &quot;מה האדם הזה באמת מרגיש?&quot;</p>
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold text-indigo-600 mb-1">איך להבחין בין תחושה לאמת</h4>

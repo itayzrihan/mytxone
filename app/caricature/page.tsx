@@ -194,7 +194,7 @@ export default function CaricaturePage() {
                   </span>
                 </h2>
                 <p className="text-gray-800 leading-relaxed text-lg mb-4">
-                  <strong>איתי זריהן</strong> הוא לא רק &quot;גורו עושר&quot;. הוא לוחם תודעתי נגד האויב הכי מסוכן: <strong>הסביבה</strong> – מערכת הלחץ שמוכרת לך נוחות בתור ביטחון.
+                  <strong>איתי זריהן</strong> הוא לא רק &quot;גורו עושר&quot;. הוא לוחם תודעתי נגד האויב הכי מסוכן: <strong>הסביבה</strong> &ndash; מערכת הלחץ שמוכרת לך נוחות בתור ביטחון.
                 </p>
                 <div className="space-y-4">
                   <div>
@@ -255,7 +255,7 @@ export default function CaricaturePage() {
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-red-600 font-bold mt-1">•</span>
-                      <span>החברה שמחנכת "לא כולם יכולים"</span>
+                      <span>החברה שמחנכת &quot;לא כולם יכולים&quot;</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-red-600 font-bold mt-1">•</span>
@@ -301,7 +301,7 @@ export default function CaricaturePage() {
                     <li>✓ אלפא־מייל, ביטחון עצמי מופרז</li>
                     <li>✓ לא מתנצל</li>
                     <li>✓ מתבטא כמו מתמטיקאי של תודעה</li>
-                    <li>✓ שפה חדה, מלאה ב"עקרונות חיים"</li>
+                    <li>✓ שפה חדה, מלאה ב&quot;עקרונות חיים&quot;</li>
                     <li>✓ הצופה לא בטוח אם זה אמיתי או פארודיה</li>
                   </ul>
                 </div>
@@ -341,7 +341,7 @@ export default function CaricaturePage() {
                     <h3 className="text-2xl font-bold text-orange-600">הצלחה אגרסיבית</h3>
                   </div>
                   <p className="text-gray-700 leading-relaxed">
-                    לא פשרה, לא "איזון" — מצב בליץ על מטרה אחת. תדר העל של ההשגה. הסביבה תגיד "רגע" — אתה בתנועה מלאה, אתה כבר בשלב הבא.
+                    לא פשרה, לא &quot;איזון&quot; — מצב בליץ על מטרה אחת. תדר העל של ההשגה. הסביבה תגיד &quot;רגע&quot; — אתה בתנועה מלאה, אתה כבר בשלב הבא.
                   </p>
                   <div className="mt-4 pt-4 border-t border-orange-200">
                     <p className="text-sm text-orange-600 font-semibold">המסר:</p>
@@ -384,7 +384,7 @@ export default function CaricaturePage() {
                     <ul className="space-y-2 text-gray-700 text-sm">
                       <li><strong>סמל קבוע:</strong> פלסטר לבן על האף</li>
                       <li><strong>רקע:</strong> בטון אפור / קיר זכוכית / לופט עסקי קר</li>
-                      <li><strong>לבוש:</strong> ז'קט שחור פתוח, שעון זהב זול מדי</li>
+                      <li><strong>לבוש:</strong> ז&apos;קט שחור פתוח, שעון זהב זול מדי</li>
                       <li><strong>צבעים:</strong> זהב (עושר) וכחול עמוק (שליטה)</li>
                       <li><strong>סמל נוסף:</strong> עיגול אדום עם קו אלכסוני</li>
                     </ul>
@@ -395,8 +395,8 @@ export default function CaricaturePage() {
                       <li><strong>פונט:</strong> Bebas Neue / Impact Bold</li>
                       <li><strong>מוזיקה:</strong> ביט טראפ איטי או Lofi עם בייס עמוק</li>
                       <li><strong>אייקון חתימה:</strong> ⚡️ או 🩹</li>
-                      <li><strong>כיתוב:</strong> "תודעה", "שליטה", "אמת פנימית"</li>
-                      <li><strong>סיום וידאו:</strong> מבט ישיר + "די להקשיב לכולם"</li>
+                      <li><strong>כיתוב:</strong> &quot;תודעה&quot;, &quot;שליטה&quot;, &quot;אמת פנימית&quot;</li>
+                      <li><strong>סיום וידאו:</strong> מבט ישיר + &quot;די להקשיב לכולם&quot;</li>
                     </ul>
                   </div>
                 </div>
@@ -466,7 +466,7 @@ export default function CaricaturePage() {
               <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-8 md:p-12 hover:border-gray-300 transition-all duration-300 shadow-lg">
                 <h2 className="text-3xl font-bold mb-6">
                   <span className="bg-gradient-to-r from-red-600 to-yellow-600 bg-clip-text text-transparent">
-                    💣 קאץ'־פרייזים בלתי נשכחים
+                    💣 קאץ&apos;־פרייזים בלתי נשכחים
                   </span>
                 </h2>
                 <div className="space-y-4">
@@ -888,7 +888,7 @@ export default function CaricaturePage() {
                   <div className="bg-gradient-to-r from-red-50 to-orange-50 p-6 rounded-lg border-2 border-red-200 mt-6">
                     <h3 className="text-lg font-bold text-red-600 mb-3">הגיבור האמיתי</h3>
                     <p className="text-gray-800">
-                      דמות שמטיפה לחופש, עצמאות תודעתית, ובעיטה ב"סביבה" — המערכת, החברה, והמסלול הבטוח לבינוניות.
+                      דמות שמטיפה לחופש, עצמאות תודעתית, ובעיטה ב&quot;סביבה&quot; — המערכת, החברה, והמסלול הבטוח לבינוניות.
                     </p>
                   </div>
 
