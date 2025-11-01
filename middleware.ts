@@ -32,7 +32,8 @@ export default async function middleware(req: NextRequest) {
   // 2️⃣ Skip auth & just forward + CORS on these two API roots
   if (
     req.nextUrl.pathname.startsWith("/api/external/v1") ||
-    req.nextUrl.pathname.startsWith("/api/heybos/")
+    req.nextUrl.pathname.startsWith("/api/heybos/") ||
+    req.nextUrl.pathname.startsWith("/api/social/serve-temp-video")
   ) {
     const res = NextResponse.next();
     return applyCors(res, origin);

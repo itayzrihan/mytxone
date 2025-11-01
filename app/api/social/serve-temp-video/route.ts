@@ -64,6 +64,32 @@ export async function GET(request: NextRequest) {
     };
     const contentType = contentTypeMap[ext || "mp4"] || "video/mp4";
 
+    // Check for Range request (important for video streaming and metadata reading)
+    const range = request.headers.get("range");
+    if (range) {
+      const ranges = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(ranges[0], 10);
+      const end = ranges[1] ? parseInt(ranges[1], 10) : fileSize - 1;
+      const chunkSize = end - start + 1;
+
+      const chunk = fileBuffer.slice(start, end + 1);
+
+      return new NextResponse(chunk as unknown as BodyInit, {
+        status: 206, // Partial Content
+        headers: {
+          "Content-Type": contentType,
+          "Content-Length": chunkSize.toString(),
+          "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+          "Accept-Ranges": "bytes",
+          "Cache-Control": "public, max-age=3600",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Range",
+          "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
+        },
+      });
+    }
+
     // Create response with proper headers for media metadata reading
     const response = new NextResponse(fileBuffer as unknown as BodyInit, {
       status: 200,
@@ -73,6 +99,11 @@ export async function GET(request: NextRequest) {
         "Content-Disposition": `inline; filename="${filename}"`,
         "Cache-Control": "public, max-age=3600", // Cache for 1 hour
         "Accept-Ranges": "bytes",
+        // CORS headers for external access (Blotato)
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Range",
+        "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
         // Additional headers to help with metadata reading
         "X-Content-Type-Options": "nosniff",
       },
@@ -156,6 +187,11 @@ export async function HEAD(request: NextRequest) {
         "Content-Disposition": `inline; filename="${filename}"`,
         "Cache-Control": "public, max-age=3600",
         "Accept-Ranges": "bytes",
+        // CORS headers for external access (Blotato)
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Range",
+        "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
         "X-Content-Type-Options": "nosniff",
       },
     });
@@ -168,4 +204,19 @@ export async function HEAD(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Handle CORS preflight requests
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Range",
+      "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
+    },
+  });
 }
