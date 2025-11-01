@@ -1,0 +1,1959 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1750d20-2f6e-4826-80b8-654d0985120d",
+              "name": "final_google_drive_url",
+              "value": "={{ $('Ready to Post Image/Video').item.json['Media URL (google drive)'].match(/https:\\/\\/drive\\.google\\.com\\/file\\/d\\/([A-Za-z0-9_-]+)/i)[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1904,
+        1776
+      ],
+      "id": "a7716108-36f5-47c6-b5f5-da4fe559166d",
+      "name": "Get Google Drive ID"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        1776
+      ],
+      "id": "9d45e954-cf03-4652-a78a-d6b4549a8110",
+      "name": "Limit to 1 Item"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rFO7VQacpiHp3WTmpSrNKzyVvS5uch7t1GBttQTeuDw",
+          "mode": "list",
+          "cachedResultName": "WITH MUSIC 125 VIDEOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rFO7VQacpiHp3WTmpSrNKzyVvS5uch7t1GBttQTeuDw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rFO7VQacpiHp3WTmpSrNKzyVvS5uch7t1GBttQTeuDw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2192,
+        1776
+      ],
+      "id": "58b85404-918b-4ad3-be1d-6444dc32ee21",
+      "name": "Ready to Post Image/Video",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FDFTiQsj0gmjEWqo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-ready-to-post",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "Ready to Post",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9b2dab9a-fd42-4575-a01d-1e7476ec6a03",
+      "name": "Filter Ready to Post Only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -2048,
+        1776
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "mediaUrl": "=https://drive.google.com/uc?export=download&id={{ $json.final_google_drive_url }}"
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -1568,
+        1776
+      ],
+      "id": "e32c2a04-e74b-46ff-b0fc-3163a45fb4e6",
+      "name": "Upload Image/Video to BLOTATO",
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "platform": "linkedin",
+        "accountId": {
+          "__rl": true,
+          "value": "7191",
+          "mode": "list",
+          "cachedResultName": "Itay Zrihan",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/7191"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        2304
+      ],
+      "id": "90476f39-133b-406f-ae56-14395749f70b",
+      "name": "Linkedin [BLOTATO]",
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "platform": "facebook",
+        "accountId": {
+          "__rl": true,
+          "value": "11176",
+          "mode": "list",
+          "cachedResultName": "Itay Zrihan",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/11176"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "facebookPageId": {
+          "__rl": true,
+          "value": "161711670360847",
+          "mode": "list",
+          "cachedResultName": "Blotato",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/369/subaccounts/161711670360847"
+        },
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        2464
+      ],
+      "id": "1b051298-c271-4aca-9f71-cf45fc27efe1",
+      "name": "Facebook [BLOTATO]",
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "platform": "twitter",
+        "accountId": {
+          "__rl": true,
+          "value": "7977",
+          "mode": "list",
+          "cachedResultName": "ItayZn",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/7977"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        2608
+      ],
+      "id": "1566d97c-6aec-4bbe-9416-9dbfb4fc2904",
+      "name": "Twitter [BLOTATO]",
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "platform": "youtube",
+        "accountId": {
+          "__rl": true,
+          "value": "13695",
+          "mode": "list",
+          "cachedResultName": "Itay Zrihan (Itay Zrihan)",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/13695"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "postCreateYoutubeOptionTitle": "={{ $('Ready to Post Image/Video').item.json.Title }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        2768
+      ],
+      "id": "7858d776-f878-4620-8052-a8ea9685ac49",
+      "name": "Youtube [BLOTATO]",
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "platform": "threads",
+        "accountId": {
+          "__rl": true,
+          "value": "3250",
+          "mode": "list",
+          "cachedResultName": "itay_zrihan",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/3250"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        3328
+      ],
+      "id": "b74d90f4-e61e-4dcb-a8b1-bb22a8c72bfe",
+      "name": "Threads [BLOTATO]",
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1rFO7VQacpiHp3WTmpSrNKzyVvS5uch7t1GBttQTeuDw",
+          "mode": "list",
+          "cachedResultName": "WITH MUSIC 125 VIDEOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rFO7VQacpiHp3WTmpSrNKzyVvS5uch7t1GBttQTeuDw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rFO7VQacpiHp3WTmpSrNKzyVvS5uch7t1GBttQTeuDw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Caption": "={{ $('Ready to Post Image/Video').item.json.Caption }}"
+          },
+          "matchingColumns": [
+            "Caption"
+          ],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Media URL (google drive)",
+              "displayName": "Media URL (google drive)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -928,
+        3680
+      ],
+      "id": "7f9c5db5-c6eb-4e56-abd4-802268f33956",
+      "name": "Update Status to \"Posted\"",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FDFTiQsj0gmjEWqo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Ready to Post\nYou can post text, images, videos, stories, slideshows, and carousels. \n\n## How Template Works\n- Checks Google Sheet every 3 hours for new items with status \"Ready to Post\"\n- Get 1 item that is ready to post (so you don't spam too many posts at the same time)\n- Get unique Google Drive ID of media (image/video)\n- Upload media to Blotato\n- Post media and caption to social platforms\n- Update item's status to \"Posted\" in Google sheet\n\n## Setup\n1. Sign up for Blotato.com\n2. Generate Blotato API Key by going to Settings > API > Generate API Key (paid feature only)\n3. Ensure you have \"Verified Community Nodes\" enabled in your n8n Admin Panel. Install \"Blotato\" community node.\n4. Create credential for Blotato.\n5. Connect your Google Drive to n8n: https://docs.n8n.io/integrations/builtin/credentials/google/oauth-single-service\n6. Copy this sample Google Sheet. Do NOT change the column names, unless you know what you're doing:\nhttps://docs.google.com/spreadsheets/d/1v5S7F9p2apfWRSEHvx8Q6ZX8e-d1lZ4FLlDFyc0-ZA4/edit\n7. Make your Google Drive folder containing images/videos PUBLIC (i.e. Anyone with the link)\n8. Complete the 3 setup steps shown in BROWN sticky notes in this template",
+        "height": 1504,
+        "width": 2080,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3296,
+        1056
+      ],
+      "id": "46aef430-81f6-4f39-9bb3-6d4fe9420e35",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Setup 1\nConfigure your Google Sheet",
+        "height": 112,
+        "width": 224,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2208,
+        1952
+      ],
+      "id": "340cfb8d-9b4b-493e-ad49-f23bffdd6e1f",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Don't Touch",
+        "height": 112,
+        "width": 150,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1936,
+        1952
+      ],
+      "id": "c89efc73-d49e-4e5c-bb49-92984218580c",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Post Everywhere\n\n## IMPORTANT\nDo not post the same image/video over and over again, otherwise it will be flagged as spam. Make sure to disclose AI generated content if you're using avatars.\n\n👉  **Blotato API Docs**: https://help.blotato.com/api\n✅  **Troubleshoot Errors**: https://my.blotato.com/api-dashboard\n📷  **Media Requirements**: https://help.blotato.com/api/media\n🛠️  **Contact help**: log into blotato > click support button in bottom right corner",
+        "height": 2656,
+        "width": 928,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        16
+      ],
+      "id": "e42333fa-d607-40c3-8f30-67fdfdc8ec32",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# Setup 2\nSelect your Blotato credential\n\n### Troubleshooting Checklist:\n- your Google Drive is public\n- column names in your Google Sheet match the original example\n- file size < 60MB; for large files, Google Drive does not work, use Amazon S3 instead",
+        "height": 304,
+        "width": 272,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1744,
+        2000
+      ],
+      "id": "23a34929-24be-47cc-ba69-aa4bf17e3e20",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# Platform Specific Notes\n\n## Tiktok\nYou can post images, videos, and slideshows. Your Tiktok account must be warmed up before using Blotato, otherwise you'll get low views. [Follow this warm up guide](https://help.blotato.com/platforms/tiktok/brand-new-accounts). \n\nCheck out best practices and troubleshooting FAQs:\nhttps://help.blotato.com/platforms/tiktok\n\n## Linkedin\nYou can post text, images, videos, and PDF carousels. Check out best practices and troubleshooting FAQs:\nhttps://help.blotato.com/platforms/linkedin\n\n## Facebook\nYou can post text, images, regular videos, and reels. Check out best practices and troubleshooting FAQs\nhttps://help.blotato.com/platforms/facebook\n\n## Instagram\nYou can post images, reels, stories, and slideshows. Check out best practices and troubleshooting FAQs:\nhttps://help.blotato.com/platforms/instagram\n\n## Twitter\nYou can post text, images, and videos. You can post a long-form thread by clicking \"Show Advanced Settings\". Check out best practices and troubleshooting FAQs:\nhttps://help.blotato.com/platforms/twitter\n\n## Threads\nYou can post text, images, and videos. You can post a long-form thread by clicking \"Show Advanced Settings\". Check out best practices and troubleshooting FAQs:\nhttps://help.blotato.com/platforms/threads\n\n## Bluesky\nYou can post text, images, and videos. You can post a long-form thread by clicking \"Show Advanced Settings\". Check out best practices and troubleshooting FAQs:\nhttps://help.blotato.com/platforms/bluesky\n\n## Youtube\nYou can post Youtube shorts and long-form videos. You don't need to do anything. Youtube automatically posts Shorts if your video is <2 minutes and 9:16 aspect ratio.\n\nBrand new Youtube accounts are limited to a few posts per day via API. You can still upload manually through Youtube website. This restriction is directly from Youtube and is gradually lifted as you post consistently.\n\nCheck out best practices and troubleshooting FAQs:\nhttps://help.blotato.com/platforms/youtube\n\n## Pinterest\nYou can post image and video pins. You must warm up your Pinterest account by posting a few pins per day, gradually ramping up.\n\nHow to Get Your Pinterest Board ID:\nGo to Blotato, create a Pinterest post, click Publish, and you'll see your board IDs. Copy board ID to here.\n\nCheck out best practices and troubleshooting FAQs:\nhttps://help.blotato.com/platforms/pinterest\n\n## Need More Help?\n\nLog into Blotato.com\nClick support button in bottom right corner.\nSabrina Ramonov🍄 replies within 24 hours most weekdays.",
+        "height": 1632,
+        "width": 608,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        960,
+        720
+      ],
+      "id": "5a48a78d-2f5c-4511-b301-a404fc2c5af6",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "# Setup 3\n1. Open each node\n2. Select your social account\n3. Deactivate platforms you don't need\n3. 👉 **You don't need to do anything else!**",
+        "height": 176,
+        "width": 320,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        432
+      ],
+      "id": "b47dd28c-9aa2-44bf-a2ee-6d13505f0f9c",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "# Error Report\n\n👉 View run logs and results.\n\n👉 API Dashboard:\n https://my.blotato.com/api-dashboard",
+        "height": 192,
+        "width": 288,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        928,
+        2464
+      ],
+      "typeVersion": 1,
+      "id": "bb942fd3-0409-4d00-b61f-0165db7dccfd",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "numberInputs": 10
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        944
+      ],
+      "id": "2041e501-cdc1-4414-8df6-e246e871aa58",
+      "name": "Error Report",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "numberInputs": 10
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        144,
+        2304
+      ],
+      "id": "1ab412db-4322-416f-b432-9b88e216d402",
+      "name": "Error Report1",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "platform": "tiktok",
+        "accountId": {
+          "__rl": true,
+          "value": "17585",
+          "mode": "list",
+          "cachedResultName": "itay_zrihan",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/17585"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        864
+      ],
+      "id": "ae6c4a55-aeb6-4211-9fee-2394c0d11e4f",
+      "name": "Tiktok Itay_Zrihan",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "platform": "tiktok",
+        "accountId": {
+          "__rl": true,
+          "value": "17588",
+          "mode": "list",
+          "cachedResultName": "itay_tech",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/17588"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        1056
+      ],
+      "id": "36d74c2a-8097-47d4-9a69-1e9699af919c",
+      "name": "Tiktok Itay_Tech",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "platform": "tiktok",
+        "accountId": {
+          "__rl": true,
+          "value": "17591",
+          "mode": "list",
+          "cachedResultName": "itay.zrihan",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/17591"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        1248
+      ],
+      "id": "a58609f7-386d-489d-8f6f-8564a98211e6",
+      "name": "Tiktok Itay.Zrihan Not Warmed Up Yet",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "accountId": {
+          "__rl": true,
+          "value": "16826",
+          "mode": "list",
+          "cachedResultName": "sales_growth_digital",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/16826"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        1488
+      ],
+      "id": "b57ba9d3-887d-4b5d-9b46-09111cabdf0c",
+      "name": "Instagram Sales_Growth_Digital",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "accountId": {
+          "__rl": true,
+          "value": "16820",
+          "mode": "list",
+          "cachedResultName": "itay.zrihan",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/16820"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        1664
+      ],
+      "id": "16968714-f856-44b8-a101-b2b92d4d07ca",
+      "name": "Instagram Itay.Zrihan",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "accountId": {
+          "__rl": true,
+          "value": "16823",
+          "mode": "list",
+          "cachedResultName": "itay_chi",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/16823"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        1856
+      ],
+      "id": "22a86213-46e4-4527-bf71-def11a621b40",
+      "name": "Instagram Itay_Chi",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "accountId": {
+          "__rl": true,
+          "value": "16816",
+          "mode": "list",
+          "cachedResultName": "itay_zrihan",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/16816"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        2016
+      ],
+      "id": "4865cb9e-1d3b-4631-a0e8-59872d7875ca",
+      "name": "Instagram Itay_Zrihan Official",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "platform": "tiktok",
+        "accountId": {
+          "__rl": true,
+          "value": "17593",
+          "mode": "list",
+          "cachedResultName": "itaythespammer",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/17593"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        688
+      ],
+      "id": "15f98c7d-7db7-4920-b7d2-72a61b200778",
+      "name": "Tiktok ItayTheSpammer",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelaySeconds }}",
+        "unit": "seconds"
+      },
+      "id": "746d3f39-37ee-4665-81d6-c434ccad2456",
+      "name": "Wait Random Seconds",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -2400,
+        1776
+      ],
+      "webhookId": "6336291b-2801-4cac-a5e2-0cbb87fa334f"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelaySeconds = Math.floor(Math.random() * 10) + 1;\nreturn [{ randomDelaySeconds }];"
+      },
+      "id": "ec888710-c1b0-4d19-89e8-2113acb6932a",
+      "name": "Generate Random Delay (Seconds)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -2688,
+        1776
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "14892afd-7fdc-4159-b70d-7db127cc0796",
+      "name": "Start Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3088,
+        1856
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "b019af80-da4c-4005-95a6-6d96e86d6e46",
+      "name": "LinkedIn Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        2304
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "1e2ba83c-b220-4b47-97fd-83d0d0421a9e",
+      "name": "LinkedIn Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        2304
+      ],
+      "webhookId": "31476f43-ce03-4206-9364-9be681150b6e"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "74fd958c-3aee-4748-959d-bf2073e3445f",
+      "name": "Facebook Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        2464
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "ac45bd0e-a14b-4bd7-b90d-bc7a17bf63f9",
+      "name": "Facebook Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        2464
+      ],
+      "webhookId": "1c1b36ff-5a28-4aba-81ca-0e9beefe5cc2"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "7573a942-ec0f-4823-ad5f-be754071aa34",
+      "name": "Twitter Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        2608
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "fdd804dc-3447-4ff5-98fa-7af54a4853ad",
+      "name": "Twitter Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        2608
+      ],
+      "webhookId": "40de1492-edc0-46c1-a419-a8c1fe62a625"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "370f5a22-0160-4a46-a48c-0b5c92d03224",
+      "name": "YouTube Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        2768
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "3ee16a12-9cff-4d2a-8c86-a578b24101b5",
+      "name": "YouTube Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        2768
+      ],
+      "webhookId": "bf2d8d85-5607-49e1-b99e-5228bb498798"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "b22ba4a1-651b-4fd6-8673-7cdb0e9f5006",
+      "name": "Threads Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        3328
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "6c87124e-1834-4db2-a43a-2144c03755ea",
+      "name": "Threads Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        3328
+      ],
+      "webhookId": "5625c6c5-5601-40b6-a21c-b72369ae9c68"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "a0b9a310-690e-4e01-af28-e4bb5d00e1cf",
+      "name": "TikTok Spammer Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "6b243e4f-8992-4737-bd04-65494869ac1a",
+      "name": "TikTok Spammer Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        688
+      ],
+      "webhookId": "8a810e42-0a98-4f01-acd9-c34635c4e0c7"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "3be258b6-86ba-49d6-a2f4-dd66c193d307",
+      "name": "TikTok Zrihan Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "f8631a71-cbb6-44cd-9a88-35e7c5156ea6",
+      "name": "TikTok Zrihan Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        864
+      ],
+      "webhookId": "76a49c4c-bfe6-4bf0-a5ae-d98132f81025"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "4b9cd6b3-7b37-4c2a-8975-920d90bfb810",
+      "name": "TikTok Tech Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "21fe9893-e6ad-46fb-8146-b017de19a7f4",
+      "name": "TikTok Tech Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        1056
+      ],
+      "webhookId": "acefb2a0-63a3-4e4c-ad3f-1e152a36143b"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "72d15739-11d7-44e0-bba2-927dfc20ec85",
+      "name": "TikTok NotWarmed Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "b78960cc-e786-4ce6-9661-2e855acc4e04",
+      "name": "TikTok NotWarmed Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        1248
+      ],
+      "webhookId": "5c387991-9839-4040-ae0a-450b4dad4a24"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "2422a1b2-9032-4606-9b48-77947a18fb7d",
+      "name": "Instagram Sales Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "7acefd96-981e-48be-bb03-d147cf42f15f",
+      "name": "Instagram Sales Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        1488
+      ],
+      "webhookId": "61c2d0b9-d629-4952-9016-9be27eebca02"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "316c17af-f3bc-4b77-8bc3-562ab801a756",
+      "name": "Instagram Zrihan Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        1664
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "c1cd2a4e-a58c-423c-9e5a-6078dca591ce",
+      "name": "Instagram Zrihan Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        1664
+      ],
+      "webhookId": "9ab8fb87-4e29-4d53-872d-5d88784bb46e"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "598b1426-ca8d-4ba1-858c-48c49329217b",
+      "name": "Instagram Chi Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        1856
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "e9a8b97e-2af6-40c7-ac15-6df9fa2dfada",
+      "name": "Instagram Chi Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        1856
+      ],
+      "webhookId": "68006932-c44f-4a2a-95bf-7679ed3db5c0"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "b0a78691-5d77-4d0f-bcaa-eacbb2ce8379",
+      "name": "Instagram Official Delay Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        2016
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "d55bf97c-5b08-44f9-bb6b-e1248b188d1b",
+      "name": "Instagram Official Wait Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        2016
+      ],
+      "webhookId": "c2008451-80c2-4b76-97c4-26c5e1b4f7d3"
+    },
+    {
+      "parameters": {
+        "platform": "youtube",
+        "accountId": {
+          "__rl": true,
+          "value": "13696",
+          "mode": "list",
+          "cachedResultName": "Mytx (Mytx)",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/13696"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "postCreateYoutubeOptionTitle": "={{ $('Ready to Post Image/Video').item.json.Title }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        2976
+      ],
+      "id": "1e1c5fc9-ebc5-423e-9bb5-41dcf205aa30",
+      "name": "Youtube [BLOTATO]1",
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "d7e833db-22f6-4d18-a468-d56d151ccec6",
+      "name": "YouTube Delay Generator1",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        2976
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.randomDelayMinutes }}",
+        "unit": "minutes"
+      },
+      "id": "b90a3ea0-3134-40b9-bf33-b6b8d06efbec",
+      "name": "YouTube Wait Delay1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        2976
+      ],
+      "webhookId": "cb6e80cb-a355-4fd8-81a5-734cc3f89235"
+    },
+    {
+      "parameters": {
+        "platform": "youtube",
+        "accountId": {
+          "__rl": true,
+          "value": "13698",
+          "mode": "list",
+          "cachedResultName": "Itay Zrihan (איתי זריהן מכירות התפתחות ודיגיטל)",
+          "cachedResultUrl": "https://backend.blotato.com/v2/accounts/13698"
+        },
+        "postContentText": "={{ $('Ready to Post Image/Video').item.json.Caption }}",
+        "postContentMediaUrls": "={{ $('Upload Image/Video to BLOTATO').item.json.url }}",
+        "postCreateYoutubeOptionTitle": "={{ $('Ready to Post Image/Video').item.json.Title }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        3152
+      ],
+      "id": "43bc6a1f-48b6-4921-858e-19da5e1910ba",
+      "name": "Youtube [BLOTATO]2",
+      "credentials": {
+        "blotatoApi": {
+          "id": "qKekutsVMLNwcTEo",
+          "name": "Blotato account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "functionCode": "const randomDelayMinutes = Math.floor(Math.random() * 2);\nreturn [{ randomDelayMinutes }];"
+      },
+      "id": "77167da2-b167-4a99-a0a7-5b7f4bc0b299",
+      "name": "YouTube Delay Generator2",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        3152
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3088,
+        1680
+      ],
+      "id": "7b3b8b98-04a5-4cd2-807e-e871f7d27566",
+      "name": "Check Every 8 Hours"
+    }
+  ],
+  "connections": {
+    "Get Google Drive ID": {
+      "main": [
+        [
+          {
+            "node": "Limit to 1 Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit to 1 Item": {
+      "main": [
+        [
+          {
+            "node": "Upload Image/Video to BLOTATO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ready to Post Image/Video": {
+      "main": [
+        [
+          {
+            "node": "Filter Ready to Post Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Ready to Post Only": {
+      "main": [
+        [
+          {
+            "node": "Get Google Drive ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image/Video to BLOTATO": {
+      "main": [
+        [
+          {
+            "node": "Threads Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YouTube Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Twitter Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LinkedIn Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram Official Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram Chi Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram Zrihan Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram Sales Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TikTok Tech Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TikTok Zrihan Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TikTok Spammer Delay Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YouTube Delay Generator1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YouTube Delay Generator2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Status to \"Posted\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linkedin [BLOTATO]": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook [BLOTATO]": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Twitter [BLOTATO]": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Youtube [BLOTATO]": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report1",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Threads [BLOTATO]": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report1",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Tiktok Itay_Zrihan": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Tiktok Itay_Tech": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Tiktok Itay.Zrihan Not Warmed Up Yet": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Instagram Sales_Growth_Digital": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Instagram Itay.Zrihan": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Instagram Itay_Chi": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "Instagram Itay_Zrihan Official": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report",
+            "type": "main",
+            "index": 7
+          }
+        ]
+      ]
+    },
+    "Tiktok ItayTheSpammer": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Random Seconds": {
+      "main": [
+        [
+          {
+            "node": "Ready to Post Image/Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Random Delay (Seconds)": {
+      "main": [
+        [
+          {
+            "node": "Wait Random Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate Random Delay (Seconds)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Linkedin [BLOTATO]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "Facebook Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Facebook [BLOTATO]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twitter Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "Twitter Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twitter Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Twitter [BLOTATO]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "YouTube Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Youtube [BLOTATO]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Threads Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "Threads Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Threads Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Threads [BLOTATO]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok Spammer Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "TikTok Spammer Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok Spammer Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Tiktok ItayTheSpammer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok Zrihan Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "TikTok Zrihan Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok Zrihan Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Tiktok Itay_Zrihan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok Tech Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "TikTok Tech Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok Tech Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Tiktok Itay_Tech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok NotWarmed Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "TikTok NotWarmed Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok NotWarmed Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Tiktok Itay.Zrihan Not Warmed Up Yet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Sales Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "Instagram Sales Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Sales Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Instagram Sales_Growth_Digital",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Zrihan Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "Instagram Zrihan Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Zrihan Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Instagram Itay.Zrihan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Chi Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "Instagram Chi Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Chi Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Instagram Itay_Chi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Official Delay Generator": {
+      "main": [
+        [
+          {
+            "node": "Instagram Official Wait Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram Official Wait Delay": {
+      "main": [
+        [
+          {
+            "node": "Instagram Itay_Zrihan Official",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Youtube [BLOTATO]1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report1",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Youtube [BLOTATO]2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Error Report1",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "YouTube Delay Generator2": {
+      "main": [
+        [
+          {
+            "node": "Youtube [BLOTATO]2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Every 8 Hours": {
+      "main": [
+        [
+          {
+            "node": "Generate Random Delay (Seconds)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "73e57cc0f11509191af8d50929e5d525aac95d4adfbfaae1d5fa119dc08c8ca1"
+  }
+}

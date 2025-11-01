@@ -194,13 +194,13 @@ export default function CaricaturePage() {
                   </span>
                 </h2>
                 <p className="text-gray-800 leading-relaxed text-lg mb-4">
-                  <strong>איתי זריהן</strong> הוא לא רק "גורו עושר". הוא לוחם תודעתי נגד האויב הכי מסוכן: <strong>הסביבה</strong> – מערכת הלחץ שמוכרת לך נוחות בתור ביטחון.
+                  <strong>איתי זריהן</strong> הוא לא רק &quot;גורו עושר&quot;. הוא לוחם תודעתי נגד האויב הכי מסוכן: <strong>הסביבה</strong> – מערכת הלחץ שמוכרת לך נוחות בתור ביטחון.
                 </p>
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-xl font-semibold text-red-600 mb-2">הסלוגן הלב:</h3>
                     <p className="text-gray-700 text-lg italic">
-                      "די להקשיב לכולם. תתחיל להקשיב לעצמך."
+                      &quot;די להקשיב לכולם. תתחיל להקשיב לעצמך.&quot;
                     </p>
                   </div>
                   <div>
@@ -228,22 +228,22 @@ export default function CaricaturePage() {
               <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-8 md:p-12 hover:border-gray-300 transition-all duration-300 shadow-lg">
                 <h2 className="text-3xl font-bold mb-6">
                   <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                    ⚔️ האויב: "הסביבה"
+                    ⚔️ האויב: &quot;הסביבה&quot;
                   </span>
                 </h2>
                 <div className="space-y-4 text-gray-800">
                   <p className="leading-relaxed text-lg">
-                    <strong>מי זו "הסביבה"?</strong> כל מה שמנסה לעצב אותך. משפחה, חברים, מנטורים, פוליטיקאים, מורים – כל מי שמנסה להקטין אותך ולשכנע אותך להישאר רגוע, ריאלי, צפוי. כל מי ששואב מכם אנרגיה.
+                    <strong>מי זו &quot;הסביבה&quot;?</strong> כל מה שמנסה לעצב אותך. משפחה, חברים, מנטורים, פוליטיקאים, מורים – כל מי שמנסה להקטין אותך ולשכנע אותך להישאר רגוע, ריאלי, צפוי. כל מי ששואב מכם אנרגיה.
                   </p>
                   <h3 className="text-xl font-semibold text-red-600 mb-2">הסביבה היא:</h3>
                   <ul className="space-y-2">
                     <li className="flex items-start gap-3">
                       <span className="text-red-600 font-bold mt-1">•</span>
-                      <span>הקול שאומר "עזוב, זה לא יצליח"</span>
+                      <span>הקול שאומר &quot;עזוב, זה לא יצליח&quot;</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-red-600 font-bold mt-1">•</span>
-                      <span>המשפחה שאומרת "תהיה ריאלי"</span>
+                      <span>המשפחה שאומרת &quot;תהיה ריאלי&quot;</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="text-red-600 font-bold mt-1">•</span>
@@ -264,7 +264,7 @@ export default function CaricaturePage() {
                   </ul>
                   <div className="bg-red-50 p-4 rounded-lg border border-red-200 mt-4">
                     <p className="text-gray-800 font-semibold">
-                      "הסביבה לא רוצה שתיכשל — היא רוצה שתישאר קטן. כי ככה אתה לא מאיים עליה."
+                      &quot;הסביבה לא רוצה שתיכשל — היא רוצה שתישאר קטן. כי ככה אתה לא מאיים עליה.&quot;
                     </p>
                   </div>
                 </div>
@@ -329,7 +329,7 @@ export default function CaricaturePage() {
                   </p>
                   <div className="mt-4 pt-4 border-t border-red-200">
                     <p className="text-sm text-red-600 font-semibold">המסר:</p>
-                    <p className="text-sm text-gray-600">"עסקים זה חופש בתנועה"</p>
+                    <p className="text-sm text-gray-600">&quot;עסקים זה חופש בתנועה&quot;</p>
                   </div>
                 </div>
               </div>
@@ -345,7 +345,7 @@ export default function CaricaturePage() {
                   </p>
                   <div className="mt-4 pt-4 border-t border-orange-200">
                     <p className="text-sm text-orange-600 font-semibold">המסר:</p>
-                    <p className="text-sm text-gray-600">"או הכל או שום דבר"</p>
+                    <p className="text-sm text-gray-600">&quot;או הכל או שום דבר&quot;</p>
                   </div>
                 </div>
               </div>
@@ -361,7 +361,7 @@ export default function CaricaturePage() {
                   </p>
                   <div className="mt-4 pt-4 border-t border-yellow-200">
                     <p className="text-sm text-yellow-600 font-semibold">המסר:</p>
-                    <p className="text-sm text-gray-600">"טכנולוגיה זה הנשק החדש"</p>
+                    <p className="text-sm text-gray-600">&quot;טכנולוגיה זה הנשק החדש&quot;</p>
                   </div>
                 </div>
               </div>
@@ -417,9 +417,9 @@ export default function CaricaturePage() {
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
                   <h3 className="text-lg font-bold text-red-600 mb-3">תסריט 1 – שכיר זה לא קללה</h3>
                   <div className="space-y-2 text-gray-700 text-sm">
-                    <p><strong>HOOK:</strong> "שכיר זה לא קללה… זה שם קוד למי שוויתר מוקדם מדי."</p>
-                    <p><strong>BODY:</strong> "כל יום שאתה מוכר זמן — מישהו אחר קונה חופש."</p>
-                    <p><strong>PUNCHLINE:</strong> "אל תתפטר. תתחיל לחשוב כמו בוס, לא כמו בולבוס."</p>
+                    <p><strong>HOOK:</strong> &quot;שכיר זה לא קללה… זה שם קוד למי שוויתר מוקדם מדי.&quot;</p>
+                    <p><strong>BODY:</strong> &quot;כל יום שאתה מוכר זמן — מישהו אחר קונה חופש.&quot;</p>
+                    <p><strong>PUNCHLINE:</strong> &quot;אל תתפטר. תתחיל לחשוב כמו בוס, לא כמו בולבוס.&quot;</p>
                   </div>
                 </div>
               </div>
@@ -428,9 +428,9 @@ export default function CaricaturePage() {
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
                   <h3 className="text-lg font-bold text-red-600 mb-3">תסריט 2 – חוק ה־100₪</h3>
                   <div className="space-y-2 text-gray-700 text-sm">
-                    <p><strong>HOOK:</strong> "אם אתה מרוויח פחות ממאה לשעה — אתה לא עני, אתה סטטי."</p>
-                    <p><strong>BODY:</strong> "זה לא המספר, זה הסטנדרט. תרים סטנדרט — תעלה הכנסה."</p>
-                    <p><strong>PUNCHLINE:</strong> "שבור את חוק ה־100₪. אחרת הוא ישבור אותך."</p>
+                    <p><strong>HOOK:</strong> &quot;אם אתה מרוויח פחות ממאה לשעה — אתה לא עני, אתה סטטי.&quot;</p>
+                    <p><strong>BODY:</strong> &quot;זה לא המספר, זה הסטנדרט. תרים סטנדרט — תעלה הכנסה.&quot;</p>
+                    <p><strong>PUNCHLINE:</strong> &quot;שבור את חוק ה־100₪. אחרת הוא ישבור אותך.&quot;</p>
                   </div>
                 </div>
               </div>
@@ -439,9 +439,9 @@ export default function CaricaturePage() {
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
                   <h3 className="text-lg font-bold text-red-600 mb-3">תסריט 3 – תדר־על</h3>
                   <div className="space-y-2 text-gray-700 text-sm">
-                    <p><strong>HOOK:</strong> "כשאתה בפוקוס מוחלט — גם היקום נהיה העובד שלך."</p>
-                    <p><strong>BODY:</strong> "תפסיק לרדוף אחרי כסף. תן לכסף לרדוף אחרי הוויב שלך."</p>
-                    <p><strong>PUNCHLINE:</strong> "תעלה תדר, תעלה הכנסה."</p>
+                    <p><strong>HOOK:</strong> &quot;כשאתה בפוקוס מוחלט — גם היקום נהיה העובד שלך.&quot;</p>
+                    <p><strong>BODY:</strong> &quot;תפסיק לרדוף אחרי כסף. תן לכסף לרדוף אחרי הוויב שלך.&quot;</p>
+                    <p><strong>PUNCHLINE:</strong> &quot;תעלה תדר, תעלה הכנסה.&quot;</p>
                   </div>
                 </div>
               </div>
@@ -450,9 +450,9 @@ export default function CaricaturePage() {
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
                   <h3 className="text-lg font-bold text-red-600 mb-3">תסריט 4 – הסביבה</h3>
                   <div className="space-y-2 text-gray-700 text-sm">
-                    <p><strong>HOOK:</strong> "הסביבה רוצה שתישאר רגוע. כי ככה אתה לא מאיים עליה."</p>
-                    <p><strong>BODY:</strong> "זה לא אנשים רעים — זה אנשים בינוניים שמפחדים שתצליח."</p>
-                    <p><strong>PUNCHLINE:</strong> "הסביבה לא אויב — עד שאתה מנסה לגדול. ואז היא סוהר."</p>
+                    <p><strong>HOOK:</strong> &quot;הסביבה רוצה שתישאר רגוע. כי ככה אתה לא מאיים עליה.&quot;</p>
+                    <p><strong>BODY:</strong> &quot;זה לא אנשים רעים — זה אנשים בינוניים שמפחדים שתצליח.&quot;</p>
+                    <p><strong>PUNCHLINE:</strong> &quot;הסביבה לא אויב — עד שאתה מנסה לגדול. ואז היא סוהר.&quot;</p>
                   </div>
                 </div>
               </div>
@@ -471,151 +471,151 @@ export default function CaricaturePage() {
                 </h2>
                 <div className="space-y-4">
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"כסף זה לא מטרה — זה תוצאה של מי שאתה."</p>
+                    <p className="text-gray-800 font-semibold">&quot;כסף זה לא מטרה — זה תוצאה של מי שאתה.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"מי שמחכה להזדמנות, כבר הפסיד אותה."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שמחכה להזדמנות, כבר הפסיד אותה.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"אם אתה לא נוח לאחרים, אתה כנראה מתחיל לנצח."</p>
+                    <p className="text-gray-800 font-semibold">&quot;אם אתה לא נוח לאחרים, אתה כנראה מתחיל לנצח.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"תפסיק לעבוד קשה — תתחיל לעבוד חכם, ואז קשה."</p>
+                    <p className="text-gray-800 font-semibold">&quot;תפסיק לעבוד קשה — תתחיל לעבוד חכם, ואז קשה.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"מי שאין לו אויבים, כנראה שלא עשה רעש."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שאין לו אויבים, כנראה שלא עשה רעש.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"הסביבה לא רוצה שתיכשל — היא רוצה שתישאר קטן."</p>
+                    <p className="text-gray-800 font-semibold">&quot;הסביבה לא רוצה שתיכשל — היא רוצה שתישאר קטן.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"בינוניות זה מגפה חברתית."</p>
+                    <p className="text-gray-800 font-semibold">&quot;בינוניות זה מגפה חברתית.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"אל תבקש אישור מהכלא שלך."</p>
+                    <p className="text-gray-800 font-semibold">&quot;אל תבקש אישור מהכלא שלך.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"אם כולם מסכימים איתך — כנראה שאתה בדרך הלא נכונה."</p>
+                    <p className="text-gray-800 font-semibold">&quot;אם כולם מסכימים איתך — כנראה שאתה בדרך הלא נכונה.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"שקט נפשי זה השם החדש של ויתור."</p>
+                    <p className="text-gray-800 font-semibold">&quot;שקט נפשי זה השם החדש של ויתור.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"תפסיק לפחד לאכזב אחרים, תתחיל לפחד לאכזב את עצמך."</p>
+                    <p className="text-gray-800 font-semibold">&quot;תפסיק לפחד לאכזב אחרים, תתחיל לפחד לאכזב את עצמך.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"רק דגים מתים שוחים עם הזרם."</p>
+                    <p className="text-gray-800 font-semibold">&quot;רק דגים מתים שוחים עם הזרם.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"כשמישהו אומר לכם מה לעשות הוא שרוף!"</p>
+                    <p className="text-gray-800 font-semibold">&quot;כשמישהו אומר לכם מה לעשות הוא שרוף!&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"אתם אריות שגדלו עם חינוך של כבשים!"</p>
+                    <p className="text-gray-800 font-semibold">&quot;אתם אריות שגדלו עם חינוך של כבשים!&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"מי שמאמין בפוליטיקה מאמין בעבודת אלילים, אין נציגים שיכולים לייצג אתכם, רק אתם צריכים לייצג את עצמכם!"</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שמאמין בפוליטיקה מאמין בעבודת אלילים, אין נציגים שיכולים לייצג אתכם, רק אתם צריכים לייצג את עצמכם!&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"מי שלא חושב בעצמו – עובד בשביל מי שכן."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שלא חושב בעצמו – עובד בשביל מי שכן.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"עדר לא מחפש אמת — הוא מחפש מנהיג."</p>
+                    <p className="text-gray-800 font-semibold">&quot;עדר לא מחפש אמת — הוא מחפש מנהיג.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"העולם לא צריך עוד מצייתים — הוא צריך מתעוררים."</p>
+                    <p className="text-gray-800 font-semibold">&quot;העולם לא צריך עוד מצייתים — הוא צריך מתעוררים.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"מי שמחכה להוראות, לעולם לא ינהיג."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שמחכה להוראות, לעולם לא ינהיג.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"מרד אמיתי מתחיל בראש שלך, לא ברחובות."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מרד אמיתי מתחיל בראש שלך, לא ברחובות.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"הם מלמדים אותך לציית, לא לחשוב."</p>
+                    <p className="text-gray-800 font-semibold">&quot;הם מלמדים אותך לציית, לא לחשוב.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"מי שחי בשביל הכרה – מת בלי זהות."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שחי בשביל הכרה – מת בלי זהות.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"הבעיה היא לא השקר — אלא כמה נוח לך איתו."</p>
+                    <p className="text-gray-800 font-semibold">&quot;הבעיה היא לא השקר — אלא כמה נוח לך איתו.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"כשהם אומרים 'זה החוק', שאל למי הוא משרת."</p>
+                    <p className="text-gray-800 font-semibold">&quot;כשהם אומרים &apos;זה החוק&apos;, שאל למי הוא משרת.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"כל מערכת בנויה על כך שלא תטיל בה ספק."</p>
+                    <p className="text-gray-800 font-semibold">&quot;כל מערכת בנויה על כך שלא תטיל בה ספק.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"אל תהיה הילד הטוב של מערכת רקובה."</p>
+                    <p className="text-gray-800 font-semibold">&quot;אל תהיה הילד הטוב של מערכת רקובה.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"צייתנות היא מחלה חברתית שמתחפשת למוסר."</p>
+                    <p className="text-gray-800 font-semibold">&quot;צייתנות היא מחלה חברתית שמתחפשת למוסר.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"מי שמפחד לטעות – חי חיים של אחרים."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שמפחד לטעות – חי חיים של אחרים.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"כיבוי אש של מחשבות הוא התחביב הלאומי."</p>
+                    <p className="text-gray-800 font-semibold">&quot;כיבוי אש של מחשבות הוא התחביב הלאומי.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"הם קוראים לזה סדר — אני קורא לזה שליטה."</p>
+                    <p className="text-gray-800 font-semibold">&quot;הם קוראים לזה סדר — אני קורא לזה שליטה.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"חופש לא מבקשים — לוקחים."</p>
+                    <p className="text-gray-800 font-semibold">&quot;חופש לא מבקשים — לוקחים.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"עדיף להיות מוקצה בחופש מאשר גיבור בשבי."</p>
+                    <p className="text-gray-800 font-semibold">&quot;עדיף להיות מוקצה בחופש מאשר גיבור בשבי.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"מי שאין לו עמוד שדרה, נופל עם הרוח הראשונה."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שאין לו עמוד שדרה, נופל עם הרוח הראשונה.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"כשהעדר רץ — עמוד רגע. אולי הוא בורח ממשהו."</p>
+                    <p className="text-gray-800 font-semibold">&quot;כשהעדר רץ — עמוד רגע. אולי הוא בורח ממשהו.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"אין דבר מסוכן יותר מאדם שלא צריך אישור."</p>
+                    <p className="text-gray-800 font-semibold">&quot;אין דבר מסוכן יותר מאדם שלא צריך אישור.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"מי שנולד חופשי ונכנע — עבד מרצון."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שנולד חופשי ונכנע — עבד מרצון.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"הפחד שלך הוא כלי הנשק שלהם."</p>
+                    <p className="text-gray-800 font-semibold">&quot;הפחד שלך הוא כלי הנשק שלהם.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"תפסיק לחפש מנהיג — תתחיל להנהיג את עצמך."</p>
+                    <p className="text-gray-800 font-semibold">&quot;תפסיק לחפש מנהיג — תתחיל להנהיג את עצמך.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"אל תשנא את השקרנים — שנא את עצמך על זה שאתה מקשיב להם."</p>
+                    <p className="text-gray-800 font-semibold">&quot;אל תשנא את השקרנים — שנא את עצמך על זה שאתה מקשיב להם.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"מערכת שמחנכת אותך לציית – מפחדת ממך חושב."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מערכת שמחנכת אותך לציית – מפחדת ממך חושב.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"האויב האמיתי שלך הוא הקול שאומר 'עזוב, אין מה לעשות'."</p>
+                    <p className="text-gray-800 font-semibold">&quot;האויב האמיתי שלך הוא הקול שאומר &apos;עזוב, אין מה לעשות&apos;.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"לא כולם ראויים לשקט שלך — במיוחד מי שמוכר לך פחד."</p>
+                    <p className="text-gray-800 font-semibold">&quot;לא כולם ראויים לשקט שלך — במיוחד מי שמוכר לך פחד.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"מי שמבין את המשחק — לא משחק לפי הכללים."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שמבין את המשחק — לא משחק לפי הכללים.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"רק מתים זורמים עם השגרה."</p>
+                    <p className="text-gray-800 font-semibold">&quot;רק מתים זורמים עם השגרה.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"מי שלא מוכן להיות שונה — נשאר שקוף."</p>
+                    <p className="text-gray-800 font-semibold">&quot;מי שלא מוכן להיות שונה — נשאר שקוף.&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"אל תנסה להשתלב בעולם שבנוי לכלוא אותך."</p>
+                    <p className="text-gray-800 font-semibold">&quot;אל תנסה להשתלב בעולם שבנוי לכלוא אותך.&quot;</p>
                   </div>
                   <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-600">
-                    <p className="text-gray-800 font-semibold">"צעקה אמיתית לא צריכה קהל."</p>
+                    <p className="text-gray-800 font-semibold">&quot;צעקה אמיתית לא צריכה קהל.&quot;</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-600">
-                    <p className="text-gray-800 font-semibold">"הכוח שונא שקט – כי שם אנשים מתחילים לחשוב. הם לא יתנו לכם רגע של שקט, חדשות תשלומים פוליטיקה עבודה פחד כאב מתנות פרסומות העיקר שלא תחשבו על משהו בעצמכם!!"</p>
+                    <p className="text-gray-800 font-semibold">&quot;הכוח שונא שקט – כי שם אנשים מתחילים לחשוב. הם לא יתנו לכם רגע של שקט, חדשות תשלומים פוליטיקה עבודה פחד כאב מתנות פרסומות העיקר שלא תחשבו על משהו בעצמכם!!&quot;</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-600">
-                    <p className="text-gray-800 font-semibold">"חופש לא נמדד בגבולות — אלא בכמה אתה מוכן לשבור אותם."</p>
+                    <p className="text-gray-800 font-semibold">&quot;חופש לא נמדד בגבולות — אלא בכמה אתה מוכן לשבור אותם.&quot;</p>
                   </div>
                 </div>
               </div>
@@ -682,15 +682,15 @@ export default function CaricaturePage() {
                 <div className="space-y-4">
                   <div className="bg-gradient-to-r from-red-50 to-orange-50 p-6 rounded-lg border-2 border-red-300">
                     <h3 className="text-lg font-bold text-red-600 mb-2">סלוגן ראשי</h3>
-                    <p className="text-gray-800 text-lg italic">"די להקשיב לכולם. תתחיל להקשיב לעצמך."</p>
+                    <p className="text-gray-800 text-lg italic">&quot;די להקשיב לכולם. תתחיל להקשיב לעצמך.&quot;</p>
                   </div>
                   <div className="bg-gradient-to-r from-orange-50 to-yellow-50 p-6 rounded-lg border-2 border-orange-300">
                     <h3 className="text-lg font-bold text-red-600 mb-2">סלוגן וויראלי</h3>
-                    <p className="text-gray-800 text-lg italic">"נשר לא חי בעדר."</p>
+                    <p className="text-gray-800 text-lg italic">&quot;נשר לא חי בעדר.&quot;</p>
                   </div>
                   <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-lg border-2 border-yellow-300">
                     <h3 className="text-lg font-bold text-red-600 mb-2">לשם וחתימה</h3>
-                    <p className="text-gray-800 text-lg italic">איתי זריהן ⚡️ — "Freedom is the new currency"</p>
+                    <p className="text-gray-800 text-lg italic">איתי זריהן ⚡️ — &quot;Freedom is the new currency&quot;</p>
                   </div>
                 </div>
               </div>
@@ -708,29 +708,29 @@ export default function CaricaturePage() {
               <div className="group relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000" />
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
-                  <p className="text-gray-800 mb-2"><strong className="text-red-600">תגובה:</strong> "שטויות."</p>
-                  <p className="text-gray-700 italic">⚡️ "שטויות זה רק רעיון שלא ניסית עדיין."</p>
+                  <p className="text-gray-800 mb-2"><strong className="text-red-600">תגובה:</strong> &quot;שטויות.&quot;</p>
+                  <p className="text-gray-700 italic">⚡️ &quot;שטויות זה רק רעיון שלא ניסית עדיין.&quot;</p>
                 </div>
               </div>
               <div className="group relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-yellow-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000" />
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
-                  <p className="text-gray-800 mb-2"><strong className="text-red-600">תגובה:</strong> "אתה שחצן."</p>
-                  <p className="text-gray-700 italic">⚡️ "שחצנות זה ביטחון לפני שאתה מוכן."</p>
+                  <p className="text-gray-800 mb-2"><strong className="text-red-600">תגובה:</strong> &quot;אתה שחצן.&quot;</p>
+                  <p className="text-gray-700 italic">⚡️ &quot;שחצנות זה ביטחון לפני שאתה מוכן.&quot;</p>
                 </div>
               </div>
               <div className="group relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-600 to-red-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000" />
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
-                  <p className="text-gray-800 mb-2"><strong className="text-red-600">תגובה:</strong> "לא כולם יכולים."</p>
-                  <p className="text-gray-700 italic">⚡️ "נכון. רק מי שמאמין שכן."</p>
+                  <p className="text-gray-800 mb-2"><strong className="text-red-600">תגובה:</strong> &quot;לא כולם יכולים.&quot;</p>
+                  <p className="text-gray-700 italic">⚡️ &quot;נכון. רק מי שמאמין שכן.&quot;</p>
                 </div>
               </div>
               <div className="group relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-yellow-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000" />
                 <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-all duration-300 shadow-lg">
-                  <p className="text-gray-800 mb-2"><strong className="text-red-600">תגובה:</strong> "זה פרודיה?"</p>
-                  <p className="text-gray-700 italic">⚡️ "תבחר מה שנוח לך. אני כבר בעשייה."</p>
+                  <p className="text-gray-800 mb-2"><strong className="text-red-600">תגובה:</strong> &quot;זה פרודיה?&quot;</p>
+                  <p className="text-gray-700 italic">⚡️ &quot;תבחר מה שנוח לך. אני כבר בעשייה.&quot;</p>
                 </div>
               </div>
             </div>
@@ -762,7 +762,7 @@ export default function CaricaturePage() {
           <section className="mb-20" data-section="slang-lexicon">
             <h2 className="text-4xl font-bold mb-12">
               <span className="bg-gradient-to-r from-red-600 to-yellow-600 bg-clip-text text-transparent">
-                🗣️ מילון סלאנג ייחודי ("נשריזם")
+                🗣️ מילון סלאנג ייחודי (&quot;נשריזם&quot;)
               </span>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -863,7 +863,7 @@ export default function CaricaturePage() {
                   <div className="border-l-4 border-red-600 pl-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-2">המשפט הבולט ביותר</h3>
                     <p className="text-gray-700 text-lg italic font-semibold">
-                      "אל תאמינו לאף אחד! כולם שקרנים!"
+                      &quot;אל תאמינו לאף אחד! כולם שקרנים!&quot;
                     </p>
                     <p className="text-gray-600 text-sm mt-2">
                       משפט זה חוזר בכל תוכן — בהתחלה, באמצע או בסוף — אך הוא תמיד שם.
@@ -873,7 +873,7 @@ export default function CaricaturePage() {
                   <div className="border-l-4 border-orange-600 pl-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-2">מי הוא איתי זריהן?</h3>
                     <p className="text-gray-700">
-                      קריקטורה מודעת לעצמה של "גורו עושר אלפא־דיגיטלי".
+                      קריקטורה מודעת לעצמה של &quot;גורו עושר אלפא־דיגיטלי&quot;.
                       שילוב של מאמן מנטלי, פילוסוף אינטרנט, וסטנדאפיסט קר.
                     </p>
                   </div>
@@ -881,7 +881,7 @@ export default function CaricaturePage() {
                   <div className="border-l-4 border-yellow-600 pl-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-2">המסר המרכזי</h3>
                     <p className="text-gray-700 font-semibold">
-                      "די להקשיב לכולם. תתחיל להקשיב לעצמך."
+                      &quot;די להקשיב לכולם. תתחיל להקשיב לעצמך.&quot;
                     </p>
                   </div>
 
@@ -899,7 +899,7 @@ export default function CaricaturePage() {
                     </div>
                     <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                       <h4 className="font-bold text-purple-600 mb-2">תחושת הקהל</h4>
-                      <p className="text-sm text-gray-700">"הוא אומר את מה שאני מפחד להגיד בקול"</p>
+                      <p className="text-sm text-gray-700">&quot;הוא אומר את מה שאני מפחד להגיד בקול&quot;</p>
                     </div>
                   </div>
                 </div>
