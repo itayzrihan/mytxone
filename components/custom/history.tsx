@@ -26,6 +26,7 @@ import {
   TrashIcon,
   UsersIcon,
   WorkflowIcon,
+  ShareIcon,
 } from "./icons";
 import {
   AlertDialog,
@@ -157,6 +158,15 @@ export const History = ({ user }: { user: User | undefined }) => {
             {/* Admin-only buttons */}
             {shouldShowAdminElements && viewMode === "admin" && (
               <>
+                <Button
+                  className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/social/upload-video">
+                    <div>Social Media Manager</div>
+                    <ShareIcon size={14} />
+                  </Link>
+                </Button>
                 <Button
                   className="font-normal text-sm flex flex-row justify-between text-white mb-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
                   asChild

@@ -1,0 +1,689 @@
+{
+  "name": "Social Media Poster - Dual Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "post-to-social",
+        "method": "POST",
+        "authentication": "none",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1200, -500],
+      "id": "webhook-trigger-api",
+      "name": "API Webhook Trigger (Path 2: Existing Link)"
+    },
+    {
+      "parameters": {
+        "path": "upload-and-post",
+        "method": "POST",
+        "authentication": "none",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1200, 200],
+      "id": "webhook-trigger-upload",
+      "name": "Upload Webhook Trigger (Path 1: Upload First)"
+    },
+    {
+      "parameters": {
+        "content": "=📍 Trigger Source: {{ $json.source || 'api' }}\n⏰ Request Time: {{ $now.toISOString() }}\n👤 User: {{ $json.userId || 'unknown' }}\n🎥 Video: {{ $json.title }}\n🔗 Drive Link: {{ $json.driveLink }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-800, -700],
+      "id": "trigger-info"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "driveLink",
+              "name": "driveLink",
+              "type": "string",
+              "value": "={{ $json.body.driveLink || $json.driveLink }}"
+            },
+            {
+              "id": "title",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $json.body.title || $json.title }}"
+            },
+            {
+              "id": "caption",
+              "name": "caption",
+              "type": "string",
+              "value": "={{ $json.body.caption || $json.caption }}"
+            },
+            {
+              "id": "source",
+              "name": "source",
+              "type": "string",
+              "value": "={{ $json.body.source || $json.source || 'existing' }}"
+            },
+            {
+              "id": "userId",
+              "name": "userId",
+              "type": "string",
+              "value": "={{ $json.body.userId || $json.userId || 'unknown' }}"
+            },
+            {
+              "id": "final_google_drive_url",
+              "name": "final_google_drive_url",
+              "type": "string",
+              "value": "={{ ($json.body.driveLink || $json.driveLink).match(/\\/d\\/([a-zA-Z0-9-_]+)/)?.[1] || ($json.body.driveLink || $json.driveLink) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-800, -500],
+      "id": "extract-api-data",
+      "name": "Extract & Normalize Data"
+    },
+    {
+      "parameters": {
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [-800, 50],
+      "id": "validate-input",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const url = $json.final_google_drive_url;\nconst finalUrl = `https://drive.google.com/uc?export=download&id=${url}`;\nreturn { ...$json, mediaUrl: finalUrl };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-800, 200],
+      "id": "build-download-url",
+      "name": "Build Download URL"
+    },
+    {
+      "parameters": {
+        "mediaUrl": "={{ $json.mediaUrl }}",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [-400, 200],
+      "id": "blotato-upload",
+      "name": "Upload to BLOTATO",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      }
+    },
+    {
+      "parameters": {
+        "account": "tiktok_itay_zrihan",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [-100, -500],
+      "id": "tiktok-1",
+      "name": "TikTok: itay_zrihan",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "tiktok_itay_tech",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [-100, -350],
+      "id": "tiktok-2",
+      "name": "TikTok: itay_tech",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "tiktok_itay_zrihan_warmed",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [-100, -200],
+      "id": "tiktok-3",
+      "name": "TikTok: itay.zrihan (Warmed)",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "tiktok_spammer",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [-100, -50],
+      "id": "tiktok-4",
+      "name": "TikTok: itaythespammer",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "instagram_sales_growth_digital",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [200, -500],
+      "id": "instagram-1",
+      "name": "Instagram: sales_growth_digital",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "instagram_itay_zrihan",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [200, -350],
+      "id": "instagram-2",
+      "name": "Instagram: itay_zrihan",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "instagram_itay_chi",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [200, -200],
+      "id": "instagram-3",
+      "name": "Instagram: itay_chi",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "instagram_itay_zrihan_official",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [200, -50],
+      "id": "instagram-4",
+      "name": "Instagram: itay_zrihan_official",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "youtube_itay_zrihan",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [500, -500],
+      "id": "youtube-1",
+      "name": "YouTube: Itay Zrihan",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "youtube_mytx",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [500, -350],
+      "id": "youtube-2",
+      "name": "YouTube: Mytx",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "linkedin_itay_zrihan",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [500, -200],
+      "id": "linkedin",
+      "name": "LinkedIn",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "facebook_blotato_page",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [500, -50],
+      "id": "facebook",
+      "name": "Facebook",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "twitter_ItayZn",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [800, -500],
+      "id": "twitter",
+      "name": "Twitter/X",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "account": "threads_itay_zrihan",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.caption }}",
+        "uploadedMedia": "={{ $json.uploadedMedia }}",
+        "options": {}
+      },
+      "type": "@blotato/n8n-nodes-blotato.blotato",
+      "typeVersion": 2,
+      "position": [800, -350],
+      "id": "threads",
+      "name": "Threads",
+      "credentials": {
+        "blotatoApi": "qKekutsVMLNwcTEo"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "numberInputs": 15
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [1100, -300],
+      "id": "merge-results",
+      "name": "Merge All Results"
+    },
+    {
+      "parameters": {
+        "content": "=✅ Posting Complete\n📊 Platforms: 13+\n⏱️ Duration: ~10-15 min\n🎯 Source: {{ $json.source }}\n📹 Title: {{ $json.title }}"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1100, 200],
+      "id": "completion-note"
+    }
+  ],
+  "connections": {
+    "webhook-trigger-api": {
+      "main": [
+        [
+          {
+            "node": "extract-api-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "webhook-trigger-upload": {
+      "main": [
+        [
+          {
+            "node": "extract-api-data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract-api-data": {
+      "main": [
+        [
+          {
+            "node": "validate-input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "validate-input": {
+      "main": [
+        [
+          {
+            "node": "build-download-url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "build-download-url": {
+      "main": [
+        [
+          {
+            "node": "blotato-upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "blotato-upload": {
+      "main": [
+        [
+          {
+            "node": "tiktok-1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tiktok-2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tiktok-3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "tiktok-4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "instagram-1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "instagram-2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "instagram-3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "instagram-4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "youtube-1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "youtube-2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "linkedin",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "facebook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "twitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tiktok-1": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tiktok-2": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "tiktok-3": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "tiktok-4": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "instagram-1": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "instagram-2": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "instagram-3": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "instagram-4": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 7
+          }
+        ]
+      ]
+    },
+    "youtube-1": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 8
+          }
+        ]
+      ]
+    },
+    "youtube-2": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 9
+          }
+        ]
+      ]
+    },
+    "linkedin": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 10
+          }
+        ]
+      ]
+    },
+    "facebook": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 11
+          }
+        ]
+      ]
+    },
+    "twitter": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 12
+          }
+        ]
+      ]
+    },
+    "threads": {
+      "main": [
+        [
+          {
+            "node": "merge-results",
+            "type": "main",
+            "index": 13
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "73e57cc0f11509191af8d50929e5d525aac95d4adfbfaae1d5fa119dc08c8ca1"
+  }
+}

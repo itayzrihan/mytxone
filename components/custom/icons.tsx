@@ -797,3 +797,22 @@ export const WorkflowIcon = ({ size = 16 }: { size?: number }) => {
     </svg>
   );
 };
+
+export const ShareIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width={size}
+      style={{ color: "currentcolor" }}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5.5 3C5.5 2.72386 5.72386 2.5 6 2.5H13C13.2761 2.5 13.5 2.72386 13.5 3V10C13.5 10.2761 13.2761 10.5 13 10.5C12.7239 10.5 12.5 10.2761 12.5 10V3.5H6C5.72386 3.5 5.5 3.27614 5.5 3ZM3 6.5C3.27614 6.5 3.5 6.72386 3.5 7V13C3.5 13.2761 3.72386 13.5 4 13.5H10C10.2761 13.5 10.5 13.2761 10.5 13V7C10.5 6.72386 10.2761 6.5 10 6.5C9.72386 6.5 9.5 6.72386 9.5 7V12.5H4V7C4 6.72386 3.72386 6.5 3 6.5Z"
+        fill="currentColor"
+      ></path>
+    </svg>
+  );
+};

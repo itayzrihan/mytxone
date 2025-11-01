@@ -1,0 +1,464 @@
+# Social Media Manager - Visual Flow Guide
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                        MYTX.ONE SOCIAL MEDIA MANAGER                           ║
+║                          Upload & Post Video System                            ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              USER INTERFACE                                  │
+│                         /social/upload-video                                 │
+│                                                                              │
+│  ┌──────────────────────────────┐  ┌──────────────────────────────┐        │
+│  │  PATH 1: UPLOAD & POST       │  │  PATH 2: USE EXISTING LINK   │        │
+│  │  (Recommended)               │  │  (Quick)                     │        │
+│  ├──────────────────────────────┤  ├──────────────────────────────┤        │
+│  │ 1. Drag & drop video         │  │ 1. Paste Google Drive link   │        │
+│  │ 2. Add title                 │  │ 2. Add title                 │        │
+│  │ 3. Add caption               │  │ 3. Add caption               │        │
+│  │ 4. Upload to Google Drive    │  │ 4. Post directly             │        │
+│  │ 5. Post to social            │  │                              │        │
+│  └──────────────┬───────────────┘  └──────────────┬───────────────┘        │
+│                 │                                  │                        │
+└─────────────────┼──────────────────────────────────┼────────────────────────┘
+                  │                                  │
+                  ▼                                  │
+        ┌─────────────────────┐                     │
+        │ GOOGLE DRIVE UPLOAD │                     │
+        │ API ENDPOINT        │                     │
+        ├─────────────────────┤                     │
+        │ • Receive video     │                     │
+        │ • Upload to GDrive  │                     │
+        │ • Set permissions   │                     │
+        │ • Return link       │                     │
+        └──────────┬──────────┘                     │
+                   │                                 │
+                   └─────────────┬───────────────────┘
+                                 │
+                                 ▼
+                   ┌──────────────────────────┐
+                   │   POST TO SOCIAL API     │
+                   │   /api/social/post-video │
+                   ├──────────────────────────┤
+                   │ Accepts:                 │
+                   │ • driveLink              │
+                   │ • title                  │
+                   │ • caption                │
+                   │ • source                 │
+                   └──────────┬───────────────┘
+                              │
+                              ▼
+                   ┌──────────────────────────┐
+                   │   N8N WEBHOOK TRIGGER    │
+                   │  auto.mytx.co/webhook/   │
+                   │    post-to-social        │
+                   └──────────┬───────────────┘
+                              │
+                              ▼
+    ╔═════════════════════════════════════════════════════════════════╗
+    ║                    N8N WORKFLOW EXECUTION                        ║
+    ╚═════════════════════════════════════════════════════════════════╝
+    
+    Step 1: EXTRACT & NORMALIZE
+    ┌────────────────────────────────────────────────────────────┐
+    │ • Parse JSON body                                          │
+    │ • Extract driveLink, title, caption, source                │
+    │ • Extract Google Drive file ID from URL                    │
+    │   Regex: /\/d\/([a-zA-Z0-9-_]+)/                          │
+    └────────────────────┬───────────────────────────────────────┘
+                         │
+                         ▼
+    Step 2: VALIDATE INPUT
+    ┌────────────────────────────────────────────────────────────┐
+    │ • Ensure single item processing                            │
+    │ • Validate required fields present                         │
+    └────────────────────┬───────────────────────────────────────┘
+                         │
+                         ▼
+    Step 3: BUILD DOWNLOAD URL
+    ┌────────────────────────────────────────────────────────────┐
+    │ Convert:                                                   │
+    │   drive.google.com/file/d/ABC123/view                     │
+    │ To:                                                        │
+    │   drive.google.com/uc?export=download&id=ABC123           │
+    └────────────────────┬───────────────────────────────────────┘
+                         │
+                         ▼
+    Step 4: UPLOAD TO BLOTATO
+    ┌────────────────────────────────────────────────────────────┐
+    │ • Download from Google Drive                               │
+    │ • Upload to Blotato CDN                                    │
+    │ • Get media reference ID                                   │
+    │ • Duration: ~1-2 minutes                                   │
+    └────────────────────┬───────────────────────────────────────┘
+                         │
+                         ▼
+    Step 5: PARALLEL PLATFORM DISTRIBUTION
+    ┌─────────────────────────────────────────────────────────────┐
+    │                                                             │
+    │  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
+    │  │  TIKTOK    │  │ INSTAGRAM  │  │  YOUTUBE   │           │
+    │  ├────────────┤  ├────────────┤  ├────────────┤           │
+    │  │ • itay_    │  │ • sales_   │  │ • Itay     │           │
+    │  │   zrihan   │  │   growth   │  │   Zrihan   │           │
+    │  │ • itay_    │  │ • itay_    │  │ • Mytx     │           │
+    │  │   tech     │  │   zrihan   │  │            │           │
+    │  │ • itay.    │  │ • itay_chi │  │ Delay: 1-2 │           │
+    │  │   zrihan   │  │ • itay_    │  │ min each   │           │
+    │  │ • itaythe  │  │   zrihan_  │  │            │           │
+    │  │   spammer  │  │   official │  │            │           │
+    │  │            │  │            │  │            │           │
+    │  │ Delay: 1-2 │  │ Delay: 1-2 │  │            │           │
+    │  │ min each   │  │ min each   │  │            │           │
+    │  └────────────┘  └────────────┘  └────────────┘           │
+    │                                                             │
+    │  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
+    │  │ LINKEDIN   │  │  FACEBOOK  │  │ TWITTER/X  │           │
+    │  ├────────────┤  ├────────────┤  ├────────────┤           │
+    │  │ • Itay     │  │ • Blotato  │  │ • ItayZn   │           │
+    │  │   Zrihan   │  │   Page     │  │            │           │
+    │  │            │  │            │  │ Delay: 1-2 │           │
+    │  │ Delay: 1-2 │  │ Delay: 1-2 │  │ min        │           │
+    │  │ min        │  │ min        │  │            │           │
+    │  └────────────┘  └────────────┘  └────────────┘           │
+    │                                                             │
+    │  ┌────────────┐                                            │
+    │  │  THREADS   │                                            │
+    │  ├────────────┤                                            │
+    │  │ • itay_    │                                            │
+    │  │   zrihan   │                                            │
+    │  │            │                                            │
+    │  │ Delay: 1-2 │                                            │
+    │  │ min        │                                            │
+    │  └────────────┘                                            │
+    │                                                             │
+    │  Total: 14 accounts across 7 platforms                     │
+    │  Each post has 1-2 minute random delay                     │
+    │  Parallel execution (not sequential)                       │
+    │  Continue on error (failed posts don't block others)       │
+    └──────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+    Step 6: MERGE RESULTS
+    ┌─────────────────────────────────────────────────────────────┐
+    │ • Collect all platform responses                            │
+    │ • Track successes and errors                                │
+    │ • Generate completion report                                │
+    │ • Estimated total time: 10-15 minutes                       │
+    └─────────────────────────────────────────────────────────────┘
+
+
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                             TIMELINE DIAGRAM                                 ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+
+User Action          │ Backend Processing         │ n8n Workflow          │ Results
+─────────────────────┼───────────────────────────┼──────────────────────┼─────────
+                     │                           │                      │
+PATH 1:              │                           │                      │
+Upload video ──────► │ Upload to GDrive (30s-2m) │                      │
+Add metadata         │   ↓                       │                      │
+Click "Upload" ─────► │ Return drive link         │                      │
+                     │   ↓                       │                      │
+Click "Post" ───────► │ Call n8n webhook ────────► Extract data (1s)    │
+                     │                           │   ↓                  │
+                     │                           │ Validate (1s)        │
+                     │                           │   ↓                  │
+                     │                           │ Build URL (1s)       │
+                     │                           │   ↓                  │
+                     │                           │ Upload Blotato (1-2m)│
+                     │                           │   ↓                  │
+                     │                           │ Post TikTok 1 (30s)  │
+                     │                           │ Wait 1-2 min         │
+                     │                           │ Post TikTok 2 (30s)  │
+                     │                           │ Wait 1-2 min         │
+                     │                           │ Post TikTok 3 (30s)  │
+                     │                           │ Wait 1-2 min         │
+                     │                           │ Post TikTok 4 (30s)  │
+                     │                           │   (parallel with)    │
+                     │                           │ Post Instagram 1-4   │
+                     │                           │ Post YouTube 1-2     │
+                     │                           │ Post LinkedIn        │
+                     │                           │ Post Facebook        │
+                     │                           │ Post Twitter         │
+                     │                           │ Post Threads         │
+                     │                           │   ↓                  │
+                     │                           │ Merge results ──────► Success!
+                     │                           │                      │ All posted
+──────────────────────────────────────────────────────────────────────────────────
+Total Time:          2-4 min                     10-15 min              12-20 min
+
+
+PATH 2:              │                           │                      │
+Paste GDrive link ─► │ Call n8n webhook ────────► (same as above)      │
+Add metadata         │                           │                      │
+Click "Post" ───────► │                           │                      │
+──────────────────────────────────────────────────────────────────────────────────
+Total Time:          Instant                     10-15 min              10-15 min
+
+
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                          DATA FLOW DIAGRAM                                   ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────┐
+│ User Input      │
+│ • video file    │ ─────► Path 1: Upload to GDrive
+│ • title         │          │
+│ • caption       │          ▼
+└─────────────────┘    ┌──────────────────┐
+                       │ Google Drive API │
+        OR             │ • Upload file    │
+                       │ • Set public     │
+┌─────────────────┐    │ • Return link    │
+│ User Input      │    └────────┬─────────┘
+│ • drive link    │             │
+│ • title         │ ────────────┘
+│ • caption       │ ─────► Path 2: Use existing link
+└─────────────────┘          │
+                             ▼
+                   ┌──────────────────────┐
+                   │ POST /api/social/    │
+                   │      post-video      │
+                   │                      │
+                   │ Body:                │
+                   │ {                    │
+                   │   driveLink,         │
+                   │   title,             │
+                   │   caption,           │
+                   │   source             │
+                   │ }                    │
+                   └──────────┬───────────┘
+                              │
+                              ▼
+                   ┌──────────────────────┐
+                   │ n8n Webhook          │
+                   │ https://auto.mytx.co/│
+                   │ webhook/post-to-     │
+                   │ social               │
+                   └──────────┬───────────┘
+                              │
+                              ▼
+                   ┌──────────────────────┐
+                   │ Extract File ID      │
+                   │ Input:               │
+                   │  drive.google.com/   │
+                   │  file/d/ABC123/view  │
+                   │                      │
+                   │ Regex:               │
+                   │  /\/d\/([^\/]+)/    │
+                   │                      │
+                   │ Output:              │
+                   │  ABC123              │
+                   └──────────┬───────────┘
+                              │
+                              ▼
+                   ┌──────────────────────┐
+                   │ Build Download URL   │
+                   │ Template:            │
+                   │  https://drive.      │
+                   │  google.com/uc?      │
+                   │  export=download&    │
+                   │  id={fileId}         │
+                   │                      │
+                   │ Output:              │
+                   │  https://drive.      │
+                   │  google.com/uc?      │
+                   │  export=download&    │
+                   │  id=ABC123           │
+                   └──────────┬───────────┘
+                              │
+                              ▼
+                   ┌──────────────────────┐
+                   │ Blotato Upload       │
+                   │ • Download from      │
+                   │   Google Drive       │
+                   │ • Upload to CDN      │
+                   │ • Return media ID    │
+                   │                      │
+                   │ Output:              │
+                   │  { uploadedMedia:    │
+                   │    "blotato-xyz" }   │
+                   └──────────┬───────────┘
+                              │
+                              ▼
+              ┌───────────────────────────────┐
+              │ Parallel Platform Distribution │
+              │                               │
+              │ Each platform receives:       │
+              │ {                             │
+              │   account: "platform_name",   │
+              │   title: "user title",        │
+              │   description: "caption",     │
+              │   uploadedMedia: "id"         │
+              │ }                             │
+              └───────────┬───────────────────┘
+                          │
+       ┌──────────────────┼────────────────────┐
+       │                  │                    │
+       ▼                  ▼                    ▼
+  ┌─────────┐       ┌─────────┐         ┌─────────┐
+  │ TikTok  │       │Instagram│    ...  │ Threads │
+  │ Posts   │       │ Posts   │         │ Post    │
+  └─────────┘       └─────────┘         └─────────┘
+       │                  │                    │
+       └──────────────────┼────────────────────┘
+                          │
+                          ▼
+                  ┌───────────────┐
+                  │ Merge Results │
+                  │ • Success: 14 │
+                  │ • Errors: 0   │
+                  │ • Time: 12min │
+                  └───────────────┘
+
+
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                        SECURITY & PERMISSIONS                                ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ AUTHENTICATION LAYERS                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Layer 1: User Authentication (NextAuth)                                     │
+│  ┌────────────────────────────────────────────────────────────────────┐    │
+│  │ • User must be logged in                                           │    │
+│  │ • Session validated on every request                               │    │
+│  │ • JWT token checked                                                │    │
+│  └────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+│  Layer 2: Admin Authorization                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐    │
+│  │ • Check: shouldShowAdminElements = true                            │    │
+│  │ • Check: viewMode === "admin"                                      │    │
+│  │ • UI elements hidden for non-admins                                │    │
+│  │ • API routes verify admin status                                   │    │
+│  └────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+│  Layer 3: Google Drive Service Account                                       │
+│  ┌────────────────────────────────────────────────────────────────────┐    │
+│  │ • Server-side credentials only                                     │    │
+│  │ • JSON key never exposed to client                                 │    │
+│  │ • Limited to specific Google Drive folder                          │    │
+│  │ • Files auto-set to "Anyone with link" for sharing                 │    │
+│  └────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+│  Layer 4: n8n Workflow                                                       │
+│  ┌────────────────────────────────────────────────────────────────────┐    │
+│  │ • No authentication on webhook (internal use only)                 │    │
+│  │ • Only accessible from mytx.one backend                            │    │
+│  │ • Blotato API key stored in n8n credentials                        │    │
+│  │ • Platform OAuth tokens managed by Blotato                         │    │
+│  └────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                          ERROR HANDLING FLOW                                 ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ UPLOAD ERROR HANDLING                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Upload Attempt                                                              │
+│       │                                                                      │
+│       ├─► Google Drive API Error                                             │
+│       │   └─► Show: "Upload failed: {error message}"                        │
+│       │   └─► Log error server-side                                         │
+│       │   └─► User can retry                                                │
+│       │                                                                      │
+│       ├─► File Too Large                                                     │
+│       │   └─► Show: "File size exceeds limit"                               │
+│       │   └─► Display max file size                                         │
+│       │   └─► User must compress video                                      │
+│       │                                                                      │
+│       ├─► Invalid File Type                                                  │
+│       │   └─► Show: "Please upload a video file"                            │
+│       │   └─► List accepted formats                                         │
+│       │   └─► User selects correct file                                     │
+│       │                                                                      │
+│       └─► Network Error                                                      │
+│           └─► Show: "Network error, please try again"                       │
+│           └─► Retry button available                                        │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ POSTING ERROR HANDLING                                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Post Request                                                                │
+│       │                                                                      │
+│       ├─► Invalid Drive Link                                                 │
+│       │   └─► Show: "Invalid Google Drive link"                             │
+│       │   └─► Check link format                                             │
+│       │   └─► User corrects link                                            │
+│       │                                                                      │
+│       ├─► n8n Workflow Not Active                                            │
+│       │   └─► Show: "Workflow trigger failed"                               │
+│       │   └─► Admin checks n8n status                                       │
+│       │   └─► Activate workflow                                             │
+│       │                                                                      │
+│       ├─► Platform Connection Error                                          │
+│       │   └─► Platform post fails (e.g., TikTok error)                      │
+│       │   └─► Other platforms continue posting                              │
+│       │   └─► Error logged in n8n                                           │
+│       │   └─► Partial success (11/14 platforms posted)                      │
+│       │                                                                      │
+│       └─► Complete Workflow Failure                                          │
+│           └─► Show: "Posting failed, please try again"                      │
+│           └─► Check n8n execution logs                                      │
+│           └─► Verify Blotato credentials                                    │
+│           └─► Retry entire flow                                             │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                            SUCCESS INDICATORS                                ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+
+UI States:
+┌──────────────┬─────────────────────────────────────────────────────────────┐
+│ State        │ Visual Indicator                                            │
+├──────────────┼─────────────────────────────────────────────────────────────┤
+│ Idle         │ • Default form                                              │
+│              │ • Blue/cyan buttons                                         │
+│              │ • "Upload" or "Post" button enabled                         │
+├──────────────┼─────────────────────────────────────────────────────────────┤
+│ Uploading    │ • Progress bar (0% → 100%)                                  │
+│              │ • Spinner icon rotating                                     │
+│              │ • "Uploading to Google Drive..." text                       │
+│              │ • Form fields disabled                                      │
+├──────────────┼─────────────────────────────────────────────────────────────┤
+│ Upload Done  │ • Green checkmark icon                                       │
+│              │ • "Video uploaded to Google Drive!"                         │
+│              │ • Drive link displayed                                      │
+│              │ • "Post to Social Media" button appears                     │
+├──────────────┼─────────────────────────────────────────────────────────────┤
+│ Posting      │ • Blue spinner icon                                          │
+│              │ • "Posting to All Platforms..." text                        │
+│              │ • Button disabled                                           │
+├──────────────┼─────────────────────────────────────────────────────────────┤
+│ Posted       │ • Green success banner                                       │
+│              │ • "Posted Successfully!" heading                            │
+│              │ • "Posting in Progress! ~10-15 minutes" info                │
+│              │ • List of platforms shown                                   │
+│              │ • Form resets after 3 seconds                               │
+├──────────────┼─────────────────────────────────────────────────────────────┤
+│ Error        │ • Red alert icon                                             │
+│              │ • "Error" heading with message                              │
+│              │ • Retry button available                                    │
+│              │ • Error details displayed                                   │
+└──────────────┴─────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              END OF VISUAL GUIDE
+═══════════════════════════════════════════════════════════════════════════════
+```
