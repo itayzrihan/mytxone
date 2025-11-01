@@ -69,8 +69,9 @@ export const Navbar = ({ session }: NavbarProps) => {
   const shouldHideNavbar = pathname.includes("/teleprompter") || 
                            pathname.includes("/create-meeting") || 
                            pathname.includes("/create-community") || 
-                           pathname.includes("/resume");
-
+                           pathname.includes("/resume") ||
+                           pathname.includes("/caricature") ||
+                           pathname.includes("/odh");
   // Prevent hydration mismatch by only rendering session-dependent UI on client
   useEffect(() => {
     setIsClient(true);

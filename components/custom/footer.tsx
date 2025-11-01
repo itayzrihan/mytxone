@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAdmin } from "@/contexts/admin-context";
 import { Button } from "../ui/button";
+import path from "path";
 
 export function Footer() {
   const pathname = usePathname();
@@ -13,7 +14,9 @@ export function Footer() {
   const shouldHideFooter = pathname.includes("/teleprompter") || 
                            pathname.includes("/create-meeting") || 
                            pathname.includes("/create-community") || 
-                           pathname.includes("/resume");
+                           pathname.includes("/resume") ||
+                           pathname.includes("/caricature") ||
+                           pathname.includes("/odh");
 
   // Admin context - provides centralized admin state for the entire app
   const { shouldShowAdminElements, viewMode } = useAdmin();
