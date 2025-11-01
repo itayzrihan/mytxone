@@ -422,7 +422,7 @@ export default function UploadVideoPage() {
                       className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500"
                     />
                     <p className="text-xs text-zinc-400 mt-1">
-                      Make sure the file is set to "Anyone with the link" access
+                      Make sure the file is set to &quot;Anyone with the link&quot; access
                     </p>
                   </div>
 
