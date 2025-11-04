@@ -4,6 +4,24 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Experience the Power of Hypnosis | MyTx One",
+  description: "Join our hypnosis program to unlock your subconscious potential. Professional hypnotherapy sessions designed for personal transformation and growth.",
+  openGraph: {
+    title: "Experience the Power of Hypnosis | MyTx One",
+    description: "Join our hypnosis program to unlock your subconscious potential. Professional hypnotherapy sessions designed for personal transformation and growth.",
+    images: [
+      {
+        url: "https://dg.mytx.co/thumbails/hyno/hypno.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Hypnosis Program",
+      },
+    ],
+  },
+};
 
 interface FormData {
   fullName: string;

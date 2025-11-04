@@ -4,6 +4,32 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Download, CheckCircle, BookOpen, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "To Hypnotize the Universe | Free E-Book | MyTx One",
+  description: "Download our exclusive e-book 'To Hypnotize the Universe' - Learn advanced hypnosis techniques and unlock the power of your mind. Free download available now.",
+  keywords: "hypnosis, e-book, personal development, mind power, subconscious",
+  openGraph: {
+    title: "To Hypnotize the Universe | Free E-Book | MyTx One",
+    description: "Download our exclusive e-book 'To Hypnotize the Universe' - Learn advanced hypnosis techniques and unlock the power of your mind.",
+    type: "article",
+    images: [
+      {
+        url: "https://dg.mytx.co/thumbails/hyno/hypno.jpg",
+        width: 1200,
+        height: 630,
+        alt: "To Hypnotize the Universe E-Book",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "To Hypnotize the Universe | Free E-Book",
+    description: "Download exclusive hypnosis e-book with advanced techniques.",
+    images: ["https://dg.mytx.co/thumbails/hyno/hypno.jpg"],
+  },
+};
 
 const EbookDownloadPage = () => {
   const [isDownloading, setIsDownloading] = useState(false);
