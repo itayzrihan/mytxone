@@ -273,7 +273,7 @@ const HypnoLandingPage = () => {
                       className="mt-1 w-5 h-5 accent-pink-500 rounded cursor-pointer"
                     />
                     <span className="text-sm text-gray-300 group-hover:text-white transition">
-                      יש לכם אישור ממני לשלוח לי את הספר וקבל עדכונים ותוכן אקסקלוסיבי בנושא היפנוזה וידע רוחני
+                      יש לכם אישור ממני לשלוח לי את הספר וקבל עדכונים ותוכן אקסקלוסיבי שיווקי בנושא היפנוזה וידע רוחני
                     </span>
                   </label>
                 </div>
@@ -355,7 +355,7 @@ const HypnoLandingPage = () => {
           transition={{ duration: 1.5, delay: 0.8 }}
         >
           <p className="text-gray-400 italic text-lg leading-relaxed">
-            "כשיש לך את הידע הזה, העולם משתנה. לא המציאות משתנה, אלא תפיסתך שלה."
+            &quot;כשיש לך את הידע הזה, העולם משתנה. לא המציאות משתנה, אלא תפיסתך שלה.&quot;
           </p>
           <p className="text-gray-500 text-sm mt-4">— איתי זריהן</p>
         </motion.div>

@@ -199,7 +199,7 @@ const EbookDownloadPage = () => {
           >
             <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
               <p className="text-sm text-gray-300">
-                <span className="font-semibold text-white">📧 משלוח בדוא"ל:</span> הספר נשלח גם לכתובת הדוא"ל שלכם כדי שתוכלו לשמור עליו.
+                <span className="font-semibold text-white">📧 משלוח בדוא&quot;ל:</span> הספר נשלח גם לכתובת הדוא&quot;ל שלכם כדי שתוכלו לשמור עליו.
               </p>
             </div>
 
@@ -224,7 +224,7 @@ const EbookDownloadPage = () => {
             transition={{ duration: 1, delay: 0.8 }}
           >
             <p className="text-gray-400 italic text-lg leading-relaxed mb-2">
-              "The universe hypnotizes you every moment. Now, learn to hypnotize it back."
+              &quot;The universe hypnotizes you every moment. Now, learn to hypnotize it back.&quot;
             </p>
             <p className="text-gray-500 text-sm">
               — From your e-book
