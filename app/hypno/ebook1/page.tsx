@@ -6,28 +6,32 @@ import { Download, CheckCircle, BookOpen, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Metadata } from "next";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://dg.mytx.co";
+
 export const metadata: Metadata = {
-  title: "To Hypnotize the Universe | Free E-Book | MyTx One",
-  description: "Download our exclusive e-book 'To Hypnotize the Universe' - Learn advanced hypnosis techniques and unlock the power of your mind. Free download available now.",
-  keywords: "hypnosis, e-book, personal development, mind power, subconscious",
+  metadataBase: new URL(baseUrl),
+  title: "להיפנוטיז את היקום | ספר אלקטרוני חינם | MyTx One",
+  description: "הורידו את ספר האלקטרוני הבלעדי שלנו 'להיפנוטיז את היקום' - למדו טכניקות היפנוזה מתקדמות וגלו את כוח המוח שלכם. הורדה חינמית זמינה כעת.",
+  keywords: "היפנוזה, ספר אלקטרוני, התפתחות אישית, כוח המוח, תת-הכרה",
   openGraph: {
-    title: "To Hypnotize the Universe | Free E-Book | MyTx One",
-    description: "Download our exclusive e-book 'To Hypnotize the Universe' - Learn advanced hypnosis techniques and unlock the power of your mind.",
+    title: "להיפנוטיז את היקום | ספר אלקטרוני חינם | MyTx One",
+    description: "הורידו את ספר האלקטרוני הבלעדי שלנו 'להיפנוטיז את היקום' - למדו טכניקות היפנוזה מתקדמות.",
     type: "article",
+    locale: "he_IL",
     images: [
       {
-        url: "https://dg.mytx.co/thumbails/hyno/hypno.jpg",
+        url: `${baseUrl}/thumbails/hyno/hypno.jpg`,
         width: 1200,
         height: 630,
-        alt: "To Hypnotize the Universe E-Book",
+        alt: "להיפנוטיז את היקום - ספר אלקטרוני",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "To Hypnotize the Universe | Free E-Book",
-    description: "Download exclusive hypnosis e-book with advanced techniques.",
-    images: ["https://dg.mytx.co/thumbails/hyno/hypno.jpg"],
+    title: "להיפנוטיז את היקום | ספר אלקטרוני חינם",
+    description: "הורידו ספר אלקטרוני בלעדי של היפנוזה עם טכניקות מתקדמות.",
+    images: [`${baseUrl}/thumbails/hyno/hypno.jpg`],
   },
 };
 

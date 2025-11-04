@@ -6,20 +6,31 @@ import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { Metadata } from "next";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://dg.mytx.co";
+
 export const metadata: Metadata = {
-  title: "Experience the Power of Hypnosis | MyTx One",
-  description: "Join our hypnosis program to unlock your subconscious potential. Professional hypnotherapy sessions designed for personal transformation and growth.",
+  metadataBase: new URL(baseUrl),
+  title: "חוו את כוח ההיפנוזה | MyTx One",
+  description: "הצטרפו לתוכנית ההיפנוזה שלנו וגלו את הפוטנציאל הלא מודע שלכם. סשנים מקצועיים של היפנוטראפיה שעוצבו לתמורה אישית וגדילה.",
+  keywords: "היפנוזה, היפנוטראפיה, התפתחות אישית, שיפור עצמי",
   openGraph: {
-    title: "Experience the Power of Hypnosis | MyTx One",
-    description: "Join our hypnosis program to unlock your subconscious potential. Professional hypnotherapy sessions designed for personal transformation and growth.",
+    title: "חוו את כוח ההיפנוזה | MyTx One",
+    description: "הצטרפו לתוכנית ההיפנוזה שלנו וגלו את הפוטנציאל הלא מודע שלכם. סשנים מקצועיים של היפנוטראפיה שעוצבו לתמורה אישית וגדילה.",
+    locale: "he_IL",
     images: [
       {
-        url: "https://dg.mytx.co/thumbails/hyno/hypno.jpg",
+        url: `${baseUrl}/thumbails/hyno/hypno.jpg`,
         width: 1200,
         height: 630,
-        alt: "Hypnosis Program",
+        alt: "היפנוזה - תוכנית התפתחות אישית",
       },
     ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "חוו את כוח ההיפנוזה | MyTx One",
+    description: "הצטרפו לתוכנית ההיפנוזה שלנו וגלו את הפוטנציאל הלא מודע שלכם.",
+    images: [`${baseUrl}/thumbails/hyno/hypno.jpg`],
   },
 };
 

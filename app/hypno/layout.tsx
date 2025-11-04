@@ -1,28 +1,33 @@
 import { ReactNode } from "react";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Hypnosis & Personal Development | MyTx One",
-  description: "Unlock your potential through hypnosis and personal development programs. Transform your mindset and achieve your goals.",
-  keywords: "hypnosis, personal development, self-improvement, meditation, mindfulness",
+const baseUrl = process.env.NEXTAUTH_URL || "https://dg.mytx.co";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
+  title: "היפנוזה וההתפתחות אישית | MyTx One",
+  description: "פתחו את הפוטנציאל שלכם דרך היפנוזה ותוכניות התפתחות אישית. שנו את המנטליות שלכם והשיגו את היעדים שלכם.",
+  keywords: "היפנוזה, התפתחות אישית, שיפור עצמי, מדיטציה, מודעות",
   openGraph: {
-    title: "Hypnosis & Personal Development | MyTx One",
-    description: "Unlock your potential through hypnosis and personal development programs. Transform your mindset and achieve your goals.",
-    url: "https://dg.mytx.co/hypno",
+    title: "היפנוזה וההתפתחות אישית | MyTx One",
+    description: "פתחו את הפוטנציאל שלכם דרך היפנוזה ותוכניות התפתחות אישית. שנו את המנטליות שלכם והשיגו את היעדים שלכם.",
+    url: `${baseUrl}/hypno`,
     type: "website",
+    locale: "he_IL",
     images: [
       {
-        url: "https://dg.mytx.co/thumbails/hyno/hypno.jpg",
+        url: `${baseUrl}/thumbails/hyno/hypno.jpg`,
         width: 1200,
         height: 630,
-        alt: "Hypnosis & Personal Development",
+        alt: "היפנוזה וההתפתחות אישית",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hypnosis & Personal Development | MyTx One",
-    description: "Unlock your potential through hypnosis and personal development programs.",
-    image: "https://dg.mytx.co/thumbails/hyno/hypno.jpg",
+    title: "היפנוזה וההתפתחות אישית | MyTx One",
+    description: "פתחו את הפוטנציאל שלכם דרך היפנוזה ותוכניות התפתחות אישית.",
+    images: [`${baseUrl}/thumbails/hyno/hypno.jpg`],
   },
 };
 
