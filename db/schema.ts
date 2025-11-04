@@ -591,3 +591,21 @@ export const meetingAttendeeRelations = relations(meetingAttendee, ({ one }) => 
     references: [user.id],
   }),
 }));
+
+// Hypnosis E-book Leads Schema
+export const hypnosisLead = pgTable("HypnosisLead", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
+  allowMarketing: boolean("allow_marketing").notNull().default(false),
+  allowHypnosisKnowledge: boolean("allow_hypnosis_knowledge").notNull().default(false),
+  ebookSent: boolean("ebook_sent").notNull().default(false),
+  ebookSentAt: timestamp("ebook_sent_at"),
+  source: varchar("source", { length: 50 }).notNull().default("hypno-landing"), // marketing source tracking
+  notes: text("notes"), // Any additional notes
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type HypnosisLead = InferSelectModel<typeof hypnosisLead>;

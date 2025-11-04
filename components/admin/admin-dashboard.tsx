@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Shield, Users, Crown, Calendar, Clock, AlertTriangle, Star, Gem, Zap } from 'lucide-react';
+import { User, Shield, Users, Crown, Calendar, Clock, AlertTriangle, Star, Gem, Zap, Mail, Phone, CheckCircle, Download } from 'lucide-react';
 import type { SafeUser } from '@/db/queries';
 
 interface AdminDashboardProps {
@@ -14,6 +14,21 @@ interface AdminDashboardProps {
     id: string;
     email?: string;
   };
+}
+
+interface HypnosisLead {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  allowMarketing: boolean;
+  allowHypnosisKnowledge: boolean;
+  ebookSent: boolean;
+  ebookSentAt: string | null;
+  source: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface UserStats {
@@ -29,6 +44,7 @@ interface UserStats {
 
 export default function AdminDashboard({ currentUser }: AdminDashboardProps) {
   const [users, setUsers] = useState<SafeUser[]>([]);
+  const [leads, setLeads] = useState<HypnosisLead[]>([]);
   const [userStats, setUserStats] = useState<UserStats>({ 
     total: 0, 
     admins: 0, 
@@ -36,9 +52,11 @@ export default function AdminDashboard({ currentUser }: AdminDashboardProps) {
     subscriptions: { free: 0, basic: 0, pro: 0 }
   });
   const [loading, setLoading] = useState(true);
+  const [leadsLoading, setLeadsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
   const [updatingSubscription, setUpdatingSubscription] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'users' | 'leads'>('users');
 
   // Fetch users and stats
   useEffect(() => {
@@ -66,10 +84,29 @@ export default function AdminDashboard({ currentUser }: AdminDashboardProps) {
       const statsData = await statsResponse.json();
       setUserStats(statsData);
       
+      // Fetch hypnosis leads
+      await fetchLeads();
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLeads = async () => {
+    try {
+      setLeadsLoading(true);
+      const response = await fetch('/api/admin/hypnosis-leads');
+      if (!response.ok) {
+        throw new Error('Failed to fetch leads');
+      }
+      const data = await response.json();
+      setLeads(data.leads);
+    } catch (err) {
+      console.error('Error fetching leads:', err);
+    } finally {
+      setLeadsLoading(false);
     }
   };
 
@@ -412,6 +449,114 @@ export default function AdminDashboard({ currentUser }: AdminDashboardProps) {
               </TableBody>
             </Table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Hypnosis Leads Section */}
+      <Card className="bg-white/5 backdrop-blur-md border border-white/10">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mail className="w-5 h-5" />
+              <div>
+                <CardTitle className="text-white">Form Submissions</CardTitle>
+                <CardDescription className="text-white/60">
+                  Hypnosis e-book lead submissions from the landing page
+                </CardDescription>
+              </div>
+            </div>
+            <Badge variant="outline" className="bg-purple-500/20 text-purple-300 border-purple-400/30">
+              {leads.length} leads
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {leadsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : leads.length === 0 ? (
+            <div className="text-center py-8 text-white/50">
+              No submissions yet
+            </div>
+          ) : (
+            <div className="rounded-md border border-white/10 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/10 hover:bg-white/5">
+                    <TableHead className="text-white/70">Full Name</TableHead>
+                    <TableHead className="text-white/70">Email</TableHead>
+                    <TableHead className="text-white/70">Phone</TableHead>
+                    <TableHead className="text-white/70 text-center">Marketing</TableHead>
+                    <TableHead className="text-white/70 text-center">Knowledge</TableHead>
+                    <TableHead className="text-white/70 text-center">E-Book Sent</TableHead>
+                    <TableHead className="text-white/70">Submitted</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {leads.map((lead) => (
+                    <TableRow key={lead.id} className="border-white/10 hover:bg-white/5">
+                      <TableCell className="text-white">{lead.fullName}</TableCell>
+                      <TableCell className="text-white/70 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3 h-3" />
+                          {lead.email}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-white/70 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-3 h-3" />
+                          {lead.phoneNumber}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {lead.allowMarketing ? (
+                          <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-400/30">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Yes
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-500/20 text-gray-300 border-gray-400/30">
+                            No
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {lead.allowHypnosisKnowledge ? (
+                          <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-400/30">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Yes
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-500/20 text-gray-300 border-gray-400/30">
+                            No
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {lead.ebookSent ? (
+                          <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-400/30">
+                            <Download className="w-3 h-3 mr-1" />
+                            Sent
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-yellow-500/20 text-yellow-300 border-yellow-400/30">
+                            Pending
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-white/70 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(lead.createdAt)}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

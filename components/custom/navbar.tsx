@@ -71,7 +71,8 @@ export const Navbar = ({ session }: NavbarProps) => {
                            pathname.includes("/create-community") || 
                            pathname.includes("/resume") ||
                            pathname.includes("/caricature") ||
-                           pathname.includes("/odh");
+                           pathname.includes("/odh") ||
+                           pathname.includes("/hypno");
   // Prevent hydration mismatch by only rendering session-dependent UI on client
   useEffect(() => {
     setIsClient(true);

@@ -16,7 +16,8 @@ export function Footer() {
                            pathname.includes("/create-community") || 
                            pathname.includes("/resume") ||
                            pathname.includes("/caricature") ||
-                           pathname.includes("/odh");
+                           pathname.includes("/odh") ||
+                           pathname.includes("/hypno");
 
   // Admin context - provides centralized admin state for the entire app
   const { shouldShowAdminElements, viewMode } = useAdmin();
