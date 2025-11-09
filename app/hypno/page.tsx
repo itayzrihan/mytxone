@@ -133,14 +133,23 @@ const HypnoLandingPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-2xl font-serif">
-            להפנט את היקום
+          {/* Free Gift Badge */}
+          <div className="inline-flex items-center gap-3 mx-auto mb-4 px-4 py-2 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 text-slate-900 font-semibold shadow-xl">
+            <span className="text-sm">🎁</span>
+            <span className="text-sm">מתנה חינמית — ספר דיגיטלי על היפנוזה</span>
+            <span className="ml-2 text-xs bg-black/10 px-2 py-1 rounded-full">הורדה מיידית</span>
+          </div>
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-3 drop-shadow-md font-serif leading-tight">
+            להפנט את היקום 📕
+          </h1>
+                    <h1 className="text-3xl md:text-6xl font-extrabold text-white mb-3 drop-shadow-md font-serif leading-tight">
+            מתנה חינמית לחלוטין
           </h1>
           <p className="text-xl md:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 font-light mb-2">
-            Hypnotize the Universe
+            ההדרכה הדיגיטלית על היפנוזה, תודעה ושינוי עמוק
           </p>
-          <p className="text-gray-300 text-lg max-w-2xl mx-auto font-light">
-            מאת: איתי זריהן
+          <p className="text-gray-300 text-sm max-w-2xl mx-auto font-light">
+            מאת: איתי זריהן — הורידו עכשיו ללא עלות, קישור ישיר להורדה
           </p>
         </motion.div>
 
@@ -155,9 +164,9 @@ const HypnoLandingPage = () => {
           >
             <div className="space-y-4">
               <h2 className="text-3xl font-bold text-white">
-                פתחו את עולמכם לאפשרויות אינסופיות
+                למה כדאי לכם להבין היפנוזה?
               </h2>
-              <p className="text-gray-300 leading-relaxed">
+              <p className="text-white leading-relaxed">
                 גלו את העולם הנסתר שקיים מעבר לפיזי. למדו את הסודות העמוקים של ההיפנוזה, 
                 התודעה, והכוח הגדול שטמון בתוככם.
               </p>
@@ -168,7 +177,7 @@ const HypnoLandingPage = () => {
                 <div className="w-1 bg-gradient-to-b from-pink-500 to-purple-600"></div>
                 <div>
                   <h3 className="font-bold text-white mb-1">הבנת ההיפנוזה</h3>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-white">
                     היפנוזה אינה מה שאתם חושבים שהיא. גילוי האמת שמוסתרת מעיניכם.
                   </p>
                 </div>
@@ -178,7 +187,7 @@ const HypnoLandingPage = () => {
                 <div className="w-1 bg-gradient-to-b from-purple-500 to-indigo-600"></div>
                 <div>
                   <h3 className="font-bold text-white mb-1">ידע אתי ואחראי</h3>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-white">
                     למדו כיצד להגן על עצמכם ולהשתמש בכוחות אלה למטרות הטובות.
                   </p>
                 </div>
@@ -188,7 +197,7 @@ const HypnoLandingPage = () => {
                 <div className="w-1 bg-gradient-to-b from-indigo-500 to-pink-600"></div>
                 <div>
                   <h3 className="font-bold text-white mb-1">שנו את המציאות שלכם</h3>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-white">
                     אם לא תבינו את הכוחות הללו, לא תוכלו לשלוט בחייכם. זה הזמן להשתנות.
                   </p>
                 </div>
@@ -208,23 +217,26 @@ const HypnoLandingPage = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 to-purple-600/20 rounded-2xl blur-xl"></div>
 
             {/* Form Container */}
-            <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-              <h3 className="text-2xl font-bold text-white mb-6">
-                קבלו את הספר במתנה!
+            <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl">
+              <h3 className="text-2xl font-bold text-white mb-3">
+                קבלו את הספר במתנה להורדה מיידית🎁
               </h3>
+                        <h3 className="text-2xl font-bold text-white mb-3">
+לאן לשלוח את הקישור ?
+              </h3>
+              <p className="text-sm text-gray-300 mb-4">פשוט הכניסו את המייל וקבלו קישור להורדה בתוך הדוא"ל.</p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Full Name */}
+                {/* Full Name (optional) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    שם מלא *
-                  </label>
+                    שם 
+                                      </label>
                   <input
                     type="text"
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    required
                     placeholder="שם מלא"
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:bg-white/15 transition"
                   />
@@ -246,17 +258,16 @@ const HypnoLandingPage = () => {
                   />
                 </div>
 
-                {/* Phone Number */}
+                {/* Phone Number (optional) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    מספר טלפון *
+                    מספר טלפון 
                   </label>
                   <input
                     type="tel"
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
-                    required
                     placeholder="050-000-0000"
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:bg-white/15 transition"
                   />
@@ -273,7 +284,7 @@ const HypnoLandingPage = () => {
                       className="mt-1 w-5 h-5 accent-pink-500 rounded cursor-pointer"
                     />
                     <span className="text-sm text-gray-300 group-hover:text-white transition">
-                      יש לכם אישור ממני לשלוח לי את הספר וקבל עדכונים ותוכן אקסקלוסיבי שיווקי בנושא היפנוזה וידע רוחני
+                      אני מסכים/ה לקבל את הספר וקבלת עדכונים רלוונטיים (ניתן להסיר בכל עת)
                     </span>
                   </label>
                 </div>
@@ -290,7 +301,7 @@ const HypnoLandingPage = () => {
                       בטעינה...
                     </span>
                   ) : (
-                    "פתח את הספר החינם 🔓"
+                    "קבלו את המתנה החינמית עכשיו 🎁"
                   )}
                 </button>
 
@@ -316,9 +327,22 @@ const HypnoLandingPage = () => {
                 )}
               </form>
 
-              <p className="text-xs text-gray-500 text-center mt-6">
-                הפרטיות שלך קדושה. אנו מכבדים את התודעה שלך.
+              <p className="text-xs text-gray-500 text-center mt-4">
+                הפרטיות שלך שמורה — לא נשתף את כתובת המייל שלך עם צדדים שלישיים.
               </p>
+
+              {/* Quick social proof */}
+              <div className="mt-4 flex items-center justify-center gap-4">
+                <div className="text-center text-sm text-gray-300">
+                  <div className="font-bold text-white">★★★★★</div>
+                  <div className="text-xs">קוראים מרוצים</div>
+                </div>
+                <div className="text-sm text-gray-300">|</div>
+                <div className="text-center text-sm text-gray-300">
+                  <div className="font-bold text-white">100% חינם</div>
+                  <div className="text-xs">ללא עלויות נסתרות</div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
