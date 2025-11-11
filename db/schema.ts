@@ -965,3 +965,23 @@ export const hypnosisLead = pgTable("HypnosisLead", {
 });
 
 export type HypnosisLead = InferSelectModel<typeof hypnosisLead>;
+
+// Registration Token Schema for 2FA Registration Tracking
+export const registrationToken = pgTable("RegistrationToken", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id),
+  email: varchar("email", { length: 255 }).notNull(),
+  serviceName: varchar("service_name", { length: 255 }).notNull(),
+  callbackUrl: text("callback_url"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, completed, rejected, expired
+  seedId: varchar("seed_id", { length: 255 }),
+  totpSeed: text("totp_seed"), // Encrypted TOTP seed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export type RegistrationToken = InferSelectModel<typeof registrationToken>;
