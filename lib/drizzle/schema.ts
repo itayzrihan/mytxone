@@ -248,6 +248,7 @@ export const user = pgTable("User", {
 	notMytxEmail: varchar("not_mytx_email", { length: 255 }),
 	profileImageUrl: text("profile_image_url"),
 	paypalSubscriptionId: varchar("paypal_subscription_id", { length: 255 }),
+	totpEnabled: boolean("totp_enabled").default(false).notNull(),
 });
 
 export const quoteTemplate = pgTable("QuoteTemplate", {
