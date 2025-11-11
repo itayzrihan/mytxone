@@ -224,7 +224,7 @@ const HypnoLandingPage = () => {
                         <h3 className="text-2xl font-bold text-white mb-3">
 לאן לשלוח את הקישור ?
               </h3>
-              <p className="text-sm text-gray-300 mb-4">פשוט הכניסו את המייל וקבלו קישור להורדה בתוך הדוא"ל.</p>
+              <p className="text-sm text-gray-300 mb-4">פשוט הכניסו את המייל וקבלו קישור להורדה בתוך הדוא&quot;ל.</p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Full Name (optional) */}

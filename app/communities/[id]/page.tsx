@@ -54,7 +54,7 @@ export default function CommunityPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <h1 className="text-2xl font-bold text-white mb-4">Community Not Found</h1>
-        <p className="text-zinc-400">The community you're looking for doesn't exist.</p>
+        <p className="text-zinc-400">The community you&apos;re looking for doesn&apos;t exist.</p>
       </div>
     );
   }
