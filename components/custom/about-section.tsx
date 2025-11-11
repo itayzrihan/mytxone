@@ -160,7 +160,7 @@ export function AboutSection() {
           </div>
 
           <p className="text-zinc-300 text-lg leading-relaxed text-right mb-6 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-6">
-            אני לא רק "מפתח אפליקציות", אלא <span className="text-yellow-400 font-semibold">שותף תהליכי</span> שמלווה אותך מהחזון ועד הביצוע — כולל אפיון, עיצוב UX/UI, בניית אסטרטגיה עסקית והכוונה בשיווק והשקה.
+            אני לא רק &quot;מפתח אפליקציות&quot;, אלא <span className="text-yellow-400 font-semibold">שותף תהליכי</span> שמלווה אותך מהחזון ועד הביצוע — כולל אפיון, עיצוב UX/UI, בניית אסטרטגיה עסקית והכוונה בשיווק והשקה.
           </p>
 
           <p className="text-zinc-300 text-lg leading-relaxed text-right bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-6">
