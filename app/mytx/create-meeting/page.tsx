@@ -2,6 +2,10 @@
 
 import UpgradePlanWall from "@/components/custom/upgrade-plan-wall";
 import { useSubscription, isUserPaidSubscriber } from "@/lib/use-subscription";
+import { useUserPlan } from "@/components/custom/user-plan-context";
+import { getLimitForPlan } from "@/lib/plan-utils";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 // Placeholder component for actual meeting creation
 function CreateMeetingForm() {
@@ -82,10 +86,31 @@ function CreateMeetingForm() {
 }
 
 export default function CreateMeetingPage() {
-  const { subscription, isLoading, error, isAuthenticated } = useSubscription();
+  const { subscription, isLoading, error, isAuthenticated, user } = useSubscription();
+  const { userPlan, meetingCount, isLoading: isPlanLoading } = useUserPlan();
+  const router = useRouter();
+
+  // Check if user can create meetings directly
+  useEffect(() => {
+    // Don't redirect while loading
+    if (isLoading || isPlanLoading) {
+      return;
+    }
+
+    // Only redirect if user is authenticated and has paid subscription
+    if (isAuthenticated && userPlan && isUserPaidSubscriber(userPlan)) {
+      const meetingLimit = getLimitForPlan(userPlan);
+      
+      // If user hasn't reached their limit, navigate to owned meetings page
+      if (meetingCount < meetingLimit) {
+        router.push('/owned-meetings');
+        return;
+      }
+    }
+  }, [isLoading, isPlanLoading, isAuthenticated, userPlan, meetingCount, router]);
 
   // Show loading state while checking subscription
-  if (isLoading) {
+  if (isLoading || isPlanLoading) {
     return (
       <>
         {/* Hide navbar and footer during loading */}
@@ -141,5 +166,5 @@ export default function CreateMeetingPage() {
   }
 
   // Always show upgrade plan wall for meeting creation
-  return <UpgradePlanWall type="meeting" user={isAuthenticated ? { subscription } : null} />;
+  return <UpgradePlanWall type="meeting" user={isAuthenticated ? { ...user, subscription } : null} />;
 }

@@ -4,69 +4,69 @@ import { Video, Smartphone, Shield, HardDrive, Cloud, Cpu, Code, Database, Globe
 const services = [
   {
     icon: Video,
-    title: "Video Production",
-    description: "Professional video editing, motion graphics, and multimedia production services.",
+    title: "הפקת וידאו",
+    description: "שירותי עריכת וידאו מקצועית, מוצ'ן גרפיקס והפקות מולטימדיה.",
     color: "text-cyan-400"
   },
   {
     icon: Smartphone,
-    title: "App Development",
-    description: "Native and cross-platform mobile apps, web applications, and software solutions.",
+    title: "פיתוח אפליקציות",
+    description: "אפליקציות מובייל נייטיב וחוצות פלטפורמות, אפליקציות ווב ופתרונות תוכנה.",
     color: "text-blue-400"
   },
   {
     icon: Shield,
-    title: "Cybersecurity",
-    description: "Advanced security solutions, penetration testing, and threat protection services.",
+    title: "אבטחת סייבר",
+    description: "פתרונות אבטחה מתקדמים, בדיקות חדירה ושירותי הגנה מפני איומים.",
     color: "text-red-400"
   },
   {
     icon: HardDrive,
-    title: "Hardware Solutions",
-    description: "Custom hardware design, IoT devices, and embedded systems development.",
+    title: "פתרונות חומרה",
+    description: "עיצוב חומרה מותאם אישית, מכשירי IoT ופיתוח מערכות משובצות.",
     color: "text-orange-400"
   },
   {
     icon: Cloud,
-    title: "Cloud Infrastructure",
-    description: "Scalable cloud solutions, DevOps, and infrastructure as code services.",
+    title: "תשתית ענן",
+    description: "פתרונות ענן ניתנים להרחבה, DevOps ושירותי תשתית כקוד.",
     color: "text-purple-400"
   },
   {
     icon: Cpu,
-    title: "AI & Machine Learning",
-    description: "Intelligent solutions, data analytics, and automated systems development.",
+    title: "בינה מלאכותית ולמידת מכונה",
+    description: "פתרונות חכמים, אנליטיקת נתונים ופיתוח מערכות אוטומטיות.",
     color: "text-green-400"
   },
   {
     icon: Code,
-    title: "Software Development",
-    description: "Custom software, API development, and enterprise solutions.",
+    title: "פיתוח תוכנה",
+    description: "תוכנה מותאמת אישית, פיתוח API ופתרונות ארגוניים.",
     color: "text-yellow-400"
   },
   {
     icon: Database,
-    title: "Data Management",
-    description: "Database design, optimization, and big data solutions.",
+    title: "ניהול מידע",
+    description: "עיצוב מסדי נתונים, אופטימיזציה ופתרונות ביג דאטה.",
     color: "text-pink-400"
   },
   {
     icon: Globe,
-    title: "Web Development",
-    description: "Modern websites, e-commerce platforms, and web applications.",
+    title: "פיתוח אתרים",
+    description: "אתרים מודרניים, פלטפורמות מסחר אלקטרוני ואפליקציות ווב.",
     color: "text-indigo-400"
   },
   {
     icon: Zap,
-    title: "Digital Consulting",
-    description: "Strategic digital transformation and technology consulting services.",
+    title: "ייעוץ דיגיטלי",
+    description: "טרנספורמציה דיגיטלית אסטרטגית ושירותי ייעוץ טכנולוגי.",
     color: "text-emerald-400"
   }
 ];
 
 export function ServiceCards() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6" dir="rtl">
       {services.map((service, index) => {
         const Icon = service.icon;
         return (

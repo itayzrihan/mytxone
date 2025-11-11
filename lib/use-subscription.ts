@@ -7,6 +7,7 @@ interface UseSubscriptionResult {
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  user: any; // User object with email and other fields
 }
 
 export function useSubscription(): UseSubscriptionResult {
@@ -14,6 +15,7 @@ export function useSubscription(): UseSubscriptionResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -33,6 +35,7 @@ export function useSubscription(): UseSubscriptionResult {
           // User not authenticated
           setIsAuthenticated(false);
           setSubscription('free');
+          setUser(null);
           return;
         }
 
@@ -41,10 +44,12 @@ export function useSubscription(): UseSubscriptionResult {
           // User not authenticated
           setIsAuthenticated(false);
           setSubscription('free');
+          setUser(null);
           return;
         }
 
         setIsAuthenticated(true);
+        setUser(authData.user); // Store the full user object including email
 
         // Now check subscription status from database
         const subscriptionResponse = await fetch('/api/user/subscription', {
@@ -79,6 +84,7 @@ export function useSubscription(): UseSubscriptionResult {
         // Default to free on error
         setSubscription('free');
         setIsAuthenticated(false);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -91,7 +97,8 @@ export function useSubscription(): UseSubscriptionResult {
     subscription,
     isLoading,
     error,
-    isAuthenticated
+    isAuthenticated,
+    user
   };
 }
 

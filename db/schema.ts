@@ -18,17 +18,13 @@ export const user = pgTable("User", {
   email: varchar("email", { length: 64 }).notNull(),
   password: varchar("password", { length: 64 }),
   role: varchar("role", { length: 20 }).notNull().default("user"), // 'user', 'admin'
-  subscription: varchar("subscription", { length: 20 }).notNull().default("free"), // 'free', 'basic', 'pro'
+  subscription: varchar("subscription", { length: 20 }).notNull().default("free"), // 'free', 'basic', 'pro' (cached from PayPal)
+  paypalSubscriptionId: varchar("paypal_subscription_id", { length: 255 }), // PayPal subscription ID (e.g., I-WTSU02NUPY7M)
   // Profile information
   fullName: varchar("full_name", { length: 255 }),
   phoneNumber: varchar("phone_number", { length: 20 }),
   notMytxEmail: varchar("not_mytx_email", { length: 255 }), // User's external email
   profileImageUrl: text("profile_image_url"), // URL to user's profile image
-  // 2FA / TOTP fields
-  totpSecret: text("totp_secret"), // Encrypted TOTP secret
-  totpEnabled: boolean("totp_enabled").notNull().default(false), // Is 2FA enabled
-  totpSeedId: varchar("totp_seed_id", { length: 255 }), // Reference to seed ID from Legitate
-  totpSetupCompleted: timestamp("totp_setup_completed"), // When 2FA was completed
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -50,6 +46,17 @@ export const userRelations = relations(user, ({ many }) => ({
   quoteTemplates: many(quoteTemplates),
   meetings: many(meeting),
   meetingAttendees: many(meetingAttendee),
+  communities: many(community),
+  communityMemberships: many(communityMember),
+  communityPosts: many(communityPost),
+  communityComments: many(communityComment),
+  communityPostReactions: many(communityPostReaction),
+  communityCommentReactions: many(communityCommentReaction),
+  communityCourses: many(communityCourse),
+  communityCourseEnrollments: many(communityCourseEnrollment),
+  communityEventsHosted: many(communityEvent),
+  communityEventAttendances: many(communityEventAttendee),
+  communityLeaderboardEntries: many(communityLeaderboard),
 }));
 
 export const chat = pgTable("Chat", {
@@ -495,36 +502,6 @@ export const quoteResponsesRelations = relations(quoteResponses, ({ one }) => ({
   }),
 }));
 
-// Registration tokens for 2FA setup tracking
-export const registrationToken = pgTable("RegistrationToken", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  token: varchar("token", { length: 255 }).notNull().unique(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  email: varchar("email", { length: 255 }).notNull(),
-  serviceName: varchar("service_name", { length: 255 }).notNull(),
-  callbackUrl: text("callback_url"),
-  status: varchar("status", { length: 50 }).notNull().default("pending"), // 'pending', 'completed', 'rejected', 'expired'
-  seedId: varchar("seed_id", { length: 255 }),
-  totpSeed: text("totp_seed"), // Encrypted TOTP secret
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  expiresAt: timestamp("expires_at").notNull(),
-  completedAt: timestamp("completed_at"),
-});
-
-export type RegistrationToken = InferSelectModel<typeof registrationToken>;
-
-export const registrationTokenRelations = relations(
-  registrationToken,
-  ({ one }) => ({
-    user: one(user, {
-      fields: [registrationToken.userId],
-      references: [user.id],
-    }),
-  })
-);
-
 // Meeting System Tables
 export const meeting = pgTable("Meeting", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
@@ -588,6 +565,382 @@ export const meetingAttendeeRelations = relations(meetingAttendee, ({ one }) => 
   }),
   user: one(user, {
     fields: [meetingAttendee.userId],
+    references: [user.id],
+  }),
+}));
+
+// Community System Tables
+export const community = pgTable("Community", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  communityType: text("community_type").notNull(), // "learning", "networking", "support", "hobby", etc.
+  category: text("category").notNull().default("business"), // "business", "technology", "health", etc.
+  imageUrl: text("image_url"), // Cover image for the community
+  memberCount: integer("member_count").notNull().default(0),
+  isPublic: boolean("is_public").notNull().default(true),
+  requiresApproval: boolean("requires_approval").notNull().default(false),
+  status: text("status").notNull().default("active"), // "active", "inactive", "archived"
+  tags: json("tags"), // Array of strings for categorization
+  createdAt: timestamp("created_at")
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type Community = InferSelectModel<typeof community>;
+
+export const communityRelations = relations(community, ({ one, many }) => ({
+  user: one(user, {
+    fields: [community.userId],
+    references: [user.id],
+  }),
+  members: many(communityMember),
+  posts: many(communityPost),
+  courses: many(communityCourse),
+  events: many(communityEvent),
+  leaderboard: many(communityLeaderboard),
+}));
+
+export const communityMember = pgTable("CommunityMember", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  communityId: uuid("community_id")
+    .notNull()
+    .references(() => community.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .references(() => user.id, { onDelete: "cascade" }), // null for guest members
+  guestName: text("guest_name"), // For non-registered users
+  guestEmail: text("guest_email"), // For non-registered users
+  membershipStatus: text("membership_status").notNull().default("member"), // "member", "approved", "rejected", "left"
+  role: text("role").notNull().default("member"), // "member", "moderator", "admin"
+  joinedAt: timestamp("joined_at")
+    .notNull()
+    .defaultNow(),
+});
+
+export type CommunityMember = InferSelectModel<typeof communityMember>;
+
+export const communityMemberRelations = relations(communityMember, ({ one }) => ({
+  community: one(community, {
+    fields: [communityMember.communityId],
+    references: [community.id],
+  }),
+  user: one(user, {
+    fields: [communityMember.userId],
+    references: [user.id],
+  }),
+}));
+
+// Community Posts System
+export const communityPost = pgTable("CommunityPost", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  communityId: uuid("community_id")
+    .notNull()
+    .references(() => community.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  mediaUrls: json("media_urls"), // Array of media URLs (images, videos)
+  mediaTypes: json("media_types"), // Array of media types (image, video)
+  likeCount: integer("like_count").notNull().default(0),
+  commentCount: integer("comment_count").notNull().default(0),
+  shareCount: integer("share_count").notNull().default(0),
+  isPinned: boolean("is_pinned").notNull().default(false),
+  isEdited: boolean("is_edited").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type CommunityPost = InferSelectModel<typeof communityPost>;
+
+export const communityPostRelations = relations(communityPost, ({ one, many }) => ({
+  community: one(community, {
+    fields: [communityPost.communityId],
+    references: [community.id],
+  }),
+  user: one(user, {
+    fields: [communityPost.userId],
+    references: [user.id],
+  }),
+  comments: many(communityComment),
+  reactions: many(communityPostReaction),
+}));
+
+// Community Post Comments
+export const communityComment = pgTable("CommunityComment", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  postId: uuid("post_id")
+    .notNull()
+    .references(() => communityPost.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  likeCount: integer("like_count").notNull().default(0),
+  parentCommentId: uuid("parent_comment_id"), // For nested replies
+  isEdited: boolean("is_edited").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type CommunityComment = InferSelectModel<typeof communityComment>;
+
+export const communityCommentRelations = relations(communityComment, ({ one, many }) => ({
+  post: one(communityPost, {
+    fields: [communityComment.postId],
+    references: [communityPost.id],
+  }),
+  user: one(user, {
+    fields: [communityComment.userId],
+    references: [user.id],
+  }),
+  parentComment: one(communityComment, {
+    fields: [communityComment.parentCommentId],
+    references: [communityComment.id],
+  }),
+  replies: many(communityComment),
+  reactions: many(communityCommentReaction),
+}));
+
+// Post Reactions
+export const communityPostReaction = pgTable("CommunityPostReaction", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  postId: uuid("post_id")
+    .notNull()
+    .references(() => communityPost.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  reactionType: text("reaction_type").notNull(), // "like", "love", "celebrate", etc.
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type CommunityPostReaction = InferSelectModel<typeof communityPostReaction>;
+
+export const communityPostReactionRelations = relations(communityPostReaction, ({ one }) => ({
+  post: one(communityPost, {
+    fields: [communityPostReaction.postId],
+    references: [communityPost.id],
+  }),
+  user: one(user, {
+    fields: [communityPostReaction.userId],
+    references: [user.id],
+  }),
+}));
+
+// Comment Reactions
+export const communityCommentReaction = pgTable("CommunityCommentReaction", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  commentId: uuid("comment_id")
+    .notNull()
+    .references(() => communityComment.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  reactionType: text("reaction_type").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type CommunityCommentReaction = InferSelectModel<typeof communityCommentReaction>;
+
+export const communityCommentReactionRelations = relations(communityCommentReaction, ({ one }) => ({
+  comment: one(communityComment, {
+    fields: [communityCommentReaction.commentId],
+    references: [communityComment.id],
+  }),
+  user: one(user, {
+    fields: [communityCommentReaction.userId],
+    references: [user.id],
+  }),
+}));
+
+// Community Courses
+export const communityCourse = pgTable("CommunityCourse", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  communityId: uuid("community_id")
+    .notNull()
+    .references(() => community.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  instructorId: uuid("instructor_id")
+    .notNull()
+    .references(() => user.id),
+  thumbnailUrl: text("thumbnail_url"),
+  duration: integer("duration"), // in minutes
+  level: text("level").notNull().default("beginner"), // "beginner", "intermediate", "advanced"
+  price: decimal("price", { precision: 10, scale: 2 }),
+  enrollmentCount: integer("enrollment_count").notNull().default(0),
+  isPublished: boolean("is_published").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type CommunityCourse = InferSelectModel<typeof communityCourse>;
+
+export const communityCourseRelations = relations(communityCourse, ({ one, many }) => ({
+  community: one(community, {
+    fields: [communityCourse.communityId],
+    references: [community.id],
+  }),
+  instructor: one(user, {
+    fields: [communityCourse.instructorId],
+    references: [user.id],
+  }),
+  lessons: many(communityCourseLesson),
+  enrollments: many(communityCourseEnrollment),
+}));
+
+// Course Lessons
+export const communityCourseLesson = pgTable("CommunityCourseLesson", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  courseId: uuid("course_id")
+    .notNull()
+    .references(() => communityCourse.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  content: text("content"),
+  videoUrl: text("video_url"),
+  order: integer("order").notNull(),
+  duration: integer("duration"), // in minutes
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type CommunityCourseLesson = InferSelectModel<typeof communityCourseLesson>;
+
+export const communityCourseLessonRelations = relations(communityCourseLesson, ({ one }) => ({
+  course: one(communityCourse, {
+    fields: [communityCourseLesson.courseId],
+    references: [communityCourse.id],
+  }),
+}));
+
+// Course Enrollments
+export const communityCourseEnrollment = pgTable("CommunityCourseEnrollment", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  courseId: uuid("course_id")
+    .notNull()
+    .references(() => communityCourse.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  progress: integer("progress").notNull().default(0), // percentage
+  completedLessons: json("completed_lessons"), // Array of lesson IDs
+  enrolledAt: timestamp("enrolled_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export type CommunityCourseEnrollment = InferSelectModel<typeof communityCourseEnrollment>;
+
+export const communityCourseEnrollmentRelations = relations(communityCourseEnrollment, ({ one }) => ({
+  course: one(communityCourse, {
+    fields: [communityCourseEnrollment.courseId],
+    references: [communityCourse.id],
+  }),
+  user: one(user, {
+    fields: [communityCourseEnrollment.userId],
+    references: [user.id],
+  }),
+}));
+
+// Community Events/Calendar
+export const communityEvent = pgTable("CommunityEvent", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  communityId: uuid("community_id")
+    .notNull()
+    .references(() => community.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  hostId: uuid("host_id")
+    .notNull()
+    .references(() => user.id),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  location: text("location"), // physical or virtual
+  meetingLink: text("meeting_link"), // for virtual events
+  maxAttendees: integer("max_attendees"),
+  attendeeCount: integer("attendee_count").notNull().default(0),
+  isPublic: boolean("is_public").notNull().default(true),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type CommunityEvent = InferSelectModel<typeof communityEvent>;
+
+export const communityEventRelations = relations(communityEvent, ({ one, many }) => ({
+  community: one(community, {
+    fields: [communityEvent.communityId],
+    references: [community.id],
+  }),
+  host: one(user, {
+    fields: [communityEvent.hostId],
+    references: [user.id],
+  }),
+  attendees: many(communityEventAttendee),
+}));
+
+// Event Attendees
+export const communityEventAttendee = pgTable("CommunityEventAttendee", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  eventId: uuid("event_id")
+    .notNull()
+    .references(() => communityEvent.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("going"), // "going", "maybe", "not_going"
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type CommunityEventAttendee = InferSelectModel<typeof communityEventAttendee>;
+
+export const communityEventAttendeeRelations = relations(communityEventAttendee, ({ one }) => ({
+  event: one(communityEvent, {
+    fields: [communityEventAttendee.eventId],
+    references: [communityEvent.id],
+  }),
+  user: one(user, {
+    fields: [communityEventAttendee.userId],
+    references: [user.id],
+  }),
+}));
+
+// Community Leaderboard
+export const communityLeaderboard = pgTable("CommunityLeaderboard", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  communityId: uuid("community_id")
+    .notNull()
+    .references(() => community.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  points: integer("points").notNull().default(0),
+  postsCount: integer("posts_count").notNull().default(0),
+  commentsCount: integer("comments_count").notNull().default(0),
+  reactionsReceived: integer("reactions_received").notNull().default(0),
+  coursesCompleted: integer("courses_completed").notNull().default(0),
+  eventsAttended: integer("events_attended").notNull().default(0),
+  rank: integer("rank"),
+  badges: json("badges"), // Array of badge objects
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type CommunityLeaderboard = InferSelectModel<typeof communityLeaderboard>;
+
+export const communityLeaderboardRelations = relations(communityLeaderboard, ({ one }) => ({
+  community: one(community, {
+    fields: [communityLeaderboard.communityId],
+    references: [community.id],
+  }),
+  user: one(user, {
+    fields: [communityLeaderboard.userId],
     references: [user.id],
   }),
 }));

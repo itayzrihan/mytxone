@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { getDb } from "@/db/queries";
-import { user, meeting } from "@/db/schema";
+import { user, meeting, community } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const session = await auth();
 
     if (!session?.user?.email) {
-      return NextResponse.json({ plan: "free", meetingCount: 0 }, { status: 200 });
+      return NextResponse.json({ plan: "free", meetingCount: 0, communityCount: 0 }, { status: 200 });
     }
 
     const db = getDb();
@@ -26,11 +26,13 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (!userData) {
-      return NextResponse.json({ plan: "free", meetingCount: 0 }, { status: 200 });
+      return NextResponse.json({ plan: "free", meetingCount: 0, communityCount: 0 }, { status: 200 });
     }
 
     // Count ALL user's meetings (regardless of whether they've passed)
     let meetingCount = 0;
+    let communityCount = 0;
+    
     try {
       // Get all meetings created by this user (for usage limit counting)
       const meetingCountResult = await db
@@ -44,12 +46,25 @@ export async function GET(request: NextRequest) {
       // Continue without meeting count
     }
 
+    try {
+      // Get all communities created by this user (for usage limit counting)
+      const communityCountResult = await db
+        .select()
+        .from(community)
+        .where(eq(community.userId, userData.id));
+      
+      communityCount = communityCountResult.length;
+    } catch (communityError) {
+      console.error('Error fetching community count:', communityError instanceof Error ? communityError.message : communityError);
+      // Continue without community count
+    }
+
     // Return the user's plan and meeting count
     const plan = userData.subscription || "free";
-    return NextResponse.json({ plan, meetingCount }, { status: 200 });
+    return NextResponse.json({ plan, meetingCount, communityCount }, { status: 200 });
   } catch (error) {
     console.error("Error fetching user plan:", error);
-    return NextResponse.json({ plan: "free", meetingCount: 0 }, { status: 200 });
+    return NextResponse.json({ plan: "free", meetingCount: 0, communityCount: 0 }, { status: 200 });
   }
 }
 

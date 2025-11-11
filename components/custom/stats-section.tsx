@@ -1,22 +1,22 @@
 export function StatsSection() {
   const stats = [
-    { number: "500+", label: "Projects Completed", icon: "🚀" },
-    { number: "50+", label: "Service Categories", icon: "🎯" },
-    { number: "24/7", label: "Support Available", icon: "🛡️" },
-    { number: "100%", label: "Client Satisfaction", icon: "⭐" },
-    { number: "15+", label: "Years Experience", icon: "🏆" },
-    { number: "Global", label: "Reach Worldwide", icon: "🌍" }
+    { number: "+500", label: "פרויקטים שהושלמו", icon: "🚀" },
+    { number: "+50", label: "קטגוריות שירות", icon: "🎯" },
+    { number: "24/7", label: "תמיכה זמינה", icon: "🛡️" },
+    { number: "100%", label: "שביעות רצון לקוחות", icon: "⭐" },
+    { number: "+10", label: "שנות ניסיון", icon: "🏆" },
+    { number: "עולמי", label: "טווח הגעה גלובלי", icon: "🌍" }
   ];
 
   return (
-    <div className="py-16 bg-gradient-to-r from-cyan-500/5 to-purple-500/5">
+    <div className="py-16 bg-gradient-to-r from-cyan-500/5 to-purple-500/5" dir="rtl">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Trusted by Industry Leaders
+            מהימנים על ידי מובילי התעשייה
           </h2>
           <p className="text-zinc-300">
-            Our track record speaks for itself
+            הרקורד שלנו מדבר בעד עצמו
           </p>
         </div>
 

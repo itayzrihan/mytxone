@@ -70,10 +70,10 @@ export async function createUser(
 export async function updateUser(
   userId: string,
   updates: Partial<{
-    totpSecret: string | null;
-    totpEnabled: boolean;
-    totpSeedId: string | null;
-    totpSetupCompleted: Date | null;
+    fullName?: string;
+    phoneNumber?: string;
+    profileImageUrl?: string;
+    subscription?: 'free' | 'basic' | 'pro';
   }>
 ) {
   try {
@@ -938,10 +938,6 @@ export async function getAllUsers(): Promise<Array<SafeUser>> {
       profileImageUrl: user.profileImageUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      totpSecret: user.totpSecret,
-      totpEnabled: user.totpEnabled,
-      totpSeedId: user.totpSeedId,
-      totpSetupCompleted: user.totpSetupCompleted,
       // Exclude password field for security
     }).from(user).orderBy(desc(user.createdAt));
   } catch (error) {
@@ -963,10 +959,6 @@ export async function getUserById(userId: string): Promise<SafeUser | null> {
       profileImageUrl: user.profileImageUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      totpSecret: user.totpSecret,
-      totpEnabled: user.totpEnabled,
-      totpSeedId: user.totpSeedId,
-      totpSetupCompleted: user.totpSetupCompleted,
       // Exclude password field for security
     }).from(user).where(eq(user.id, userId));
     return users[0] || null;
@@ -995,10 +987,6 @@ export async function updateUserRole(userId: string, role: 'user' | 'admin'): Pr
         profileImageUrl: user.profileImageUrl,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
-        totpSecret: user.totpSecret,
-        totpEnabled: user.totpEnabled,
-        totpSeedId: user.totpSeedId,
-        totpSetupCompleted: user.totpSetupCompleted,
       });
     return updatedUser || null;
   } catch (error) {
@@ -1026,10 +1014,6 @@ export async function updateUserSubscription(userId: string, subscription: 'free
         profileImageUrl: user.profileImageUrl,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
-        totpSecret: user.totpSecret,
-        totpEnabled: user.totpEnabled,
-        totpSeedId: user.totpSeedId,
-        totpSetupCompleted: user.totpSetupCompleted,
       });
     return updatedUser || null;
   } catch (error) {

@@ -86,10 +86,20 @@ export function GlassNav() {
     return pathname.startsWith(path);
   };
 
+  // Hide GlassNav on specific routes
+  const shouldHideGlassNav = pathname.includes("/teleprompter") || 
+                             pathname.includes("/create-meeting") || 
+                             pathname.includes("/create-community") || 
+                             pathname.includes("/resume") ||
+                             pathname.includes("/caricature") ||
+                             pathname.includes("/odh") ||
+                             pathname.includes("/hypno") ||
+                             (pathname.startsWith("/communities/") && pathname !== "/communities");
+
   return (
     <>
       {/* Only render after client-side hydration to prevent flash */}
-      {isClient && shouldShowAdminElements && viewMode === "admin" && (
+      {isClient && shouldShowAdminElements && viewMode === "admin" && !shouldHideGlassNav && (
         <>
           {/* Bottom Navigation Bar */}
           <nav className="pro-glass-nav">

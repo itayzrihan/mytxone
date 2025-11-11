@@ -7,40 +7,40 @@ import Image from "next/image";
 const products = [
   {
     id: 1,
-    name: "Web Development",
-    category: "Software",
-    price: "Custom",
+    name: "פיתוח אתרים",
+    category: "תוכנה",
+    price: "מותאם אישית",
     specs: "React • Next.js • Full Stack",
   },
   {
     id: 2,
-    name: "Mobile Apps",
-    category: "Development",
-    price: "Custom",
-    specs: "iOS • Android • Cross-Platform",
+    name: "אפליקציות מובייל",
+    category: "פיתוח",
+    price: "מותאם אישית",
+    specs: "iOS • Android • חוצה פלטפורמות",
   },
   {
     id: 3,
-    name: "Cloud Solutions",
-    category: "Infrastructure",
-    price: "Custom",
-    specs: "AWS • Azure • Scalable",
+    name: "פתרונות ענן",
+    category: "תשתית",
+    price: "מותאם אישית",
+    specs: "AWS • Azure • ניתן להרחבה",
   },
 ];
 
 const FeaturedProducts = () => {
   return (
-    <section className="py-24 px-6 md:px-8 lg:px-12">
+    <section className="py-24 px-6 md:px-8 lg:px-12" dir="rtl">
       <div className="container mx-auto">
         <div className="text-center mb-16 animate-fade-in">
           <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
-            Digital Products
+            מוצרים דיגיטליים
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Our Digital Products
+            המוצרים הדיגיטליים שלנו
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Cutting-edge solutions designed to transform your digital presence
+            פתרונות חדשניים שתוכננו לשנות את הנוכחות הדיגיטלית שלכם
           </p>
         </div>
 
@@ -64,13 +64,13 @@ const FeaturedProducts = () => {
                   size="sm"
                   className="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0"
                 >
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Details
+                  <Eye className="ml-2 h-4 w-4" />
+                  צפו בפרטים
                 </Button>
               </div>
               <div className="p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
+                <div className="flex items-start justify-between mb-3 flex-row-reverse">
+                  <div className="text-right">
                     <h3 className="text-2xl font-bold mb-1">{product.name}</h3>
                     <p className="text-sm text-muted-foreground">{product.category}</p>
                   </div>
@@ -78,16 +78,18 @@ const FeaturedProducts = () => {
                     {product.price}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{product.specs}</p>
+                <p className="text-sm text-muted-foreground text-right">{product.specs}</p>
               </div>
             </Card>
           ))}
         </div>
 
         <div className="text-center mt-12 animate-fade-in">
-          <Button variant="default" size="lg">
-            View Full Collection
-          </Button>
+          <a href="#tech-stack">
+            <Button variant="default" size="lg">
+              צפו באוסף המלא
+            </Button>
+          </a>
         </div>
       </div>
     </section>

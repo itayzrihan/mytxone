@@ -3,52 +3,52 @@ import { ArrowRight, Search, Lightbulb, Code, Rocket, CheckCircle } from "lucide
 const steps = [
   {
     icon: Search,
-    title: "Discovery & Planning",
-    description: "We analyze your requirements, goals, and challenges to create a comprehensive strategy.",
+    title: "גילוי ותכנון",
+    description: "אנו מנתחים את הדרישות, המטרות והאתגרים שלכם כדי ליצור אסטרטגיה מקיפה.",
     step: "01"
   },
   {
     icon: Lightbulb,
-    title: "Design & Strategy",
-    description: "Our experts design innovative solutions and develop detailed project roadmaps.",
+    title: "עיצוב ואסטרטגיה",
+    description: "המומחים שלנו מעצבים פתרונות חדשניים ומפתחים מפות דרכים מפורטות לפרויקט.",
     step: "02"
   },
   {
     icon: Code,
-    title: "Development & Implementation",
-    description: "We build your solution using cutting-edge technologies and best practices.",
+    title: "פיתוח והטמעה",
+    description: "אנו בונים את הפתרון שלכם תוך שימוש בטכנולוגיות חדשניות ושיטות עבודה מומלצות.",
     step: "03"
   },
   {
     icon: Rocket,
-    title: "Testing & Deployment",
-    description: "Rigorous testing ensures quality before seamless deployment to production.",
+    title: "בדיקות והטמעה",
+    description: "בדיקות קפדניות מבטיחות איכות לפני הטמעה חלקה לסביבת הייצור.",
     step: "04"
   },
   {
     icon: CheckCircle,
-    title: "Support & Optimization",
-    description: "Ongoing support, monitoring, and continuous optimization for peak performance.",
+    title: "תמיכה ואופטימיזציה",
+    description: "תמיכה שוטפת, מעקב ואופטימיזציה מתמשכת לביצועים מיטביים.",
     step: "05"
   }
 ];
 
 export function ProcessSection() {
   return (
-    <div className="py-16">
+    <div className="py-16" dir="rtl">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Our Proven Process
+            התהליך המוכח שלנו
           </h2>
           <p className="text-zinc-300 max-w-2xl mx-auto">
-            A systematic approach that delivers exceptional results every time
+            גישה שיטתית שמספקת תוצאות יוצאות דופן בכל פעם
           </p>
         </div>
 
         <div className="relative">
           {/* Connection line */}
-          <div className="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-purple-500/20"></div>
+          <div className="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-l from-cyan-500/20 via-blue-500/20 to-purple-500/20"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {steps.map((step, index) => {
@@ -60,7 +60,7 @@ export function ProcessSection() {
                       <div className="inline-flex items-center justify-center w-12 h-12 bg-cyan-500/20 border border-cyan-500/30 rounded-full mb-4">
                         <Icon className="w-6 h-6 text-cyan-400" />
                       </div>
-                      <div className="text-sm font-bold text-cyan-400 mb-2">STEP {step.step}</div>
+                      <div className="text-sm font-bold text-cyan-400 mb-2">שלב {step.step}</div>
                     </div>
                     <h3 className="text-lg font-semibold text-white mb-3 text-center">
                       {step.title}
@@ -70,10 +70,10 @@ export function ProcessSection() {
                     </p>
                   </div>
 
-                  {/* Arrow for desktop */}
+                  {/* Arrow for desktop - reversed for RTL */}
                   {index < steps.length - 1 && (
-                    <div className="hidden lg:block absolute top-24 -right-4 z-10">
-                      <ArrowRight className="w-8 h-8 text-cyan-400" />
+                    <div className="hidden lg:block absolute top-24 -left-4 z-10">
+                      <ArrowRight className="w-8 h-8 text-cyan-400 rotate-180" />
                     </div>
                   )}
                 </div>

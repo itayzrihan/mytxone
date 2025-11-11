@@ -8,6 +8,7 @@ type UserPlan = "free" | "basic" | "pro" | null;
 interface UserPlanContextType {
   userPlan: UserPlan;
   meetingCount: number;
+  communityCount: number;
   isLoading: boolean;
   refreshPlan: () => Promise<void>;
 }
@@ -18,6 +19,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const [userPlan, setUserPlan] = useState<UserPlan>(null);
   const [meetingCount, setMeetingCount] = useState<number>(0);
+  const [communityCount, setCommunityCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const fetchAbortRef = useRef<AbortController | null>(null);
 
@@ -30,7 +32,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       
       fetchAbortRef.current = new AbortController();
       const timestamp = new Date().getTime();
-      const url = `/api/user/plan?t=${timestamp}`;
+      const url = `/api/paypal/subscription/check?t=${timestamp}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -45,11 +47,13 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const data = await response.json();
-        setUserPlan(data.plan || "free");
+        setUserPlan(data.subscription || "free");
         setMeetingCount(data.meetingCount || 0);
+        setCommunityCount(data.communityCount || 0);
       } else {
         setUserPlan("free");
         setMeetingCount(0);
+        setCommunityCount(0);
       }
     } catch (error) {
       // Don't log abort errors
@@ -58,6 +62,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       }
       setUserPlan("free");
       setMeetingCount(0);
+      setCommunityCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +81,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
     } else if (status === "unauthenticated") {
       setUserPlan("free");
       setMeetingCount(0);
+      setCommunityCount(0);
       setIsLoading(false);
     }
   }, [status, session?.user?.email, fetchUserPlan]);
@@ -86,7 +92,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
   }, [fetchUserPlan]);
 
   return (
-    <UserPlanContext.Provider value={{ userPlan, meetingCount, isLoading, refreshPlan }}>
+    <UserPlanContext.Provider value={{ userPlan, meetingCount, communityCount, isLoading, refreshPlan }}>
       {children}
     </UserPlanContext.Provider>
   );

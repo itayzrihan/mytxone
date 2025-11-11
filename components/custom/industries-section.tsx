@@ -1,28 +1,28 @@
 const industries = [
-  { name: "Technology", icon: "💻", description: "SaaS, FinTech, HealthTech" },
-  { name: "E-commerce", icon: "🛒", description: "Retail, Marketplace, B2B" },
-  { name: "Healthcare", icon: "🏥", description: "Medical, Telehealth, Biotech" },
-  { name: "Finance", icon: "💰", description: "Banking, Insurance, Trading" },
-  { name: "Education", icon: "🎓", description: "EdTech, Learning Platforms" },
-  { name: "Manufacturing", icon: "🏭", description: "Industry 4.0, IoT, Automation" },
-  { name: "Real Estate", icon: "🏢", description: "PropTech, Smart Buildings" },
-  { name: "Entertainment", icon: "🎬", description: "Gaming, Media, Streaming" },
-  { name: "Logistics", icon: "🚚", description: "Supply Chain, Transportation" },
-  { name: "Agriculture", icon: "🌾", description: "AgTech, Smart Farming" },
-  { name: "Energy", icon: "⚡", description: "Renewables, Smart Grid" },
-  { name: "Government", icon: "🏛️", description: "Public Sector, Civic Tech" }
+  { name: "טכנולוגיה", icon: "💻", description: "SaaS, פינטק, הלת'טק" },
+  { name: "מסחר אלקטרוני", icon: "🛒", description: "קמעונאות, שוק, B2B" },
+  { name: "בריאות", icon: "🏥", description: "רפואה, טלרפואה, ביוטכנולוגיה" },
+  { name: "פיננסים", icon: "💰", description: "בנקאות, ביטוח, מסחר" },
+  { name: "חינוך", icon: "🎓", description: "אדטק, פלטפורמות למידה" },
+  { name: "ייצור", icon: "🏭", description: "תעשייה 4.0, IoT, אוטומציה" },
+  { name: "נדל״ן", icon: "🏢", description: "פרופטק, בניינים חכמים" },
+  { name: "בידור", icon: "🎬", description: "גיימינג, מדיה, סטרימינג" },
+  { name: "לוגיסטיקה", icon: "🚚", description: "שרשרת אספקה, תחבורה" },
+  { name: "חקלאות", icon: "🌾", description: "אגרוטכנולוגיה, חקלאות חכמה" },
+  { name: "אנרגיה", icon: "⚡", description: "אנרגיות מתחדשות, רשת חכמה" },
+  { name: "ממשלה", icon: "🏛️", description: "מגזר ציבורי, סיביק-טק" }
 ];
 
 export function IndustriesSection() {
   return (
-    <div className="py-16 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
+    <div className="py-16 bg-gradient-to-br from-blue-500/5 to-cyan-500/5" dir="rtl">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Industries We Serve
+            תעשיות שאנו משרתים
           </h2>
           <p className="text-zinc-300 max-w-2xl mx-auto">
-            Comprehensive digital solutions across all major industries
+            פתרונות דיגיטליים מקיפים בכל התעשיות העיקריות
           </p>
         </div>
 
@@ -42,7 +42,7 @@ export function IndustriesSection() {
 
         <div className="text-center mt-12">
           <p className="text-zinc-400">
-            Don&apos;t see your industry? We work with businesses of all types and sizes.
+            לא רואים את התעשייה שלכם? אנו עובדים עם עסקים מכל הסוגים והגדלים.
           </p>
         </div>
       </div>

@@ -43,22 +43,22 @@ const technologies = {
 
 export function TechStackSection() {
   const categories = [
-    { key: "frontend", title: "Frontend", data: technologies.frontend },
-    { key: "backend", title: "Backend", data: technologies.backend },
-    { key: "cloud", title: "Cloud & DevOps", data: technologies.cloud },
-    { key: "databases", title: "Databases", data: technologies.databases },
-    { key: "ai", title: "AI & ML", data: technologies.ai }
+    { key: "frontend", title: "פרונט-אנד", data: technologies.frontend },
+    { key: "backend", title: "בק-אנד", data: technologies.backend },
+    { key: "cloud", title: "ענן ו-DevOps", data: technologies.cloud },
+    { key: "databases", title: "מסדי נתונים", data: technologies.databases },
+    { key: "ai", title: "AI ולמידת מכונה", data: technologies.ai }
   ];
 
   return (
-    <div className="py-16">
+    <div className="py-16" dir="rtl" id="tech-stack">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Technology Stack
+            ערימת הטכנולוגיה
           </h2>
           <p className="text-zinc-300 max-w-2xl mx-auto">
-            We leverage the latest technologies and frameworks to build robust, scalable solutions
+            אנו ממנפים את הטכנולוגיות והמסגרות העדכניות ביותר כדי לבנות פתרונות חזקים וניתנים להרחבה
           </p>
         </div>
 

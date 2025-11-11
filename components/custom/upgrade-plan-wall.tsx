@@ -5,9 +5,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/custom/auth-context";
 import Link from "next/link";
 import { CreateMeetingDialog } from "@/components/custom/create-meeting-dialog";
+import { CreateCommunityDialog } from "@/components/custom/create-community-dialog";
 import { MeetingLimitModal } from "@/components/custom/meeting-limit-modal";
+import { CommunityLimitModal } from "@/components/custom/community-limit-modal";
 import { useRouter } from "next/navigation";
 import { useUserPlan } from "@/components/custom/user-plan-context";
+import { getLimitForPlan, isFreePlan, isPaidPlan, getPricingGridClasses } from "@/lib/plan-utils";
 
 // Sample thumbnails for the carousel
 const carouselThumbnails = [
@@ -64,9 +67,11 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { openAuthModal, isAuthModalOpen } = useAuth();
   const [showCreateMeetingDialog, setShowCreateMeetingDialog] = useState(false);
+  const [showCreateCommunityDialog, setShowCreateCommunityDialog] = useState(false);
   const [showMeetingLimitModal, setShowMeetingLimitModal] = useState(false);
+  const [showCommunityLimitModal, setShowCommunityLimitModal] = useState(false);
   const router = useRouter();
-  const { userPlan, meetingCount, isLoading: isPlanLoading, refreshPlan } = useUserPlan();
+  const { userPlan, meetingCount, communityCount, isLoading: isPlanLoading, refreshPlan } = useUserPlan();
   const [formData, setFormData] = useState({
     communityName: '',
     cardNumber: '',
@@ -84,20 +89,29 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
       return;
     }
 
-    // For meeting type, check if user has reached their plan limit
-    if (type === 'meeting' && userPlan) {
-      // Determine the meeting limit based on user's plan
-      const meetingLimit = userPlan === 'free' ? 1 : userPlan === 'basic' ? 3 : Infinity;
+    if (type === 'meeting') {
+      // Check if user has reached their meeting limit
+      const meetingLimit = getLimitForPlan(userPlan);
       
-      // If user has reached their limit, show the limit modal
       if (meetingCount >= meetingLimit) {
         setShowMeetingLimitModal(true);
         return;
       }
+      
+      // Open create meeting dialog
+      setShowCreateMeetingDialog(true);
+    } else if (type === 'community') {
+      // Check if user has reached their community limit
+      const communityLimit = getLimitForPlan(userPlan);
+      
+      if (communityCount >= communityLimit) {
+        setShowCommunityLimitModal(true);
+        return;
+      }
+      
+      // Open create community dialog
+      setShowCreateCommunityDialog(true);
     }
-
-    // If under limit or not applicable, open the create meeting dialog
-    setShowCreateMeetingDialog(true);
   };
 
   // Fetch user's current meeting count
@@ -130,7 +144,7 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
     } else {
       setShowPricing(true);
       // If user is basic/pro, default to their current plan or next tier
-      if (userPlan === 'basic' || userPlan === 'pro') {
+      if (isPaidPlan(userPlan)) {
         setSelectedPlan('basic');
       }
     }
@@ -209,71 +223,124 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
   // PayPal Integration Effect
   useEffect(() => {
     if (showModal && typeof window !== 'undefined') {
-      const script = document.createElement('script');
-      script.src = modalPlan === 'basic' 
-        ? "https://www.paypal.com/sdk/js?client-id=ARMvBbzMghnZIpuJv0MUfhxI2cAMK8-Bhk-DIganTEWt1qJRbFCPuQx6VKZcKahdjOooF9NOz7KTL5vy&vault=true&intent=subscription"
-        : "https://www.paypal.com/sdk/js?client-id=AfpHnFO-NEeZ8gF4IaICl8rjlpEw7WNeUKkPcpMvbQ1V3cgjzJjAsO-V2JA4XLRiUiJE5Ch0eLClAPhv&vault=true&intent=subscription";
-      
-      script.onload = () => {
-        const containerId = modalPlan === 'basic' 
-          ? 'paypal-button-container-P-5LP69495C05013828NDDAIUY'
-          : 'paypal-button-container-P-59286886LU147733XNDDAKDQ';
+      // Add a small delay to ensure state has updated
+      const timeoutId = setTimeout(() => {
+        const script = document.createElement('script');
         
-        const planId = modalPlan === 'basic' 
-          ? 'P-5LP69495C05013828NDDAIUY'
-          : 'P-59286886LU147733XNDDAKDQ';
-
-        const container = document.getElementById(containerId);
-        if (container) {
-          container.innerHTML = '';
+        // Determine if we're in sandbox or live mode
+        const isSandbox = process.env.NEXT_PUBLIC_PAYPAL_MODE === 'sandbox';
+        
+        // Use sandbox or live client ID based on mode
+        const clientId = isSandbox 
+          ? (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'AYa2I1kDJDD9JFwvnFtTmNefB6ylsDXsUmPLcbnHGs4sT3WKFm82jFPe122bxJb9MDUD7EwfMPXuFzwS') // Sandbox
+          : (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'AfpHnFO-NEeZ8gF4IaICl8rjlpEw7WNeUKkPcpMvbQ1V3cgjzJjAsO-V2JA4XLRiUiJE5Ch0eLClAPhv'); // Live
+        
+        script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&vault=true&intent=subscription`;
+        
+        script.onload = () => {
+          // Use the Member Basic and Member Pro plan IDs from environment variables
+          const planId = modalPlan === 'basic' 
+            ? process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_MEMBER_BASIC || (isSandbox ? 'P-1NS15766Y7070154NNEIQCAI' : 'P-9MU229264R803154JNEIP6RQ')
+            : process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_MEMBER_PRO || (isSandbox ? 'P-6GS155471J0551515NEIQCNI' : 'P-7T9384761S135801TNEIP7QA');
           
-          const isFormValid = user?.email && formData.communityName;
+          const containerId = `paypal-button-container-${planId}`;
           
-          if (!isFormValid) {
-            container.innerHTML = '<div class="text-center py-4 text-gray-500 text-sm">Please fill in all required fields above</div>';
-            return;
-          }
-          
-          (window as any).paypal.Buttons({
-            style: {
-              shape: 'pill',
-              color: 'blue',
-              layout: 'vertical',
-              label: 'subscribe'
-            },
-            createSubscription: function(data: any, actions: any) {
-              return actions.subscription.create({
-                plan_id: planId,
-                custom_id: user?.email,
-                subscriber: {
-                  email_address: user?.email,
-                  name: {
-                    given_name: formData.communityName || 'Community Admin'
-                  }
-                },
-                application_context: {
-                  brand_name: 'MYTX',
-                  user_action: 'SUBSCRIBE_NOW'
-                }
-              });
-            },
-            onApprove: function(data: any, actions: any) {
-              alert(`Subscription created: ${data.subscriptionID}`);
-              setShowModal(false);
+          const container = document.getElementById(containerId);
+          if (container) {
+            container.innerHTML = '';
+            
+            // Check if form is valid - need email and name
+            const hasEmail = user?.email && user.email.trim() !== '';
+            const hasName = formData.communityName && formData.communityName.trim() !== '';
+            
+            console.log('PayPal validation check:', { hasEmail, hasName, email: user?.email, name: formData.communityName });
+            
+            if (!hasEmail || !hasName) {
+              container.innerHTML = `<div class="text-center py-4 text-gray-500 text-sm">Please fill in the ${type === 'meeting' ? 'meeting' : 'community'} name above to continue</div>`;
+              return;
             }
-          }).render(`#${containerId}`);
-        }
-      };
+            
+            (window as any).paypal.Buttons({
+              style: {
+                shape: isSandbox ? 'rect' : 'pill',
+                color: isSandbox ? 'gold' : 'blue',
+                layout: 'vertical',
+                label: 'subscribe'
+              },
+              createSubscription: function(data: any, actions: any) {
+                return actions.subscription.create({
+                  plan_id: planId,
+                  custom_id: user?.email,
+                  subscriber: {
+                    email_address: user?.email,
+                    name: {
+                      given_name: formData.communityName || 'Member'
+                    }
+                  },
+                  application_context: {
+                    brand_name: 'MYTX',
+                    user_action: 'SUBSCRIBE_NOW'
+                  }
+                });
+              },
+              onApprove: async function(data: any, actions: any) {
+                try {
+                  setIsLoading(true);
+                  
+                  // Send subscription details to backend for verification and saving
+                  const response = await fetch('/api/paypal/subscription', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      subscriptionId: data.subscriptionID,
+                      planType: modalPlan, // 'basic' or 'pro'
+                    }),
+                  });
 
-      document.head.appendChild(script);
+                  const result = await response.json();
 
-      return () => {
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-      };
+                  if (!response.ok) {
+                    console.error('Subscription save error:', result);
+                    alert(`Error saving subscription: ${result.error || 'Unknown error'}`);
+                    setIsLoading(false);
+                    return;
+                  }
+
+                  console.log('Subscription activated successfully:', result);
+                  alert(`Subscription activated! Subscription ID: ${data.subscriptionID}`);
+                  
+                  // Close modal and refresh page to show new subscription status
+                  setShowModal(false);
+                  
+                  // Refresh the plan information
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1500);
+                  
+                } catch (error) {
+                  console.error('Error processing subscription approval:', error);
+                  alert('Error saving subscription. Please contact support.');
+                  setIsLoading(false);
+                }
+              }
+            }).render(`#${containerId}`);
+          }
+        };
+
+        document.head.appendChild(script);
+
+        return () => {
+          if (document.head.contains(script)) {
+            document.head.removeChild(script);
+          }
+        };
+      }, 300); // 300ms debounce
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [showModal, modalPlan, user?.email, formData.communityName]);
+  }, [showModal, modalPlan, user?.email, formData.communityName, type]);
 
   return (
     <>
@@ -429,7 +496,7 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
             {/* Mobile Tabs */}
             <div className="md:hidden mb-6">
               <div className="flex bg-white/10 backdrop-blur-md rounded-2xl p-1 border border-white/20">
-                {type === 'meeting' && (!userPlan || userPlan === 'free') && (
+                {isFreePlan(userPlan) && (
                   <button
                     onClick={() => setSelectedPlan('free')}
                     className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
@@ -465,10 +532,10 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
             </div>
 
             {/* Desktop Side by Side / Mobile Single Card */}
-            <div className={`${type === 'meeting' ? 'md:grid md:grid-cols-3 md:gap-6' : 'md:grid md:grid-cols-2 md:gap-6'}`}>
+            <div className={getPricingGridClasses(userPlan)}>
               
-              {/* Free Plan - Only for meetings AND only show if user is free or not logged in */}
-              {type === 'meeting' && (!userPlan || userPlan === 'free') && (
+              {/* Free Plan - Show for both meetings and communities if user is free or not logged in */}
+              {isFreePlan(userPlan) && (
                 <div className={`${selectedPlan === 'free' ? 'block' : 'hidden'} md:block`}>
                   <div className="relative">
                     <div className="absolute inset-0 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl shadow-black/20"></div>
@@ -487,7 +554,7 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
-                          <span className="text-white">1 meeting</span>
+                          <span className="text-white">1 {type === 'meeting' ? 'meeting' : 'community'}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
@@ -545,7 +612,7 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
-                        <span className="text-white">Up to 3 meetings</span>
+                        <span className="text-white">Up to 3 {type === 'meeting' ? 'meetings' : 'communities'}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
@@ -636,7 +703,7 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
-                        <span className="text-white">Unlimited meetings</span>
+                        <span className="text-white">Unlimited {type === 'meeting' ? 'meetings' : 'communities'}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
@@ -771,14 +838,15 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                 {/* Community Name */}
                 <div>
                   <label className="block text-white/80 text-sm font-medium mb-2">
-                    Community Name
+                    {type === 'meeting' ? 'Meeting Name' : 'Community Name'} *
                   </label>
                   <input
                     type="text"
                     value={formData.communityName}
                     onChange={(e) => setFormData(prev => ({ ...prev, communityName: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm"
-                    placeholder="Enter your community name"
+                    placeholder={type === 'meeting' ? 'Enter meeting name' : 'Enter community name'}
+                    required
                   />
                 </div>
 
@@ -788,7 +856,7 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
                     Payment Method
                   </label>
                   <div 
-                    id={modalPlan === 'basic' ? 'paypal-button-container-P-5LP69495C05013828NDDAIUY' : 'paypal-button-container-P-59286886LU147733XNDDAKDQ'}
+                    id={`paypal-button-container-${modalPlan === 'basic' ? (process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_MEMBER_BASIC || 'P-9MU229264R803154JNEIP6RQ') : (process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_MEMBER_PRO || 'P-7T9384761S135801TNEIP7QA')}`}
                     className="bg-white border border-white/20 rounded-2xl p-6 backdrop-blur-sm"
                   ></div>
                 </div>
@@ -816,17 +884,39 @@ export default function UpgradePlanWall({ type, user }: UpgradePlanWallProps) {
         }}
       />
 
+      {/* Create Community Dialog */}
+      <CreateCommunityDialog 
+        open={showCreateCommunityDialog} 
+        onOpenChange={setShowCreateCommunityDialog}
+        onSuccess={() => {
+          router.push('/communities?filter=owned');
+        }}
+        userPlan={userPlan || 'free'}
+      />
+
       {/* Meeting Limit Modal - For Free Users */}
       <MeetingLimitModal
         open={showMeetingLimitModal}
         onOpenChange={setShowMeetingLimitModal}
         currentCount={meetingCount}
-        limit={userPlan === 'free' ? 1 : userPlan === 'basic' ? 3 : Infinity}
+        limit={getLimitForPlan(userPlan)}
         plan={userPlan || 'free'}
         onRemoveMeeting={() => {
           setShowMeetingLimitModal(false);
-          // User can go to owned-meetings to delete a meeting
           router.push('/owned-meetings');
+        }}
+      />
+
+      {/* Community Limit Modal */}
+      <CommunityLimitModal
+        open={showCommunityLimitModal}
+        onOpenChange={setShowCommunityLimitModal}
+        currentCount={communityCount}
+        limit={getLimitForPlan(userPlan)}
+        plan={userPlan || 'free'}
+        onRemoveCommunity={() => {
+          setShowCommunityLimitModal(false);
+          router.push('/communities?filter=owned');
         }}
       />
       </div>

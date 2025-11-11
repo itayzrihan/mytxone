@@ -15,13 +15,14 @@ export function useHideNavigation() {
     return true;
   }
   
-  // For new routes, we'll let the individual components decide
-  // by using a URL parameter or other mechanism
+  // Hide for create meeting and create community pages
   if (pathname === "/mytx/create-meeting" || pathname === "/mytx/create-community") {
-    // Check if we're showing the upgrade wall (you could use a URL param or other method)
-    // For now, we'll return false to show navbar/footer by default
-    // The upgrade wall component itself can use CSS to hide them if needed
     return false;
+  }
+  
+  // Hide for individual community pages (but not the communities list)
+  if (pathname.startsWith("/communities/") && pathname !== "/communities") {
+    return true;
   }
   
   return false;
