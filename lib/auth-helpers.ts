@@ -4,10 +4,10 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
- * Check if user is authenticated and has 2FA enabled
- * Returns user info or null if not authenticated or 2FA not enabled
+ * Check if user is authenticated
+ * Returns user info or null if not authenticated
  */
-export async function requireAuth2FA() {
+export async function requireAuth() {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -23,14 +23,7 @@ export async function requireAuth2FA() {
     return null;
   }
 
-  const userRecord = userResult[0];
-
-  // If 2FA is required, ensure it's enabled
-  if (!userRecord.totpEnabled) {
-    return null;
-  }
-
-  return userRecord;
+  return userResult[0];
 }
 
 /**
@@ -46,7 +39,7 @@ export function unauthorizedResponse(message: string = "User not authenticated")
 /**
  * Create a 403 Forbidden response
  */
-export function forbiddenResponse(message: string = "2FA not enabled") {
+export function forbiddenResponse(message: string = "Access denied") {
   return new Response(
     JSON.stringify({ error: message }),
     { status: 403, headers: { "content-type": "application/json" } }

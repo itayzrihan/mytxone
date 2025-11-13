@@ -42,68 +42,10 @@ const RATE_LIMIT_ATTEMPTS = 10;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 export interface LoginActionState {
-  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data" | "2fa_required" | "2fa_verified" | "2fa_setup_required";
+  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data";
   userEmail?: string;
-  totpSeedId?: string | null;
   error?: string;
 }
-
-/**
- * Verify TOTP code and complete login
- * This action is called after user enters 2FA code during login
- */
-export const verifyTOTPAndLogin = async (
-  formData: FormData,
-): Promise<LoginActionState> => {
-  try {
-    console.log("[VERIFY_TOTP] Starting TOTP verification for login");
-    
-    const email = formData.get("email") as string;
-    const totpCode = formData.get("totpCode") as string;
-    const password = formData.get("password") as string;
-
-    if (!email || !totpCode || !password) {
-      console.log("[VERIFY_TOTP] Missing required fields");
-      return { status: "invalid_data" };
-    }
-
-    // Verify TOTP code first
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    if (!baseUrl) {
-      console.error("[VERIFY_TOTP] NEXTAUTH_URL not configured");
-      return { status: "failed", error: "Server configuration error" };
-    }
-    
-    const totpResponse = await fetch(`${baseUrl}/api/auth/verify-2fa-internal`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        email,
-        totpCode 
-      }),
-    });
-
-    if (!totpResponse.ok) {
-      console.log("[VERIFY_TOTP] TOTP verification failed");
-      return { status: "failed" };
-    }
-
-    console.log("[VERIFY_TOTP] TOTP verified successfully, now signing in");
-    
-    // TOTP verified, now sign in with credentials
-    await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    console.log("[VERIFY_TOTP] Sign in successful");
-    return { status: "2fa_verified" };
-  } catch (error) {
-    console.error("[VERIFY_TOTP] Error occurred:", error);
-    return { status: "failed" };
-  }
-};
 
 export const login = async (
   _: LoginActionState,
@@ -255,10 +197,7 @@ export const register = async (
       await createUser(email, validatedData.password, profileData);
       console.log("[REGISTER] User created successfully");
 
-      // IMPORTANT: Do NOT sign in user yet
-      // User MUST complete 2FA setup before they can log in
-      // Return success to trigger 2FA setup modal
-      console.log("[REGISTER] Returning success status - user must complete 2FA setup");
+      console.log("[REGISTER] Returning success status");
       return { 
         status: "success",
         data: { email }

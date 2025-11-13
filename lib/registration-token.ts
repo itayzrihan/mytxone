@@ -1,7 +1,7 @@
 /**
  * Registration Token Management
  * 
- * Generates and manages registration tokens for tracking 2FA setup
+ * Generates and manages registration tokens for tracking service registration
  * across deep link redirects and callbacks
  * 
  * Tokens are persisted to the database for durability across server restarts
@@ -22,8 +22,6 @@ export interface RegistrationTokenData {
   createdAt: Date;
   expiresAt: Date;
   completedAt?: Date;
-  seedId?: string;
-  totpSeed?: string; // Encrypted
 }
 
 /**
@@ -82,8 +80,6 @@ export async function createRegistrationToken(data: {
       createdAt: created.createdAt,
       expiresAt: created.expiresAt,
       completedAt: created.completedAt || undefined,
-      seedId: created.seedId || undefined,
-      totpSeed: created.totpSeed || undefined,
     };
   } catch (error) {
     console.error("[REGISTRATION_TOKEN] Error creating token:", error);
@@ -122,8 +118,6 @@ export async function getRegistrationToken(
       createdAt: row.createdAt,
       expiresAt: row.expiresAt,
       completedAt: row.completedAt || undefined,
-      seedId: row.seedId || undefined,
-      totpSeed: row.totpSeed || undefined,
     };
   } catch (error) {
     console.error("[REGISTRATION_TOKEN] Error fetching token:", error);
@@ -138,8 +132,6 @@ export async function updateRegistrationToken(
   token: string,
   updates: Partial<{
     status: "completed" | "rejected" | "expired";
-    seedId?: string;
-    totpSeed?: string;
     completedAt?: Date;
   }>
 ): Promise<RegistrationTokenData | null> {
@@ -178,8 +170,6 @@ export async function updateRegistrationToken(
       createdAt: updated.createdAt,
       expiresAt: updated.expiresAt,
       completedAt: updated.completedAt || undefined,
-      seedId: updated.seedId || undefined,
-      totpSeed: updated.totpSeed || undefined,
     };
   } catch (error) {
     console.error("[REGISTRATION_TOKEN] Error updating token:", error);
@@ -228,47 +218,5 @@ export async function validateRegistrationToken(
   };
 }
 
-/**
- * Build callback URL with parameters
- */
-export function buildCallbackUrl(
-  baseUrl: string,
-  token: string,
-  seedId: string,
-  seed: string,
-  code: string
-): string {
-  const params = new URLSearchParams({
-    success: "true",
-    regToken: token,
-    seedId,
-    seed,
-    code,
-    timestamp: Date.now().toString(),
-  });
 
-  return `${baseUrl}?${params.toString()}`;
-}
 
-/**
- * Parse callback parameters from URL
- */
-export function parseCallbackParams(searchParams: URLSearchParams): {
-  success: boolean;
-  regToken?: string;
-  seedId?: string;
-  seed?: string;
-  code?: string;
-  timestamp?: string;
-  error?: string;
-} {
-  return {
-    success: searchParams.get("success") === "true",
-    regToken: searchParams.get("regToken") || undefined,
-    seedId: searchParams.get("seedId") || undefined,
-    seed: searchParams.get("seed") || undefined,
-    code: searchParams.get("code") || undefined,
-    timestamp: searchParams.get("timestamp") || undefined,
-    error: searchParams.get("error") || undefined,
-  };
-}

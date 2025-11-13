@@ -15,7 +15,6 @@ async function fetchAllUsers() {
       console.log(`   Email: ${user.email}`);
       console.log(`    Role: ${user.role}`);
       console.log(`Subscription: ${user.subscription}`);
-      console.log(` 2FA Enabled: ${user.totpEnabled ? '✅ Yes' : '❌ No'}`);
       console.log(`   Created: ${new Date(user.createdAt).toLocaleString()}`);
       console.log(`   Updated: ${new Date(user.updatedAt).toLocaleString()}`);
       console.log("─".repeat(50));
