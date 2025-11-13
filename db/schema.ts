@@ -25,9 +25,6 @@ export const user = pgTable("User", {
   phoneNumber: varchar("phone_number", { length: 20 }),
   notMytxEmail: varchar("not_mytx_email", { length: 255 }), // User's external email
   profileImageUrl: text("profile_image_url"), // URL to user's profile image
-  // 2FA / TOTP
-  totpEnabled: boolean("totp_enabled").notNull().default(false),
-  totpSeedId: varchar("totp_seed_id", { length: 255 }), // Legitate seed reference
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -136,44 +136,23 @@ export const login = async (
       };
     }
 
-    // Check if user exists and has 2FA enabled BEFORE signing in
-    const [user] = await getUser(email);
-    console.log("[LOGIN] User lookup result:", { 
-      userExists: !!user,
+    // Sign in with credentials
+    console.log("[LOGIN] Attempting to sign in with credentials");
+    const result = await signIn("credentials", {
       email: email,
-      totpEnabled: user?.totpEnabled 
+      password: validatedData.password,
+      redirect: false,
     });
-
-    if (!user) {
-      console.log("[LOGIN] User not found");
-      // User doesn't exist - don't reveal this for security
+    
+    console.log("[LOGIN] Sign in result:", result);
+    
+    if (!result || result.ok === false) {
+      console.log("[LOGIN] Sign in failed - invalid credentials");
       return { status: "failed" };
     }
 
-    // CRITICAL: If user has NOT set up 2FA yet, force them to set it up
-    if (!user.totpEnabled) {
-      console.log("[LOGIN] User has not set up 2FA, forcing setup");
-      // Sign in the user first so they can access the enable-2fa page
-      await signIn("credentials", {
-        email: email,
-        password: validatedData.password,
-        redirect: false,
-      });
-      
-      return {
-        status: "2fa_setup_required",
-        userEmail: email,
-      };
-    }
-
-    // User has 2FA enabled - require verification before creating session
-    console.log("[LOGIN] User has 2FA enabled, returning 2fa_required");
-    // Do NOT sign in yet - user must verify TOTP first
-    return {
-      status: "2fa_required",
-      userEmail: email,
-      totpSeedId: user.totpSeedId,
-    };
+    console.log("[LOGIN] Sign in successful");
+    return { status: "success" };
   } catch (error) {
     console.error("[LOGIN] Error occurred:", error);
     

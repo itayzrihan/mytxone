@@ -937,14 +937,12 @@ export async function getAllUsers(): Promise<Array<SafeUser>> {
       phoneNumber: user.phoneNumber,
       notMytxEmail: user.notMytxEmail,
       profileImageUrl: user.profileImageUrl,
-      totpEnabled: user.totpEnabled,
-      totpSeedId: user.totpSeedId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       // Exclude password field for security
     }).from(user).orderBy(desc(user.createdAt));
   } catch (error) {
-    console.error("Failed to get all users from database");
+    console.error("Failed to get all users from database", error);
     throw error;
   }
 }
@@ -961,15 +959,13 @@ export async function getUserById(userId: string): Promise<SafeUser | null> {
       phoneNumber: user.phoneNumber,
       notMytxEmail: user.notMytxEmail,
       profileImageUrl: user.profileImageUrl,
-      totpEnabled: user.totpEnabled,
-      totpSeedId: user.totpSeedId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       // Exclude password field for security
     }).from(user).where(eq(user.id, userId));
     return users[0] || null;
   } catch (error) {
-    console.error("Failed to get user by ID from database");
+    console.error("Failed to get user by ID from database", error);
     throw error;
   }
 }
@@ -992,8 +988,6 @@ export async function updateUserRole(userId: string, role: 'user' | 'admin'): Pr
         phoneNumber: user.phoneNumber,
         notMytxEmail: user.notMytxEmail,
         profileImageUrl: user.profileImageUrl,
-        totpEnabled: user.totpEnabled,
-        totpSeedId: user.totpSeedId,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       });
@@ -1022,8 +1016,6 @@ export async function updateUserSubscription(userId: string, subscription: 'free
         phoneNumber: user.phoneNumber,
         notMytxEmail: user.notMytxEmail,
         profileImageUrl: user.profileImageUrl,
-        totpEnabled: user.totpEnabled,
-        totpSeedId: user.totpSeedId,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       });
