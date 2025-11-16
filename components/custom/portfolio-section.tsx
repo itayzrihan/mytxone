@@ -36,6 +36,48 @@ const portfolioItems = [
     color: "from-purple-500 to-pink-500"
   },
   {
+    title: "Legitate",
+    subtitle: "פלטפורמת אימות משתמשים ארגונית",
+    description: "מערכת אבטחה צבאית-דרגה עם הגנת בוט חדשנית ואלגוריתמים קריפטוגרפיים מתקדמים",
+    links: [
+      {
+        label: "Prototype",
+        url: "https://legitate.com/",
+        icon: Globe
+      }
+    ],
+    tech: "Enterprise Security • Cryptography",
+    color: "from-red-500 to-orange-500"
+  },
+  {
+    title: "GROW BROWS",
+    subtitle: "חנות אונליין לטיפוח גבות",
+    description: "מוצר יחיד לצמיחת שיער מחודשת בגבות - פתרון חדשני לטיפוח גבות",
+    links: [
+      {
+        label: "Website",
+        url: "https://growbrows.shop/",
+        icon: Globe
+      }
+    ],
+    tech: "E-Commerce • Beauty Tech",
+    color: "from-pink-500 to-rose-500"
+  },
+  {
+    title: "Liminal OS",
+    subtitle: "אב טיפוס למערכת הפעלה עתידנית",
+    description: "ממשק מהעתיד למערכת הפעלה מבוססת AI עם עיצוב קולנועי וחוויה אינטראקטיבית",
+    links: [
+      {
+        label: "Prototype",
+        url: "https://liminalos.netlify.app/",
+        icon: Globe
+      }
+    ],
+    tech: "AI Interface • Future UI/UX",
+    color: "from-violet-500 to-purple-500"
+  },
+  {
     title: "משק דניאל",
     subtitle: "חנות אי-קומרס למוצרי חקלאות",
     description: "חנות אלקטרונית חדשנית למכירת ירקות ופרחים מהמשק - סטורי ההצלחה שלי",
