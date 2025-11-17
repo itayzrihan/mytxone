@@ -43,8 +43,8 @@ export function AboutSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           {/* Card 1 - Who I Am */}
           <div className="bg-gradient-to-br from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-cyan-500/30 rounded-2xl p-8 hover:border-cyan-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/20">
-            <div className="flex items-center justify-end mb-4">
-              <h3 className="text-2xl font-bold text-white text-right">מי אני באמת</h3>
+            <div className="flex items-center justify-center mb-4">
+              <h3 className="text-2xl font-bold text-white text-center">מי אני באמת</h3>
               <div className="mr-3 p-2 bg-cyan-500/20 rounded-lg">
                 <Zap className="w-6 h-6 text-cyan-400" />
               </div>
@@ -57,8 +57,8 @@ export function AboutSection() {
 
           {/* Card 2 - All in One */}
           <div className="bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-red-500/10 border border-purple-500/30 rounded-2xl p-8 hover:border-purple-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20">
-            <div className="flex items-center justify-end mb-4">
-              <h3 className="text-2xl font-bold text-white text-right">הכל באחד</h3>
+            <div className="flex items-center justify-center mb-4">
+              <h3 className="text-2xl font-bold text-white text-center">הכל באחד</h3>
               <div className="mr-3 p-2 bg-purple-500/20 rounded-lg">
                 <Target className="w-6 h-6 text-purple-400" />
               </div>
