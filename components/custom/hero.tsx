@@ -159,26 +159,26 @@ const Hero = () => {
           </div>
         </div>
 
-          <div 
+            <div 
             className="flex flex-col sm:flex-row-reverse gap-4 animate-slide-up justify-center pb-32"
             style={{ transform: `translateY(${scrollY * -0.2}px)` }}
-          >
+            >
             <a 
               href="#services"
-              className="group bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-shadow px-8 py-3 rounded-lg text-lg font-semibold flex items-center justify-center gap-2"
+              className="group bg-blue-900 hover:bg-blue-800 text-cyan-100 shadow-lg hover:shadow-xl transition-shadow px-8 py-3 rounded-lg text-lg font-semibold flex items-center justify-center gap-2"
             >
               השירות שלי
               <ArrowRight className="mr-2 group-hover:-translate-x-1 transition-transform rotate-180" />
             </a>
             <a 
               href="#portfolio"
-              className="group backdrop-blur-md bg-white/10 border border-primary/50 text-primary hover:bg-primary/20 hover:border-primary transition-all shadow-lg px-8 py-3 rounded-lg text-lg font-semibold flex items-center justify-center gap-2"
+              className="group backdrop-blur-md bg-cyan-900/10 border border-cyan-500 text-cyan-300 hover:bg-cyan-900/20 hover:border-cyan-400 transition-all shadow-lg px-8 py-3 rounded-lg text-lg font-semibold flex items-center justify-center gap-2"
             >
               <Play className="ml-2 group-hover:scale-110 transition-transform" />
               צפו בדוגמאות
             </a>
+            </div>
           </div>
-      </div>
 
       {/* Scroll Indicator */}
       <div 
