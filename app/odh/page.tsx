@@ -6,6 +6,9 @@ import MemoryModal from '../../components/memory-modal';
 import StorytellingModal from '../../components/storytelling-modal';
 import MBTIModal from '../../components/mbti-modal';
 import ProfileModal from '../../components/profile-modal';
+import InitialsModal from '../../components/initials-modal';
+import AlphaBossModal from '../../components/alpha-boss-modal';
+import EnergyTypesModal from '../../components/energy-types-modal';
 import PageElevator from '../../components/page-elevator';
 
 export default function ODHPage() {
@@ -14,6 +17,9 @@ export default function ODHPage() {
   const [isStorytellingModalOpen, setIsStorytellingModalOpen] = useState(false);
   const [isMBTIModalOpen, setIsMBTIModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isInitialsModalOpen, setIsInitialsModalOpen] = useState(false);
+  const [isAlphaBossModalOpen, setIsAlphaBossModalOpen] = useState(false);
+  const [isEnergyTypesModalOpen, setIsEnergyTypesModalOpen] = useState(false);
   const [navigationHistory, setNavigationHistory] = useState<string[]>(['introduction']);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
   const [sections, setSections] = useState<string[]>([
@@ -524,6 +530,30 @@ export default function ODHPage() {
                             <h5 className="text-sm font-bold text-blue-600 mb-2">פרופיל אישי</h5>
                           </div>
                         </div>
+                                                <div className="group relative">
+                          <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000" />
+                          <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all duration-300 shadow-sm cursor-pointer" onClick={() => setIsMBTIModalOpen(true)}>
+                            <h5 className="text-sm font-bold text-blue-600 mb-2">MBTI</h5>
+                          </div>
+                        </div>
+                        <div className="group relative">
+                          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000" />
+                          <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all duration-300 shadow-sm cursor-pointer" onClick={() => setIsInitialsModalOpen(true)}>
+                            <h5 className="text-sm font-bold text-emerald-600 mb-2">ראשי תיבות</h5>
+                          </div>
+                        </div>
+                        <div className="group relative">
+                          <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000" />
+                          <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all duration-300 shadow-sm cursor-pointer" onClick={() => setIsAlphaBossModalOpen(true)}>
+                            <h5 className="text-sm font-bold text-red-600 mb-2">ALPHA BOSS - JOKER</h5>
+                          </div>
+                        </div>
+                        <div className="group relative">
+                          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000" />
+                          <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all duration-300 shadow-sm cursor-pointer" onClick={() => setIsEnergyTypesModalOpen(true)}>
+                            <h5 className="text-sm font-bold text-purple-600 mb-2">3 סוגי אנרגיה</h5>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div>
@@ -872,6 +902,9 @@ export default function ODHPage() {
       <StorytellingModal isOpen={isStorytellingModalOpen} onClose={() => setIsStorytellingModalOpen(false)} />
       <MBTIModal isOpen={isMBTIModalOpen} onClose={() => setIsMBTIModalOpen(false)} />
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+      <InitialsModal isOpen={isInitialsModalOpen} onClose={() => setIsInitialsModalOpen(false)} />
+      <AlphaBossModal isOpen={isAlphaBossModalOpen} onClose={() => setIsAlphaBossModalOpen(false)} />
+      <EnergyTypesModal isOpen={isEnergyTypesModalOpen} onClose={() => setIsEnergyTypesModalOpen(false)} />
 
       {/* Previous Button - Bottom Left */}
       {currentHistoryIndex > 0 && (
