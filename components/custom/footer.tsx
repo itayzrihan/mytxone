@@ -18,6 +18,7 @@ export function Footer() {
                            pathname.includes("/caricature") ||
                            pathname.includes("/odh") ||
                            pathname.includes("/hypno") ||
+                           pathname.includes("/outlook-addin") ||
                            pathname.startsWith("/communities/") && pathname !== "/communities";
 
   // Admin context - provides centralized admin state for the entire app

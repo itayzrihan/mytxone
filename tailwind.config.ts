@@ -11,6 +11,7 @@ const config: Config = {
     fontFamily: {
       sans: ["geist"],
       mono: ["geist-mono"],
+      heebo: ['"Heebo"', 'sans-serif'],
     },
     extend: {
       borderRadius: {
