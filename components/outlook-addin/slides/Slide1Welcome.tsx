@@ -94,7 +94,7 @@ export default function Slide1Welcome({ slideNumber, totalSlides, onNavigateToSl
         >
           <h2 className="text-2xl font-bold text-blue-300 mb-6 flex items-center justify-center gap-2">
             <Zap className="w-6 h-6" />
-            אג'נדה
+            אג&apos;נדה
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
             {agendaItems.map((item, idx) => (

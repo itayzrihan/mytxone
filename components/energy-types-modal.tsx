@@ -47,7 +47,7 @@ const EnergyTypesModal: React.FC<EnergyTypesModalProps> = ({ isOpen, onClose }) 
           <div className="sticky top-0 bg-white/95 backdrop-blur-xl border-b border-purple-200 p-6 flex items-center justify-between z-10">
             <div>
               <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                שלושת סוגי האנרגיה - טמס, רג'ס, סטווה
+                שלושת סוגי האנרגיה - טמס, רג&apos;ס, סטווה
               </h2>
               <p className="text-purple-600 mt-1">הגונות - איכויות האנרגיה שמניעות את העולם</p>
             </div>
@@ -85,7 +85,7 @@ const EnergyTypesModal: React.FC<EnergyTypesModalProps> = ({ isOpen, onClose }) 
                     </ul>
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-purple-600 mb-2">לרסן רג'ס:</h4>
+                    <h4 className="text-lg font-semibold text-purple-600 mb-2">לרסן רג&apos;ס:</h4>
                     <ul className="text-purple-800 space-y-1">
                       <li>• מדיטציה והתבוננות</li>
                       <li>• נשימות עמוקות</li>

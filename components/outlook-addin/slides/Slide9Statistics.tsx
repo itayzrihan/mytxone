@@ -171,7 +171,7 @@ export default function Slide9Statistics({ slideNumber, totalSlides }: SlideProp
               <div className="flex-1">
                 <h4 className="font-semibold text-amber-300 mb-2">Support Tickets Reduction</h4>
                 <p className="text-3xl font-bold text-white mb-2">-40%</p>
-                <p className="text-sm text-slate-400">fewer "Where is the Addin?" questions</p>
+                <p className="text-sm text-slate-400">fewer &quot;Where is the Addin?&quot; questions</p>
                 <p className="text-xs text-slate-500 mt-2">Better user experience = less support load</p>
               </div>
             </div>

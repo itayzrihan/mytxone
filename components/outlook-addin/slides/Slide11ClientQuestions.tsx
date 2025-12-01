@@ -128,7 +128,7 @@ export default function Slide11ClientQuestions({ slideNumber, totalSlides }: Sli
         >
           <div className="text-center">
             <div className="text-2xl mb-1">👂</div>
-            <p className="text-xs text-slate-400">We're listening</p>
+            <p className="text-xs text-slate-400">We&apos;re listening</p>
           </div>
           <div className="text-center">
             <div className="text-2xl mb-1">💡</div>
