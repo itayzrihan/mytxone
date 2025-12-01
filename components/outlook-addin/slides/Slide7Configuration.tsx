@@ -49,7 +49,7 @@ export default function Slide7Configuration({ slideNumber, totalSlides }: SlideP
 
       {/* Content */}
       <motion.div
-        className="relative z-10 flex-1 flex flex-col"
+        className="relative z-10 flex-1 flex flex-col overflow-y-auto scrollbar-hide"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}

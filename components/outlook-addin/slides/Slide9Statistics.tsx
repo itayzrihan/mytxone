@@ -76,7 +76,7 @@ export default function Slide9Statistics({ slideNumber, totalSlides }: SlideProp
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            מה קרה בפרויקטים דומים שלנו בעבר
+דוגמא מהרשת
           </motion.p>
         </div>
 

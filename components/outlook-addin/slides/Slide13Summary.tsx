@@ -171,19 +171,19 @@ export default function Slide13Summary({ slideNumber, totalSlides }: SlideProps)
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 text-center">
             <Phone className="w-6 h-6 text-blue-400 mx-auto mb-2" />
             <p className="text-xs font-semibold text-slate-400 mb-1">Phone</p>
-            <p className="text-sm text-slate-300">[Your Phone]</p>
+            <p className="text-sm text-slate-300">0515511581</p>
           </div>
 
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 text-center">
             <Mail className="w-6 h-6 text-blue-400 mx-auto mb-2" />
             <p className="text-xs font-semibold text-slate-400 mb-1">Email</p>
-            <p className="text-sm text-slate-300">[Your Email]</p>
+            <p className="text-sm text-slate-300">sales.growth.digital@gmail.com</p>
           </div>
 
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 text-center">
             <Calendar className="w-6 h-6 text-blue-400 mx-auto mb-2" />
             <p className="text-xs font-semibold text-slate-400 mb-1">Next Meeting</p>
-            <p className="text-sm text-slate-300">[Proposed Date]</p>
+            <p className="text-sm text-slate-300">1.12.25</p>
           </div>
         </motion.div>
 

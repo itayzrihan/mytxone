@@ -102,7 +102,7 @@ export default function Slide11ClientQuestions({ slideNumber, totalSlides }: Sli
             <div>
               <h3 className="text-xl font-bold text-white mb-2">Open Discussion</h3>
               <p className="text-slate-400">
-                נוזלי לשמוע כל עניין שלא הוזכר, כל חשש, או כל דבר שחשוב לכם בתהליך הזה
+                נשמח לשמוע כל עניין שלא הוזכר, כל חשש, או כל דבר שחשוב לכם בתהליך הזה
               </p>
             </div>
           </div>

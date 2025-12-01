@@ -20,7 +20,7 @@ export default function Slide5Environments({ slideNumber, totalSlides }: SlidePr
         { label: 'חשבון', value: 'Premium (בדיקה)' },
         { label: 'Pinning', value: '✅ עובד מצוין' },
         { label: 'הגדרות IT', value: 'להגדיר' },
-        { label: 'גישה', value: 'פתוחה בדיקה' },
+        { label: 'גישה', value: 'פתוח בבדיקה' },
       ],
     },
     {
@@ -31,7 +31,7 @@ export default function Slide5Environments({ slideNumber, totalSlides }: SlidePr
       features: [
         { label: 'סביבה', value: 'Outlook Classic' },
         { label: 'חשבון', value: 'בדיקה מוגבלת' },
-        { label: 'Pinning', value: '❓ בהתחקירות' },
+        { label: 'Pinning', value: '❓ האם עובד' },
         { label: 'הגדרות IT', value: 'צריך אישור' },
         { label: 'גישה', value: 'סגורה + IT Policy' },
       ],

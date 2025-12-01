@@ -20,7 +20,7 @@ export default function Slide6Environments({ slideNumber, totalSlides }: SlidePr
         { label: 'חשבון', value: 'Premium (בדיקה)' },
         { label: 'Pinning', value: '✅ עובד מצוין' },
         { label: 'הגדרות IT', value: 'להגדיר' },
-        { label: 'גישה', value: 'פתוחה בדיקה' },
+        { label: 'גישה', value: 'פתוח בבדיקה' },
       ],
     },
     {
@@ -31,7 +31,7 @@ export default function Slide6Environments({ slideNumber, totalSlides }: SlidePr
       features: [
         { label: 'סביבה', value: 'Outlook Classic' },
         { label: 'חשבון', value: 'בדיקה מוגבלת' },
-        { label: 'Pinning', value: '❓ בהתחקירות' },
+        { label: 'Pinning', value: '❓ האם עובד' },
         { label: 'הגדרות IT', value: 'צריך אישור' },
         { label: 'גישה', value: 'סגורה + IT Policy' },
       ],
@@ -51,7 +51,7 @@ export default function Slide6Environments({ slideNumber, totalSlides }: SlidePr
 
       {/* Content */}
       <motion.div
-        className="relative z-10 flex-1 flex flex-col"
+        className="relative z-10 flex-1 flex flex-col overflow-y-auto scrollbar-hide"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}

@@ -26,7 +26,7 @@ export default function Slide1Welcome({ slideNumber, totalSlides, onNavigateToSl
   ];
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex items-center justify-center p-12 relative overflow-hidden font-heebo" dir="rtl">
+    <div className="w-full h-full bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex flex-col items-center justify-center p-12 relative overflow-hidden font-heebo" dir="rtl">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 opacity-10">
         <motion.div
@@ -41,13 +41,14 @@ export default function Slide1Welcome({ slideNumber, totalSlides, onNavigateToSl
         />
       </div>
 
-      {/* Content */}
-      <motion.div
-        className="relative z-10 text-center max-w-5xl"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, type: 'spring', stiffness: 100 }}
-      >
+      {/* Content - Make scrollable */}
+      <div className="relative z-10 flex-1 flex items-center justify-center overflow-y-auto scrollbar-hide w-full">
+        <motion.div
+          className="text-center max-w-5xl"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, type: 'spring', stiffness: 100 }}
+        >
         {/* Logo/Icon */}
         <motion.div
           className="flex justify-center mb-8"
@@ -137,6 +138,7 @@ export default function Slide1Welcome({ slideNumber, totalSlides, onNavigateToSl
           <span>Slide {slideNumber} / {totalSlides}</span>
         </motion.div>
       </motion.div>
+      </div>
     </div>
   );
 }
