@@ -9,6 +9,7 @@ import ProfileModal from '../../components/profile-modal';
 import InitialsModal from '../../components/initials-modal';
 import AlphaBossModal from '../../components/alpha-boss-modal';
 import EnergyTypesModal from '../../components/energy-types-modal';
+import PrinciplesModal from '../../components/principles-modal';
 import PageElevator from '../../components/page-elevator';
 
 export default function ODHPage() {
@@ -20,10 +21,12 @@ export default function ODHPage() {
   const [isInitialsModalOpen, setIsInitialsModalOpen] = useState(false);
   const [isAlphaBossModalOpen, setIsAlphaBossModalOpen] = useState(false);
   const [isEnergyTypesModalOpen, setIsEnergyTypesModalOpen] = useState(false);
+  const [isPrinciplesModalOpen, setIsPrinciplesModalOpen] = useState(false);
+  const [principlesModalTab, setPrinciplesModalTab] = useState<'micro' | 'macro' | 'domino'>('micro');
   const [navigationHistory, setNavigationHistory] = useState<string[]>(['introduction']);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
   const [sections, setSections] = useState<string[]>([
-    'introduction', 'morning', 'body', 'mind', 'memory', 
+    'introduction', 'principles', 'morning', 'body', 'mind', 'memory', 
     'practice', 'relations', 'evening', 'brain', 'reality'
   ]);
 
@@ -231,6 +234,61 @@ export default function ODHPage() {
             </div>
           </section>
 
+          {/* Principles Section */}
+          <section className="mb-20" data-section="principles">
+            <div className="group relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000" />
+              <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-8 md:p-12 hover:border-gray-300 transition-all duration-300 shadow-lg">
+                <h2 className="text-3xl font-bold mb-6">
+                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    📚 עקרונות ומונחים בסיסיים
+                  </span>
+                </h2>
+                <p className="text-gray-800 leading-relaxed text-lg mb-8">
+                  מושגים יסודיים שכדאי לשנן ולהפנים. לחץ על כל כרטיסיה כדי ללמוד עמוק יותר על העיקרון.
+                </p>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div
+                    onClick={() => {
+                      setPrinciplesModalTab('micro');
+                      setIsPrinciplesModalOpen(true);
+                    }}
+                    className="group/card relative bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="text-4xl mb-4">🎯</div>
+                    <h3 className="text-xl font-bold text-cyan-600 mb-2">מיקרו - המטרה</h3>
+                    <p className="text-gray-700 text-sm">הפוקוס על הצעד הקטן והמטרה המיידית</p>
+                    <div className="absolute inset-0 bg-cyan-500/5 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+                  </div>
+                  <div
+                    onClick={() => {
+                      setPrinciplesModalTab('macro');
+                      setIsPrinciplesModalOpen(true);
+                    }}
+                    className="group/card relative bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="text-4xl mb-4">🌍</div>
+                    <h3 className="text-xl font-bold text-blue-600 mb-2">מאקרו - התמונה הגדולה</h3>
+                    <p className="text-gray-700 text-sm">החזון הרחב והכיוון הארוך טווח</p>
+                    <div className="absolute inset-0 bg-blue-500/5 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+                  </div>
+                  <div
+                    onClick={() => {
+                      setPrinciplesModalTab('domino');
+                      setIsPrinciplesModalOpen(true);
+                    }}
+                    className="group/card relative bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="text-4xl mb-4">🎲</div>
+                    <h3 className="text-xl font-bold text-purple-600 mb-2">אפקט דומינו</h3>
+                    <p className="text-gray-700 text-sm">איך פעולה קטנה יוצרת שרשרת גדולה</p>
+                    <div className="absolute inset-0 bg-purple-500/5 rounded-xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Morning Section */}
           <section className="mb-20" data-section="morning">
             <h2 className="text-4xl font-bold mb-12">
@@ -292,6 +350,10 @@ export default function ODHPage() {
                         <li className="flex items-start gap-3 text-gray-700">
                           <span className="text-emerald-500 font-bold mt-1">✓</span>
                           <span>אני בוחר בחמלה, ביושר ובאהבה היום.</span>
+                        </li>
+                        <li className="flex items-start gap-3 text-gray-700">
+                          <span className="text-emerald-500 font-bold mt-1">✓</span>
+                          <span>כל דבר שאני עושה אני ניגש בידעה מוחלטת שאצליח</span>
                         </li>
                       </ul>
                     </div>
@@ -905,6 +967,7 @@ export default function ODHPage() {
       <InitialsModal isOpen={isInitialsModalOpen} onClose={() => setIsInitialsModalOpen(false)} />
       <AlphaBossModal isOpen={isAlphaBossModalOpen} onClose={() => setIsAlphaBossModalOpen(false)} />
       <EnergyTypesModal isOpen={isEnergyTypesModalOpen} onClose={() => setIsEnergyTypesModalOpen(false)} />
+      <PrinciplesModal isOpen={isPrinciplesModalOpen} onClose={() => setIsPrinciplesModalOpen(false)} initialTab={principlesModalTab} />
 
       {/* Previous Button - Bottom Left */}
       {currentHistoryIndex > 0 && (
