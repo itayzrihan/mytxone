@@ -166,7 +166,7 @@ export default function PrinciplesModal({ isOpen, onClose, initialTab = 'micro' 
                 <div className="bg-white border border-purple-200 rounded-lg p-4">
                   <h4 className="font-semibold text-purple-600 mb-2">איך להשתמש בכוח הזה:</h4>
                   <p className="text-gray-700">
-                    התחל בקטן. אל תחכה ל"רגע הנכון". כל התחלה קטנה יכולה להפוך לגדולה.
+                    התחל בקטן. אל תחכה ל&quot;רגע הנכון&quot;. כל התחלה קטנה יכולה להפוך לגדולה.
                     האפקט הדומינו עובד גם הפוך - הרגלים רעים יכולים להרוס הכל.
                   </p>
                 </div>
