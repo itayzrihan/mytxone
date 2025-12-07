@@ -11,6 +11,7 @@ import AlphaBossModal from '../../components/alpha-boss-modal';
 import EnergyTypesModal from '../../components/energy-types-modal';
 import PrinciplesModal from '../../components/principles-modal';
 import PresentationsModal from '../../components/presentations-modal';
+import MentalismModal from '../../components/mentalism-modal';
 import PageElevator from '../../components/page-elevator';
 
 export default function ODHPage() {
@@ -24,6 +25,7 @@ export default function ODHPage() {
   const [isEnergyTypesModalOpen, setIsEnergyTypesModalOpen] = useState(false);
   const [isPrinciplesModalOpen, setIsPrinciplesModalOpen] = useState(false);
   const [isPresentationsModalOpen, setIsPresentationsModalOpen] = useState(false);
+  const [isMentalismModalOpen, setIsMentalismModalOpen] = useState(false);
   const [principlesModalTab, setPrinciplesModalTab] = useState<'micro' | 'macro' | 'domino'>('micro');
   const [navigationHistory, setNavigationHistory] = useState<string[]>(['introduction']);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
@@ -630,6 +632,12 @@ export default function ODHPage() {
                             <h5 className="text-sm font-bold text-pink-600 mb-2">מצגות</h5>
                           </div>
                         </div>
+                        <div className="group relative">
+                          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000" />
+                          <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all duration-300 shadow-sm cursor-pointer" onClick={() => setIsMentalismModalOpen(true)}>
+                            <h5 className="text-sm font-bold text-indigo-600 mb-2">מנטליזם - קריאת אנשים</h5>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div>
@@ -980,6 +988,10 @@ export default function ODHPage() {
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
       <InitialsModal isOpen={isInitialsModalOpen} onClose={() => setIsInitialsModalOpen(false)} />
       <AlphaBossModal isOpen={isAlphaBossModalOpen} onClose={() => setIsAlphaBossModalOpen(false)} />
+      <EnergyTypesModal isOpen={isEnergyTypesModalOpen} onClose={() => setIsEnergyTypesModalOpen(false)} />
+      <PrinciplesModal isOpen={isPrinciplesModalOpen} onClose={() => setIsPrinciplesModalOpen(false)} initialTab={principlesModalTab} />
+      <PresentationsModal isOpen={isPresentationsModalOpen} onClose={() => setIsPresentationsModalOpen(false)} />
+      <MentalismModal isOpen={isMentalismModalOpen} onClose={() => setIsMentalismModalOpen(false)} />
       <EnergyTypesModal isOpen={isEnergyTypesModalOpen} onClose={() => setIsEnergyTypesModalOpen(false)} />
       <PrinciplesModal isOpen={isPrinciplesModalOpen} onClose={() => setIsPrinciplesModalOpen(false)} initialTab={principlesModalTab} />
       <PresentationsModal isOpen={isPresentationsModalOpen} onClose={() => setIsPresentationsModalOpen(false)} />
