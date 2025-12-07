@@ -228,6 +228,7 @@ const FieldContainer = ({ label, value, details }: { label: string; value: strin
 
 export default function StorytellingModal({ isOpen, onClose }: StorytellingModalProps) {
   const [activePart, setActivePart] = useState(1);
+  const [activeTab, setActiveTab] = useState<'content' | 'dopamine'>('content');
 
   if (!isOpen) return null;
 
@@ -246,27 +247,55 @@ export default function StorytellingModal({ isOpen, onClose }: StorytellingModal
               ×
             </button>
           </div>
-          <div className="flex gap-2 mt-4">
-            {storytellingParts.map((part) => (
-              <button
-                key={part.part}
-                onClick={() => setActivePart(part.part)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activePart === part.part
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                חלק {part.part}: {part.title}
-              </button>
-            ))}
+          
+          {/* Main Tabs */}
+          <div className="flex gap-2 mt-4 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('content')}
+              className={`px-6 py-3 font-semibold transition-all ${
+                activeTab === 'content'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
+              }`}
+            >
+              תוכן סיפור
+            </button>
+            <button
+              onClick={() => setActiveTab('dopamine')}
+              className={`px-6 py-3 font-semibold transition-all ${
+                activeTab === 'dopamine'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
+              }`}
+            >
+              סולם הדופמין
+            </button>
           </div>
+
+          {activeTab === 'content' && (
+            <div className="flex gap-2 mt-4">
+              {storytellingParts.map((part) => (
+                <button
+                  key={part.part}
+                  onClick={() => setActivePart(part.part)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activePart === part.part
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  חלק {part.part}: {part.title}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-          <div className="mb-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">{currentPart?.title}</h3>
-            <p className="text-gray-600">לחץ על כל מודול לפרטים נוספים</p>
-          </div>
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">{activeTab === 'content' ? (
+          <>
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-2">{currentPart?.title}</h3>
+              <p className="text-gray-600">לחץ על כל מודול לפרטים נוספים</p>
+            </div>
 
           {activePart === 1 && (
             <div className="mb-6">
@@ -360,6 +389,121 @@ export default function StorytellingModal({ isOpen, onClose }: StorytellingModal
               </div>
             ))}
           </div>
+          </>
+        ) : (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🧠</div>
+              <h3 className="text-3xl font-bold text-blue-600 mb-4">סולם הדופמין</h3>
+            </div>
+
+            {/* Video */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+              <div className="aspect-video w-full max-w-2xl mx-auto">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/jtmstMt4WLc"
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                  className="rounded-lg"
+                ></iframe>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="bg-blue-50 p-6 rounded-xl">
+              <p className="text-lg text-gray-800 leading-relaxed">
+                מסגרת &quot;סולם הדופמין&quot; היא טכניקה שנועדה לגרום לצופים להתמכר לצפייה בתוכן על ידי שחרור כמויות הולכות וגדלות של דופמין במהלך צפייתם. אם משתמש התוכן מצליח להעביר את הצופה בהצלחה דרך כל ששת השלבים של הסולם, הצופה ישלים את הצפייה בסרטון וירצה לחזור לצפות בתוכן נוסף.
+              </p>
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-4">
+              <div className="bg-white border border-blue-200 rounded-lg p-5">
+                <h4 className="text-xl font-bold text-blue-600 mb-3">1. גירוי (Stimulation)</h4>
+                <p className="text-gray-700 mb-2">
+                  השלב הראשון והקצר ביותר בסולם הדופמין, המתרחש בתוך שנייה עד שתיים הראשונות של הסרטון.
+                </p>
+                <ul className="list-disc list-inside text-gray-600 space-y-1 mr-4">
+                  <li>שימוש בצבעים, תנועה ובהירות לגרום למישהו לעצור ולהתמקד</li>
+                  <li>עיבוד &quot;מלמטה למעלה&quot; - תהליך תת-מודע ומהיר מאוד</li>
+                  <li>שחרור דופמין חלש אך חיוני כמבשר לשלבים הבאים</li>
+                </ul>
+              </div>
+
+              <div className="bg-white border border-purple-200 rounded-lg p-5">
+                <h4 className="text-xl font-bold text-purple-600 mb-3">2. שבייה (Captivation)</h4>
+                <p className="text-gray-700 mb-2">
+                  שלב הסקרנות - הסרטון מוביל לשאלה פתוחה שהצופה שואל בראשו, ויוצר &quot;לולאת סקרנות&quot;.
+                </p>
+                <ul className="list-disc list-inside text-gray-600 space-y-1 mr-4">
+                  <li>המוח האנושי הוא מכונת פתרון בעיות</li>
+                  <li>שאלות מורכבות ורלוונטיות משחררות דופמין</li>
+                  <li>שימוש בניגודיות או הנחת יסוד מטלטלת</li>
+                </ul>
+              </div>
+
+              <div className="bg-white border border-pink-200 rounded-lg p-5">
+                <h4 className="text-xl font-bold text-pink-600 mb-3">3. צפייה מוקדמת (Anticipation)</h4>
+                <p className="text-gray-700 mb-2">
+                  הצופה מתחיל לנחש בראשו מה עשויה להיות התשובה לשאלה שהוצגה בשלב 2.
+                </p>
+                <ul className="list-disc list-inside text-gray-600 space-y-1 mr-4">
+                  <li>&quot;בלשנות תת-מודעת&quot; המתנהלת בזמן אמת</li>
+                  <li>רמת הדופמין הגבוהה ביותר רגע לפני חשיפת התשובה</li>
+                  <li>בניית מתח וסקרנות באמצעות פרטים ברורים</li>
+                </ul>
+              </div>
+
+              <div className="bg-white border border-indigo-200 rounded-lg p-5">
+                <h4 className="text-xl font-bold text-indigo-600 mb-3">4. אימות (Validation)</h4>
+                <p className="text-gray-700 mb-2">
+                  מתן התשובה לשאלה שנשאלה בשלב 2 - סגירת הלולאה.
+                </p>
+                <ul className="list-disc list-inside text-gray-600 space-y-1 mr-4">
+                  <li>תגמול הצופה בתשובה לא ברורה מאליה או בלתי צפויה</li>
+                  <li>בתוכן בידורי: פתרון העלילה</li>
+                  <li>בתוכן חינוכי: טיפ או המלצה בעלי ערך קונקרטי</li>
+                </ul>
+              </div>
+
+              <div className="bg-white border border-emerald-200 rounded-lg p-5">
+                <h4 className="text-xl font-bold text-emerald-600 mb-3">5. חיבה (Affection)</h4>
+                <p className="text-gray-700 mb-2">
+                  עלייה מעבר לסיפור האישי והתמקדות ביוצר עצמו - &quot;השליח&quot;.
+                </p>
+                <ul className="list-disc list-inside text-gray-600 space-y-1 mr-4">
+                  <li>הצופה מתחיל לחבב ולבטוח ביוצר</li>
+                  <li>ארבע דרכים: אטרקטיביות, אווירה כללית, חיוך, פתרון בעיות</li>
+                  <li>תוכן ללא פנים מתקשה להגיע לפסגה הפבלוביאנית</li>
+                </ul>
+              </div>
+
+              <div className="bg-white border border-orange-200 rounded-lg p-5">
+                <h4 className="text-xl font-bold text-orange-600 mb-3">6. גילוי (Revelation)</h4>
+                <p className="text-gray-700 mb-2">
+                  השלב האחרון שבו תגובת פבלוב מתחילה באמת.
+                </p>
+                <ul className="list-disc list-inside text-gray-600 space-y-1 mr-4">
+                  <li>הצופה מגיע להכרה שהיוצר הוא מקור קבוע ומתמשך לערך</li>
+                  <li>ראיית היוצר משחררת דופמין מקסימלי</li>
+                  <li>הצופה &quot;מנצח&quot; את משחק הקשב</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-6 rounded-xl">
+              <h4 className="font-bold text-blue-800 mb-2">🎯 המטרה האולטימטיבית:</h4>
+              <p className="text-blue-700">
+                יצירת &quot;אפקט פבלוביאני&quot; – מצב שבו ראיית שם היוצר או פניו בלבד משחררת דופמין במוחו של הצופה, והופכת אותו ל&quot;סופר מעריץ&quot; שיצפה בכל מה שהיוצר מייצר.
+              </p>
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </div>
